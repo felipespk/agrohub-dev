@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { produtoresMock, tiposGraoMock, compradoresMock } from "@/data/mock-data";
 import { Produtor, TipoGrao, Comprador } from "@/types";
-import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Pencil } from "lucide-react";
+import { UserPlus, Wheat, ShoppingCart, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
