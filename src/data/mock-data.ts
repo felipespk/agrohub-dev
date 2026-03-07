@@ -1,9 +1,9 @@
 import { Produtor, TipoGrao, Comprador, Recebimento, Saida } from "@/types";
 
 export const produtoresMock: Produtor[] = [
-  { id: "1", nome: "João da Silva", cpfCnpj: "123.456.789-00", contato: "(51) 99999-0001" },
-  { id: "2", nome: "Maria Oliveira", cpfCnpj: "987.654.321-00", contato: "(51) 99999-0002" },
-  { id: "3", nome: "Fazenda Boa Vista Ltda", cpfCnpj: "12.345.678/0001-90", contato: "(51) 99999-0003" },
+  { id: "1", tipoDocumento: "CPF", documento: "123.456.789-00", nome: "João da Silva", fazenda: "Fazenda São João", enderecoFazenda: "Estrada Rural, Km 12", cidade: "Camaquã", estado: "RS", inscricaoEstadual: "096/1234567", telefone: "(51) 99999-0001" },
+  { id: "2", tipoDocumento: "CPF", documento: "987.654.321-00", nome: "Maria Oliveira", fazenda: "Sítio Oliveira", enderecoFazenda: "Linha 3, s/n", cidade: "Pelotas", estado: "RS", inscricaoEstadual: "096/7654321", telefone: "(51) 99999-0002" },
+  { id: "3", tipoDocumento: "CNPJ", documento: "12.345.678/0001-90", nome: "Fazenda Boa Vista Ltda", fazenda: "Fazenda Boa Vista", enderecoFazenda: "Rod. BR-116, Km 340", cidade: "Rio Grande", estado: "RS", inscricaoEstadual: "096/0001234", telefone: "(51) 99999-0003" },
 ];
 
 export const tiposGraoMock: TipoGrao[] = [
