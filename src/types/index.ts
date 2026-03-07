@@ -1,8 +1,14 @@
 export interface Produtor {
   id: string;
+  tipoDocumento: "CPF" | "CNPJ";
+  documento: string;
   nome: string;
-  cpfCnpj: string;
-  contato: string;
+  fazenda: string;
+  enderecoFazenda: string;
+  cidade: string;
+  estado: string;
+  inscricaoEstadual: string;
+  telefone: string;
 }
 
 export interface TipoGrao {

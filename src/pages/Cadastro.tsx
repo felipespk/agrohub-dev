@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { produtoresMock, tiposGraoMock, compradoresMock } from "@/data/mock-data";
 import { Produtor, TipoGrao, Comprador } from "@/types";
-import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Pencil } from "lucide-react";
+import { UserPlus, Wheat, ShoppingCart, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -47,16 +48,35 @@ export default function CadastroPage() {
 }
 
 function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; setProdutores: React.Dispatch<React.SetStateAction<Produtor[]>> }) {
+  const [tipoDocumento, setTipoDocumento] = useState<"CPF" | "CNPJ">("CPF");
+  const [documento, setDocumento] = useState("");
   const [nome, setNome] = useState("");
-  const [cpfCnpj, setCpfCnpj] = useState("");
-  const [contato, setContato] = useState("");
+  const [fazenda, setFazenda] = useState("");
+  const [enderecoFazenda, setEnderecoFazenda] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [estado, setEstado] = useState("");
+  const [inscricaoEstadual, setInscricaoEstadual] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [open, setOpen] = useState(false);
 
   const handleAdd = () => {
-    if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
-    setProdutores(prev => [...prev, { id: crypto.randomUUID(), nome: nome.trim(), cpfCnpj: cpfCnpj.trim(), contato: contato.trim() }]);
+    if (!nome.trim() || !documento.trim()) { toast.error("Nome e Documento são obrigatórios."); return; }
+    setProdutores(prev => [...prev, {
+      id: crypto.randomUUID(),
+      tipoDocumento,
+      documento: documento.trim(),
+      nome: nome.trim(),
+      fazenda: fazenda.trim(),
+      enderecoFazenda: enderecoFazenda.trim(),
+      cidade: cidade.trim(),
+      estado: estado.trim(),
+      inscricaoEstadual: inscricaoEstadual.trim(),
+      telefone: telefone.trim(),
+    }]);
     toast.success("Produtor cadastrado!");
-    setNome(""); setCpfCnpj(""); setContato(""); setOpen(false);
+    setTipoDocumento("CPF"); setDocumento(""); setNome(""); setFazenda("");
+    setEnderecoFazenda(""); setCidade(""); setEstado(""); setInscricaoEstadual(""); setTelefone("");
+    setOpen(false);
   };
 
   const handleDelete = (id: string) => {
@@ -74,14 +94,53 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Novo Produtor</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-2xl">
             <DialogHeader><DialogTitle>Novo Produtor</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome do produtor" /></div>
-              <div className="space-y-2"><Label>CPF/CNPJ</Label><Input value={cpfCnpj} onChange={e => setCpfCnpj(e.target.value)} placeholder="000.000.000-00" /></div>
-              <div className="space-y-2"><Label>Contato</Label><Input value={contato} onChange={e => setContato(e.target.value)} placeholder="(00) 00000-0000" /></div>
-              <Button onClick={handleAdd} className="w-full">Salvar</Button>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label>Tipo de Documento *</Label>
+                <Select value={tipoDocumento} onValueChange={(v: "CPF" | "CNPJ") => setTipoDocumento(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CPF">CPF</SelectItem>
+                    <SelectItem value="CNPJ">CNPJ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Documento *</Label>
+                <Input value={documento} onChange={e => setDocumento(e.target.value)} placeholder={tipoDocumento === "CPF" ? "000.000.000-00" : "00.000.000/0001-00"} />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome do Produtor *</Label>
+                <Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome completo" />
+              </div>
+              <div className="space-y-2">
+                <Label>Fazenda</Label>
+                <Input value={fazenda} onChange={e => setFazenda(e.target.value)} placeholder="Nome da propriedade" />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Endereço da Fazenda</Label>
+                <Input value={enderecoFazenda} onChange={e => setEnderecoFazenda(e.target.value)} placeholder="Estrada, Km, etc." />
+              </div>
+              <div className="space-y-2">
+                <Label>Cidade</Label>
+                <Input value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Cidade" />
+              </div>
+              <div className="space-y-2">
+                <Label>Estado (UF)</Label>
+                <Input value={estado} onChange={e => setEstado(e.target.value)} placeholder="RS" maxLength={2} className="uppercase" />
+              </div>
+              <div className="space-y-2">
+                <Label>Inscrição Estadual</Label>
+                <Input value={inscricaoEstadual} onChange={e => setInscricaoEstadual(e.target.value)} placeholder="000/0000000" />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(00) 00000-0000" />
+              </div>
             </div>
+            <Button onClick={handleAdd} className="w-full mt-2">Salvar</Button>
           </DialogContent>
         </Dialog>
       </div>
@@ -90,8 +149,10 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>CPF/CNPJ</TableHead>
-              <TableHead>Contato</TableHead>
+              <TableHead>Documento</TableHead>
+              <TableHead>Fazenda</TableHead>
+              <TableHead>Cidade/UF</TableHead>
+              <TableHead>Telefone</TableHead>
               <TableHead className="w-20">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -99,8 +160,10 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
             {produtores.map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.nome}</TableCell>
-                <TableCell className="font-mono text-sm">{p.cpfCnpj}</TableCell>
-                <TableCell>{p.contato}</TableCell>
+                <TableCell className="font-mono text-sm">{p.tipoDocumento}: {p.documento}</TableCell>
+                <TableCell>{p.fazenda}</TableCell>
+                <TableCell>{p.cidade}{p.estado ? `/${p.estado}` : ""}</TableCell>
+                <TableCell>{p.telefone}</TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)} className="text-destructive hover:text-destructive">
                     <Trash2 className="h-4 w-4" />
