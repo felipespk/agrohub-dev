@@ -62,7 +62,7 @@ export default function ArmazenamentoPage() {
 
   const previewItens = useMemo(() => {
     return saldoProdutores.map(p => {
-      const sacos = Math.ceil(p.saldoKg / 50);
+      const sacos = Math.ceil(p.saldoKg / 60);
       return { produtorNome: p.produtorNome, saldoKg: p.saldoKg, sacos, total: sacos * vu };
     });
   }, [saldoProdutores, vu]);
