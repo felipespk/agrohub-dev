@@ -226,7 +226,7 @@ function CompradoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   const clearForm = () => { setNome(""); setContato(""); setEditingId(null); };
 
   const handleEdit = (c: Comprador) => {
-    setNome(c.nome); setContato(c.contato || ""); setEditingId(c.id); setOpen(true);
+    setNome(c.nome); setContato(maskTelefone(c.contato || "")); setEditingId(c.id); setOpen(true);
   };
 
   const handleSave = async () => {
