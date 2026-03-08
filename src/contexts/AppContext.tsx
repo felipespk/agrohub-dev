@@ -159,6 +159,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (sRes.data) setSaidas(sRes.data.map((s: any) => ({
       ...s,
       comprador_nome: s.compradores?.nome || "",
+      produtor_nome: s.produtores?.nome || "",
+      tipo_grao_nome: s.tipos_grao?.nome || "",
     })));
     if (qRes.data) setQuebras(qRes.data as any);
     setLoading(false);
