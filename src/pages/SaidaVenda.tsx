@@ -68,7 +68,7 @@ export default function SaidaVendaPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2"><Label>Data</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} /></div>
-          <div className="space-y-2"><Label>Placa *</Label><Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(e.target.value)} className="uppercase" /></div>
+          <div className="space-y-2"><Label>Placa *</Label><Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(maskPlaca(e.target.value))} /></div>
           <div className="space-y-2">
             <Label>Comprador *</Label>
             <Select value={compradorId} onValueChange={setCompradorId}>
