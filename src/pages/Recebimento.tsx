@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { produtoresMock, tiposGraoMock, recebimentosMock } from "@/data/mock-data";
+import { useAppData } from "@/contexts/AppContext";
 import { Recebimento } from "@/types";
 import { ArrowDownToLine, Calculator, Save } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RecebimentoPage() {
-  const [recebimentos, setRecebimentos] = useState<Recebimento[]>(recebimentosMock);
+  const { produtores, tiposGrao, recebimentos, setRecebimentos } = useAppData();
 
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
   const [placa, setPlaca] = useState("");
@@ -25,50 +25,29 @@ export default function RecebimentoPage() {
     const peso = parseFloat(pesoBruto) || 0;
     const umidade = parseFloat(umidadeInicial) || 0;
     const imp = parseFloat(impureza) || 0;
-
     const descontoUmidadePercent = umidade > 12 ? (umidade - 12) * 1.3 : 0;
     const descontoUmidadeKg = peso * (descontoUmidadePercent / 100);
     const descontoImpurezaKg = peso * (imp / 100);
     const pesoLiquido = Math.max(0, peso - descontoUmidadeKg - descontoImpurezaKg);
-
     return { descontoUmidadePercent, descontoUmidadeKg, descontoImpurezaKg, pesoLiquido };
   }, [pesoBruto, umidadeInicial, impureza]);
 
   const handleSalvar = () => {
     if (!placa || !produtorId || !tipoGraoId || !pesoBruto || !umidadeInicial) {
-      toast.error("Preencha todos os campos obrigatórios (Placa, Produtor, Tipo de Grão, Peso e Umidade).");
+      toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
-
-    const produtor = produtoresMock.find((p) => p.id === produtorId);
-    const tipoGrao = tiposGraoMock.find((t) => t.id === tipoGraoId);
-
+    const produtor = produtores.find((p) => p.id === produtorId);
+    const tipoGrao = tiposGrao.find((t) => t.id === tipoGraoId);
     const novo: Recebimento = {
-      id: crypto.randomUUID(),
-      data,
-      placaCaminhao: placa.toUpperCase(),
-      produtorId,
-      produtorNome: produtor?.nome || "",
-      tipoGraoId,
-      tipoGraoNome: tipoGrao?.nome || "",
-      pesoBruto: parseFloat(pesoBruto),
-      umidadeInicial: parseFloat(umidadeInicial),
-      umidadeFinalAlvo,
-      impureza: parseFloat(impureza) || 0,
-      ...calculos,
-      createdAt: new Date().toISOString(),
+      id: crypto.randomUUID(), data, placaCaminhao: placa.toUpperCase(),
+      produtorId, produtorNome: produtor?.nome || "", tipoGraoId, tipoGraoNome: tipoGrao?.nome || "",
+      pesoBruto: parseFloat(pesoBruto), umidadeInicial: parseFloat(umidadeInicial), umidadeFinalAlvo,
+      impureza: parseFloat(impureza) || 0, ...calculos, createdAt: new Date().toISOString(),
     };
-
     setRecebimentos((prev) => [novo, ...prev]);
     toast.success(`Entrada salva! Peso líquido: ${calculos.pesoLiquido.toFixed(0)} Kg`);
-
-    // Reset
-    setPlaca("");
-    setProdutorId("");
-    setTipoGraoId("");
-    setPesoBruto("");
-    setUmidadeInicial("");
-    setImpureza("");
+    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza("");
   };
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -84,10 +63,8 @@ export default function RecebimentoPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Formulário */}
         <div className="lg:col-span-2 form-section space-y-5">
           <h2 className="font-display font-semibold text-lg text-foreground">Nova Entrada</h2>
-
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="data">Data</Label>
@@ -102,7 +79,7 @@ export default function RecebimentoPage() {
               <Select value={produtorId} onValueChange={setProdutorId}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
-                  {produtoresMock.map((p) => (
+                  {produtores.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                   ))}
                 </SelectContent>
@@ -113,7 +90,7 @@ export default function RecebimentoPage() {
               <Select value={tipoGraoId} onValueChange={setTipoGraoId}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
-                  {tiposGraoMock.map((t) => (
+                  {tiposGrao.map((t) => (
                     <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                   ))}
                 </SelectContent>
@@ -136,20 +113,17 @@ export default function RecebimentoPage() {
               <Input value="12%" disabled className="bg-muted" />
             </div>
           </div>
-
           <Button onClick={handleSalvar} className="w-full sm:w-auto gap-2">
             <Save className="h-4 w-4" /> Salvar Entrada
           </Button>
         </div>
 
-        {/* Resultados automáticos */}
         <div className="results-section space-y-4">
           <div className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-primary" />
             <h2 className="font-display font-semibold text-lg text-foreground">Resultados</h2>
           </div>
           <p className="text-xs text-muted-foreground">Cálculos em tempo real conforme preenchimento</p>
-
           <div className="space-y-3">
             <ResultCard label="Desconto de Umidade" value={`${fmt(calculos.descontoUmidadePercent)}%`} />
             <ResultCard label="Kg Descontados (Umidade)" value={`${fmt(calculos.descontoUmidadeKg)} Kg`} />
@@ -162,7 +136,6 @@ export default function RecebimentoPage() {
         </div>
       </div>
 
-      {/* Tabela de recebimentos */}
       <div className="form-section">
         <h2 className="font-display font-semibold text-lg text-foreground mb-4">Últimos Recebimentos</h2>
         <div className="overflow-x-auto">

@@ -1,21 +1,66 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { Package, ArrowDownToLine, ArrowUpFromLine, Wheat } from "lucide-react";
-import { recebimentosMock, saidasMock } from "@/data/mock-data";
+import { useMemo } from "react";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  PieChart, Pie, Cell,
+} from "recharts";
+import { Package, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Wheat, TrendingUp, TrendingDown } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { useAppData } from "@/contexts/AppContext";
 
-const chartData = [
-  { dia: "01/03", entrada: 30000, saida: 0 },
-  { dia: "02/03", entrada: 0, saida: 0 },
-  { dia: "03/03", entrada: 25000, saida: 0 },
-  { dia: "04/03", entrada: 0, saida: 0 },
-  { dia: "05/03", entrada: 0, saida: 15000 },
-  { dia: "06/03", entrada: 0, saida: 0 },
-  { dia: "07/03", entrada: 0, saida: 0 },
+const PIE_COLORS = [
+  "hsl(152, 45%, 28%)",
+  "hsl(42, 80%, 55%)",
+  "hsl(210, 50%, 45%)",
+  "hsl(350, 60%, 50%)",
+  "hsl(280, 40%, 50%)",
 ];
 
 export default function Dashboard() {
-  const totalEstoque = recebimentosMock.reduce((s, r) => s + r.pesoLiquido, 0) - saidasMock.reduce((s, r) => s + r.kgsExpedidos, 0);
-  const totalRecebido = recebimentosMock.reduce((s, r) => s + r.pesoLiquido, 0);
-  const totalExpedido = saidasMock.reduce((s, r) => s + r.kgsExpedidos, 0);
+  const { recebimentos, saidas, quebras } = useAppData();
+
+  const totalRecebido = recebimentos.reduce((s, r) => s + r.pesoLiquido, 0);
+  const totalExpedido = saidas.reduce((s, r) => s + r.kgsExpedidos, 0);
+  const totalQuebra = quebras.reduce((s, q) => s + q.kgAjuste, 0);
+  const totalEstoque = totalRecebido - totalExpedido + totalQuebra;
+
+  // Area chart: últimos 30 dias
+  const areaData = useMemo(() => {
+    const today = new Date();
+    const days: { dia: string; entrada: number; saida: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const ds = d.toISOString().split("T")[0];
+      const label = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      const entrada = recebimentos.filter(r => r.data === ds).reduce((s, r) => s + r.pesoLiquido, 0);
+      const saida = saidas.filter(r => r.data === ds).reduce((s, r) => s + r.kgsExpedidos, 0);
+      days.push({ dia: label, entrada, saida });
+    }
+    return days;
+  }, [recebimentos, saidas]);
+
+  // Pie chart: distribuição por tipo de grão
+  const pieData = useMemo(() => {
+    const map = new Map<string, number>();
+    recebimentos.forEach(r => {
+      map.set(r.tipoGraoNome, (map.get(r.tipoGraoNome) || 0) + r.pesoLiquido);
+    });
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+  }, [recebimentos]);
+
+  // Últimas movimentações
+  const ultimasMovimentacoes = useMemo(() => {
+    const entradas = recebimentos.slice(0, 5).map(r => ({
+      id: r.id, data: r.data, tipo: "Entrada" as const, descricao: `${r.produtorNome} — ${r.tipoGraoNome}`,
+      placa: r.placaCaminhao, kgs: r.pesoLiquido, createdAt: r.createdAt,
+    }));
+    const saidasList = saidas.slice(0, 5).map(s => ({
+      id: s.id, data: s.data, tipo: "Saída" as const, descricao: `${s.compradorNome} — ${s.categoria}`,
+      placa: s.placaCaminhao, kgs: s.kgsExpedidos, createdAt: s.createdAt,
+    }));
+    return [...entradas, ...saidasList].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10);
+  }, [recebimentos, saidas]);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -27,33 +72,104 @@ export default function Dashboard() {
         <p className="page-subtitle">Visão geral do secador de grãos</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <KpiCard icon={Package} label="Estoque Atual" value={`${(totalEstoque / 1000).toFixed(1)} ton`} sub={`${totalEstoque.toLocaleString("pt-BR")} Kg`} color="text-primary" />
-        <KpiCard icon={ArrowDownToLine} label="Recebido no Mês" value={`${(totalRecebido / 1000).toFixed(1)} ton`} sub={`${recebimentosMock.length} entradas`} color="text-success" />
-        <KpiCard icon={ArrowUpFromLine} label="Expedido no Mês" value={`${(totalExpedido / 1000).toFixed(1)} ton`} sub={`${saidasMock.length} saídas`} color="text-warning" />
+      {/* KPIs */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard icon={Package} label="Estoque Atual" value={`${(totalEstoque / 1000).toFixed(1)} ton`} sub={`${totalEstoque.toLocaleString("pt-BR")} Kg`} color="text-primary" trend={+5.2} />
+        <KpiCard icon={ArrowDownToLine} label="Recebido no Mês" value={`${(totalRecebido / 1000).toFixed(1)} ton`} sub={`${recebimentos.length} entradas`} color="text-emerald-600" trend={+12.0} />
+        <KpiCard icon={ArrowUpFromLine} label="Expedido no Mês" value={`${(totalExpedido / 1000).toFixed(1)} ton`} sub={`${saidas.length} saídas`} color="text-amber-600" trend={-3.1} />
+        <KpiCard icon={AlertTriangle} label="Quebra Técnica" value={`${Math.abs(totalQuebra).toLocaleString("pt-BR")} Kg`} sub={`${quebras.length} registros`} color="text-destructive" trend={-1.5} />
       </div>
 
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 form-section">
+          <h2 className="font-display font-semibold text-lg text-foreground mb-4">Fluxo de Entrada vs Saída — 30 dias (Kg)</h2>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={areaData}>
+                <defs>
+                  <linearGradient id="gradEntrada" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(152, 45%, 28%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(152, 45%, 28%)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradSaida" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(42, 80%, 55%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(42, 80%, 55%)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(210, 15%, 88%)" />
+                <XAxis dataKey="dia" fontSize={11} interval={4} />
+                <YAxis fontSize={11} tickFormatter={(v: number) => v > 0 ? `${(v / 1000).toFixed(0)}t` : "0"} />
+                <Tooltip formatter={(value: number) => `${value.toLocaleString("pt-BR")} Kg`} />
+                <Legend />
+                <Area type="monotone" dataKey="entrada" name="Entrada" stroke="hsl(152, 45%, 28%)" fill="url(#gradEntrada)" strokeWidth={2} />
+                <Area type="monotone" dataKey="saida" name="Saída" stroke="hsl(42, 80%, 55%)" fill="url(#gradSaida)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <h2 className="font-display font-semibold text-lg text-foreground mb-4">Estoque por Tipo de Grão</h2>
+          <div className="h-72 flex items-center justify-center">
+            {pieData.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sem dados</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={11}>
+                    {pieData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => `${value.toLocaleString("pt-BR")} Kg`} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Últimas Movimentações */}
       <div className="form-section">
-        <h2 className="font-display font-semibold text-lg text-foreground mb-4">Entrada vs Saída — Últimos 7 dias (Kg)</h2>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 15% 88%)" />
-              <XAxis dataKey="dia" fontSize={12} />
-              <YAxis fontSize={12} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}t`} />
-              <Tooltip formatter={(value: number) => `${value.toLocaleString("pt-BR")} Kg`} />
-              <Legend />
-              <Bar dataKey="entrada" name="Entrada" fill="hsl(152 45% 28%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="saida" name="Saída" fill="hsl(42 80% 55%)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <h2 className="font-display font-semibold text-lg text-foreground mb-4">Últimas Movimentações</h2>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Placa</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead className="text-right">Kgs</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ultimasMovimentacoes.length === 0 ? (
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma movimentação registrada.</TableCell></TableRow>
+              ) : ultimasMovimentacoes.map(m => (
+                <TableRow key={m.id}>
+                  <TableCell>{new Date(m.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>
+                    <Badge variant={m.tipo === "Entrada" ? "default" : "secondary"}>{m.tipo}</Badge>
+                  </TableCell>
+                  <TableCell className="font-mono">{m.placa}</TableCell>
+                  <TableCell>{m.descricao}</TableCell>
+                  <TableCell className="text-right font-semibold">{m.kgs.toLocaleString("pt-BR")}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>
   );
 }
 
-function KpiCard({ icon: Icon, label, value, sub, color }: { icon: any; label: string; value: string; sub: string; color: string }) {
+function KpiCard({ icon: Icon, label, value, sub, color, trend }: { icon: any; label: string; value: string; sub: string; color: string; trend: number }) {
+  const TrendIcon = trend >= 0 ? TrendingUp : TrendingDown;
+  const trendColor = trend >= 0 ? "text-emerald-600" : "text-destructive";
+
   return (
     <div className="kpi-card">
       <div className="flex items-center justify-between mb-2">
@@ -61,7 +177,13 @@ function KpiCard({ icon: Icon, label, value, sub, color }: { icon: any; label: s
         <Icon className={`h-5 w-5 ${color}`} />
       </div>
       <p className="text-2xl font-display font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground mt-1">{sub}</p>
+      <div className="flex items-center justify-between mt-1">
+        <p className="text-xs text-muted-foreground">{sub}</p>
+        <div className={`flex items-center gap-1 text-xs font-medium ${trendColor}`}>
+          <TrendIcon className="h-3 w-3" />
+          {Math.abs(trend)}%
+        </div>
+      </div>
     </div>
   );
 }
