@@ -12,11 +12,19 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 }
 
 function usePersistedState<T>(key: string, fallback: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const [state, setState] = useState<T>(() => loadFromStorage(key, fallback));
+  const [state, setStateInternal] = useState<T>(() => loadFromStorage(key, fallback));
 
-  useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(state));
-  }, [key, state]);
+  const setState: React.Dispatch<React.SetStateAction<T>> = useCallback((action) => {
+    setStateInternal((prev) => {
+      const next = typeof action === "function" ? (action as (prev: T) => T)(prev) : action;
+      try {
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch (e) {
+        console.error(`Failed to persist ${key}:`, e);
+      }
+      return next;
+    });
+  }, [key]);
 
   return [state, setState];
 }
