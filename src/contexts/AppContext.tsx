@@ -280,6 +280,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addRecebimento, updateRecebimento, deleteRecebimento,
       addSaida, updateSaida, deleteSaida,
       addQuebra, deleteQuebra,
+      capacidadeSilo, setCapacidadeSilo,
     }}>
       {children}
     </AppContext.Provider>
