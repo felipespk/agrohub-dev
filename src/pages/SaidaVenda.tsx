@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAppData, Saida } from "@/contexts/AppContext";
 import { ArrowUpFromLine, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { maskPlaca, maskClassificacao } from "@/lib/masks";
 
 const categorias = ["Venda", "Transferência", "Devolução", "Outros"];
 
@@ -28,8 +29,8 @@ export default function SaidaVendaPage() {
   };
 
   const handleEdit = (s: Saida) => {
-    setData(s.data); setPlaca(s.placa_caminhao); setCompradorId(s.comprador_id);
-    setCategoria(s.categoria); setClassificacao(s.classificacao || ""); setKgsExpedidos(String(s.kgs_expedidos));
+    setData(s.data); setPlaca(maskPlaca(s.placa_caminhao)); setCompradorId(s.comprador_id);
+    setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || "")); setKgsExpedidos(String(s.kgs_expedidos));
     setEditingId(s.id);
   };
 
@@ -41,7 +42,7 @@ export default function SaidaVendaPage() {
   const handleSalvar = async () => {
     if (!placa || !compradorId || !kgsExpedidos) { toast.error("Preencha Placa, Comprador e Kgs Expedidos."); return; }
     const entry = {
-      data, placa_caminhao: placa.toUpperCase(), comprador_id: compradorId,
+      data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(), comprador_id: compradorId,
       classificacao, kgs_expedidos: parseFloat(kgsExpedidos), categoria,
     };
     if (editingId) {
@@ -67,7 +68,7 @@ export default function SaidaVendaPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2"><Label>Data</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} /></div>
-          <div className="space-y-2"><Label>Placa *</Label><Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(e.target.value)} className="uppercase" /></div>
+          <div className="space-y-2"><Label>Placa *</Label><Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(maskPlaca(e.target.value))} /></div>
           <div className="space-y-2">
             <Label>Comprador *</Label>
             <Select value={compradorId} onValueChange={setCompradorId}>
@@ -82,7 +83,7 @@ export default function SaidaVendaPage() {
               <SelectContent>{categorias.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div className="space-y-2"><Label>Classificação</Label><Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Classificação</Label><Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(maskClassificacao(e.target.value))} /></div>
           <div className="space-y-2"><Label>Kgs Expedidos *</Label><Input type="number" placeholder="15000" value={kgsExpedidos} onChange={e => setKgsExpedidos(e.target.value)} /></div>
         </div>
         <div className="flex gap-2">

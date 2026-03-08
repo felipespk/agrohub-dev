@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAppData, Recebimento } from "@/contexts/AppContext";
 import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { maskPlaca } from "@/lib/masks";
 
 export default function RecebimentoPage() {
   const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento } = useAppData();
@@ -49,7 +50,7 @@ export default function RecebimentoPage() {
   };
 
   const handleEdit = (r: Recebimento) => {
-    setData(r.data); setPlaca(r.placa_caminhao); setProdutorId(r.produtor_id);
+    setData(r.data); setPlaca(maskPlaca(r.placa_caminhao)); setProdutorId(r.produtor_id);
     setTipoGraoId(r.tipo_grao_id); setPesoBruto(String(r.peso_bruto));
     setUmidadeInicial(String(r.umidade_inicial)); setImpureza(String(r.impureza));
     setTaxaSecagem(String(r.taxa_secagem_percentual || 0));
@@ -67,7 +68,7 @@ export default function RecebimentoPage() {
       toast.error("Preencha todos os campos obrigatórios."); return;
     }
     const entry = {
-      data, placa_caminhao: placa.toUpperCase(),
+      data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(),
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
       peso_bruto: parseFloat(pesoBruto), umidade_inicial: parseFloat(umidadeInicial),
       umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,
@@ -105,7 +106,7 @@ export default function RecebimentoPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2"><Label>Data</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Placa do Caminhão *</Label><Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(e.target.value)} className="uppercase" /></div>
+            <div className="space-y-2"><Label>Placa do Caminhão *</Label><Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(maskPlaca(e.target.value))} /></div>
             <div className="space-y-2">
               <Label>Produtor *</Label>
               <Select value={produtorId} onValueChange={setProdutorId}>

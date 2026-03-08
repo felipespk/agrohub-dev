@@ -9,6 +9,7 @@ import { useAppData, Produtor, TipoGrao, Comprador } from "@/contexts/AppContext
 import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Edit2, X, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { maskDocumento, maskTelefone } from "@/lib/masks";
 
 export default function CadastroPage() {
   const ctx = useAppData();
@@ -53,9 +54,9 @@ function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   };
 
   const handleEdit = (p: Produtor) => {
-    setTipoDocumento(p.tipo_documento); setDocumento(p.documento); setNome(p.nome);
+    setTipoDocumento(p.tipo_documento); setDocumento(maskDocumento(p.documento)); setNome(p.nome);
     setFazenda(p.fazenda); setEnderecoFazenda(p.endereco_fazenda); setCidade(p.cidade);
-    setEstado(p.estado); setInscricaoEstadual(p.inscricao_estadual); setTelefone(p.telefone);
+    setEstado(p.estado); setInscricaoEstadual(p.inscricao_estadual); setTelefone(maskTelefone(p.telefone));
     setEditingId(p.id); setOpen(true);
   };
 
@@ -96,14 +97,14 @@ function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
                   <SelectContent><SelectItem value="CPF">CPF</SelectItem><SelectItem value="CNPJ">CNPJ</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label>Documento *</Label><Input value={documento} onChange={e => setDocumento(e.target.value)} placeholder={tipoDocumento === "CPF" ? "000.000.000-00" : "00.000.000/0001-00"} /></div>
+              <div className="space-y-2"><Label>Documento *</Label><Input value={documento} onChange={e => setDocumento(maskDocumento(e.target.value))} placeholder={tipoDocumento === "CPF" ? "000.000.000-00" : "00.000.000/0001-00"} /></div>
               <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome completo" /></div>
               <div className="space-y-2"><Label>Fazenda</Label><Input value={fazenda} onChange={e => setFazenda(e.target.value)} placeholder="Nome da propriedade" /></div>
               <div className="space-y-2 sm:col-span-2"><Label>Endereço da Fazenda</Label><Input value={enderecoFazenda} onChange={e => setEnderecoFazenda(e.target.value)} placeholder="Estrada, Km, etc." /></div>
               <div className="space-y-2"><Label>Cidade</Label><Input value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Cidade" /></div>
               <div className="space-y-2"><Label>Estado (UF)</Label><Input value={estado} onChange={e => setEstado(e.target.value)} placeholder="RS" maxLength={2} className="uppercase" /></div>
               <div className="space-y-2"><Label>Inscrição Estadual</Label><Input value={inscricaoEstadual} onChange={e => setInscricaoEstadual(e.target.value)} placeholder="000/0000000" /></div>
-              <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(00) 00000-0000" /></div>
+              <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(maskTelefone(e.target.value))} placeholder="(00) 00000-0000" /></div>
             </div>
             <div className="flex gap-2 mt-2">
               <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
@@ -225,7 +226,7 @@ function CompradoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   const clearForm = () => { setNome(""); setContato(""); setEditingId(null); };
 
   const handleEdit = (c: Comprador) => {
-    setNome(c.nome); setContato(c.contato || ""); setEditingId(c.id); setOpen(true);
+    setNome(c.nome); setContato(maskTelefone(c.contato || "")); setEditingId(c.id); setOpen(true);
   };
 
   const handleSave = async () => {
@@ -254,7 +255,7 @@ function CompradoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
             <DialogHeader><DialogTitle>{editingId ? "Editar Comprador" : "Novo Comprador"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome do comprador" /></div>
-              <div className="space-y-2"><Label>Contato</Label><Input value={contato} onChange={e => setContato(e.target.value)} placeholder="(00) 00000-0000" /></div>
+              <div className="space-y-2"><Label>Contato</Label><Input value={contato} onChange={e => setContato(maskTelefone(e.target.value))} placeholder="(00) 00000-0000" /></div>
               <div className="flex gap-2">
                 <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                   <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
