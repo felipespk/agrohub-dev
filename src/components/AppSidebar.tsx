@@ -2,7 +2,7 @@ import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft,
   Warehouse, Truck, FileBarChart, AlertTriangle, UserPlus, Wheat, LogOut
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
