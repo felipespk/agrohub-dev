@@ -104,7 +104,7 @@ function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
               <div className="space-y-2"><Label>Cidade</Label><Input value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Cidade" /></div>
               <div className="space-y-2"><Label>Estado (UF)</Label><Input value={estado} onChange={e => setEstado(e.target.value)} placeholder="RS" maxLength={2} className="uppercase" /></div>
               <div className="space-y-2"><Label>Inscrição Estadual</Label><Input value={inscricaoEstadual} onChange={e => setInscricaoEstadual(e.target.value)} placeholder="000/0000000" /></div>
-              <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(00) 00000-0000" /></div>
+              <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(maskTelefone(e.target.value))} placeholder="(00) 00000-0000" /></div>
             </div>
             <div className="flex gap-2 mt-2">
               <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
