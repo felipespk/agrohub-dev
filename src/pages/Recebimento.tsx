@@ -53,6 +53,7 @@ export default function RecebimentoPage() {
     setTipoGraoId(r.tipo_grao_id); setPesoBruto(String(r.peso_bruto));
     setUmidadeInicial(String(r.umidade_inicial)); setImpureza(String(r.impureza));
     setTaxaSecagem(String(r.taxa_secagem_percentual || 0));
+    setUmidadeFinalAlvo(String(r.umidade_final_alvo));
     setEditingId(r.id);
   };
 
