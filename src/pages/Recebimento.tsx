@@ -20,7 +20,13 @@ export default function RecebimentoPage() {
   const [impureza, setImpureza] = useState("");
   const [taxaSecagem, setTaxaSecagem] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const umidadeFinalAlvo = 12;
+  const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState("12");
+
+  const handleTipoGraoChange = (id: string) => {
+    setTipoGraoId(id);
+    const grao = tiposGrao.find(t => t.id === id);
+    if (grao) setUmidadeFinalAlvo(String(grao.umidade_padrao));
+  };
 
   const calculos = useMemo(() => {
     const peso = parseFloat(pesoBruto) || 0;
