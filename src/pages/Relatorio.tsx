@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAppData } from "@/contexts/AppContext";
 import { FileBarChart, Download, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 interface LancamentoUnificado {
   id: string;
@@ -88,21 +89,68 @@ export default function RelatorioPage() {
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const fmt2 = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const exportCSV = () => {
-    const header = "Produtor,Tipo de Grão,Data,Operação,Placa,Peso Bruto,Umidade Ini,Umidade Alvo,Impureza,Tx Secagem,Descontos,Peso Líquido\n";
+  const exportExcel = () => {
     const rows = grupos.flatMap(g =>
       g.lancamentos.map(l => {
+        const base: Record<string, string | number> = {
+          Produtor: g.produtorNome,
+          "Tipo de Grão": g.tipoGraoNome,
+          Data: l.data,
+          Operação: l.tipo === "entrada" ? "Entrada" : "Saída",
+          Placa: l.placa,
+        };
         if (l.tipo === "entrada") {
-          return `${g.produtorNome},${g.tipoGraoNome},${l.data},Entrada,${l.placa},${l.pesoBruto},${l.umidadeInicial},${l.umidadeFinalAlvo},${l.impureza},${l.taxaSecagem},${l.totalDescontos},${l.kg}`;
+          base["Peso Bruto (Kg)"] = l.pesoBruto!;
+          base["Umidade Inicial (%)"] = l.umidadeInicial!;
+          base["Umidade Alvo (%)"] = l.umidadeFinalAlvo!;
+          base["Impureza (%)"] = l.impureza!;
+          base["Tx Secagem (%)"] = l.taxaSecagem!;
+          base["Desc. Umidade (Kg)"] = l.descontoUmidadeKg!;
+          base["Desc. Impureza (Kg)"] = l.descontoImpurezaKg!;
+          base["Desc. Secagem (Kg)"] = l.descontoSecagemKg!;
+          base["Total Descontos (Kg)"] = l.totalDescontos!;
+        } else {
+          base["Peso Bruto (Kg)"] = "";
+          base["Umidade Inicial (%)"] = "";
+          base["Umidade Alvo (%)"] = "";
+          base["Impureza (%)"] = "";
+          base["Tx Secagem (%)"] = "";
+          base["Desc. Umidade (Kg)"] = "";
+          base["Desc. Impureza (Kg)"] = "";
+          base["Desc. Secagem (Kg)"] = "";
+          base["Total Descontos (Kg)"] = "";
         }
-        return `${g.produtorNome},${g.tipoGraoNome},${l.data},Saída,${l.placa},,,,,,${l.kg}`;
+        base["Peso Líquido (Kg)"] = l.kg;
+        return base;
       })
-    ).join("\n");
-    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "extrato-estoque.csv"; a.click();
-    URL.revokeObjectURL(url);
-    toast.success("CSV exportado!");
+    );
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [
+      { wch: 30 }, // Produtor
+      { wch: 18 }, // Tipo de Grão
+      { wch: 12 }, // Data
+      { wch: 10 }, // Operação
+      { wch: 10 }, // Placa
+      { wch: 16 }, // Peso Bruto
+      { wch: 16 }, // Umidade Ini
+      { wch: 14 }, // Umidade Alvo
+      { wch: 12 }, // Impureza
+      { wch: 14 }, // Tx Secagem
+      { wch: 16 }, // Desc Umidade
+      { wch: 16 }, // Desc Impureza
+      { wch: 16 }, // Desc Secagem
+      { wch: 18 }, // Total Descontos
+      { wch: 18 }, // Peso Líquido
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Extrato de Estoque");
+
+    const hoje = new Date();
+    const nomeArquivo = `Relatorio_Estoque_${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${hoje.getFullYear()}.xlsx`;
+    XLSX.writeFile(wb, nomeArquivo);
+    toast.success("Planilha Excel exportada!");
   };
 
   return (
@@ -134,7 +182,7 @@ export default function RelatorioPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" onClick={exportCSV} className="gap-2"><Download className="h-4 w-4" /> Exportar CSV</Button>
+          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel (.xlsx)</Button>
         </div>
 
         {grupos.length === 0 ? (
