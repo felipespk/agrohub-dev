@@ -4,7 +4,7 @@ import { Truck } from "lucide-react";
 
 export default function ExpedicaoPage() {
   const { saidas } = useAppData();
-  const totalKgs = saidas.reduce((sum, s) => sum + s.kgsExpedidos, 0);
+  const totalKgs = saidas.reduce((sum, s) => sum + s.kgs_expedidos, 0);
   const totalSacos = Math.round(totalKgs / 60);
   const totalToneladas = totalKgs / 1000;
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -12,10 +12,7 @@ export default function ExpedicaoPage() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <div className="flex items-center gap-2">
-          <Truck className="h-6 w-6 text-primary" />
-          <h1 className="page-title">Expedição</h1>
-        </div>
+        <div className="flex items-center gap-2"><Truck className="h-6 w-6 text-primary" /><h1 className="page-title">Expedição</h1></div>
         <p className="page-subtitle">Resumo consolidado de expedições</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
@@ -35,13 +32,13 @@ export default function ExpedicaoPage() {
               {saidas.map(s => (
                 <TableRow key={s.id}>
                   <TableCell>{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
-                  <TableCell className="font-mono">{s.placaCaminhao}</TableCell>
-                  <TableCell>{s.compradorNome}</TableCell>
+                  <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
+                  <TableCell>{s.comprador_nome}</TableCell>
                   <TableCell>{s.categoria}</TableCell>
                   <TableCell>{s.classificacao}</TableCell>
-                  <TableCell className="text-right">{s.kgsExpedidos.toLocaleString("pt-BR")}</TableCell>
-                  <TableCell className="text-right">{Math.round(s.kgsExpedidos / 60)}</TableCell>
-                  <TableCell className="text-right">{fmt(s.kgsExpedidos / 1000)}</TableCell>
+                  <TableCell className="text-right">{s.kgs_expedidos.toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-right">{Math.round(s.kgs_expedidos / 60)}</TableCell>
+                  <TableCell className="text-right">{fmt(s.kgs_expedidos / 1000)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

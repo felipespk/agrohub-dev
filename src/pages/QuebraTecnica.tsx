@@ -10,20 +10,27 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function QuebraTecnicaPage() {
-  const { quebras, setQuebras } = useAppData();
+  const { quebras, addQuebra, deleteQuebra } = useAppData();
   const [open, setOpen] = useState(false);
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
   const [kgAjuste, setKgAjuste] = useState("");
   const [justificativa, setJustificativa] = useState("");
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!kgAjuste || !justificativa.trim()) { toast.error("Preencha Kg de ajuste e justificativa."); return; }
-    setQuebras(prev => [{ id: crypto.randomUUID(), data, kgAjuste: parseFloat(kgAjuste), justificativa: justificativa.trim() }, ...prev]);
-    toast.success("Quebra técnica registrada.");
-    setKgAjuste(""); setJustificativa(""); setOpen(false);
+    const row = await addQuebra({ data, kg_ajuste: parseFloat(kgAjuste), justificativa: justificativa.trim() });
+    if (row) {
+      toast.success("Quebra técnica registrada.");
+      setKgAjuste(""); setJustificativa(""); setOpen(false);
+    }
   };
 
-  const totalQuebra = quebras.reduce((s, q) => s + q.kgAjuste, 0);
+  const handleDelete = async (id: string) => {
+    const ok = await deleteQuebra(id);
+    if (ok) toast.success("Quebra removida.");
+  };
+
+  const totalQuebra = quebras.reduce((s, q) => s + q.kg_ajuste, 0);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -53,13 +60,14 @@ export default function QuebraTecnicaPage() {
         </div>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader><TableRow><TableHead>Data</TableHead><TableHead className="text-right">Kg Ajuste</TableHead><TableHead>Justificativa</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Data</TableHead><TableHead className="text-right">Kg Ajuste</TableHead><TableHead>Justificativa</TableHead><TableHead className="w-20">Ações</TableHead></TableRow></TableHeader>
             <TableBody>
               {quebras.map(q => (
                 <TableRow key={q.id}>
                   <TableCell>{new Date(q.data).toLocaleDateString("pt-BR")}</TableCell>
-                  <TableCell className={`text-right font-semibold ${q.kgAjuste < 0 ? "text-destructive" : "text-primary"}`}>{q.kgAjuste > 0 ? "+" : ""}{q.kgAjuste.toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className={`text-right font-semibold ${q.kg_ajuste < 0 ? "text-destructive" : "text-primary"}`}>{q.kg_ajuste > 0 ? "+" : ""}{q.kg_ajuste.toLocaleString("pt-BR")}</TableCell>
                   <TableCell>{q.justificativa}</TableCell>
+                  <TableCell><Button variant="ghost" size="icon" onClick={() => handleDelete(q.id)} className="text-destructive hover:text-destructive"><AlertTriangle className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
               ))}
             </TableBody>
