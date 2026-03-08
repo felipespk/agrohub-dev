@@ -145,7 +145,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       supabase.from("tipos_grao").select("*").order("nome"),
       supabase.from("compradores").select("*").order("nome"),
       supabase.from("recebimentos").select("*, produtores(nome), tipos_grao(nome)").order("created_at", { ascending: false }),
-      supabase.from("saidas").select("*, compradores(nome)").order("created_at", { ascending: false }),
+      supabase.from("saidas").select("*, compradores(nome), produtores(nome), tipos_grao(nome)").order("created_at", { ascending: false }),
       supabase.from("quebras_tecnicas").select("*").order("created_at", { ascending: false }),
     ]);
     if (pRes.data) setProdutores(pRes.data as any);
