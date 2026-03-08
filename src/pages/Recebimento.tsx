@@ -33,13 +33,14 @@ export default function RecebimentoPage() {
     const umidade = parseFloat(umidadeInicial) || 0;
     const imp = parseFloat(impureza) || 0;
     const secagem = parseFloat(taxaSecagem) || 0;
-    const desconto_umidade_percent = umidade > 12 ? (umidade - 12) * 1.3 : 0;
+    const alvo = parseFloat(umidadeFinalAlvo) || 12;
+    const desconto_umidade_percent = umidade > alvo ? (umidade - alvo) * 1.3 : 0;
     const desconto_umidade_kg = peso * (desconto_umidade_percent / 100);
     const desconto_impureza_kg = peso * (imp / 100);
     const desconto_secagem_kg = peso * (secagem / 100);
     const peso_liquido = Math.max(0, peso - desconto_umidade_kg - desconto_impureza_kg - desconto_secagem_kg);
     return { desconto_umidade_percent, desconto_umidade_kg, desconto_impureza_kg, taxa_secagem_percentual: secagem, desconto_secagem_kg, peso_liquido };
-  }, [pesoBruto, umidadeInicial, impureza, taxaSecagem]);
+  }, [pesoBruto, umidadeInicial, impureza, taxaSecagem, umidadeFinalAlvo]);
 
   const clearForm = () => {
     setData(new Date().toISOString().split("T")[0]);
