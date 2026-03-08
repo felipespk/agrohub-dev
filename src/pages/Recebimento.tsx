@@ -109,7 +109,7 @@ export default function RecebimentoPage() {
             </div>
             <div className="space-y-2">
               <Label>Tipo de Grão *</Label>
-              <Select value={tipoGraoId} onValueChange={setTipoGraoId}>
+              <Select value={tipoGraoId} onValueChange={handleTipoGraoChange}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>{tiposGrao.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}</SelectContent>
               </Select>
