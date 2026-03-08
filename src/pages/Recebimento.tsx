@@ -22,6 +22,7 @@ export default function RecebimentoPage() {
   const [taxaSecagem, setTaxaSecagem] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState("");
+  const [valorArmazenamento, setValorArmazenamento] = useState("0.15");
 
   const handleTipoGraoChange = (id: string) => {
     setTipoGraoId(id);
@@ -45,7 +46,7 @@ export default function RecebimentoPage() {
 
   const clearForm = () => {
     setData(new Date().toISOString().split("T")[0]);
-    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo("");
+    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setValorArmazenamento("0.15");
     setEditingId(null);
   };
 
@@ -55,6 +56,7 @@ export default function RecebimentoPage() {
     setUmidadeInicial(String(r.umidade_inicial)); setImpureza(String(r.impureza));
     setTaxaSecagem(String(r.taxa_secagem_percentual || 0));
     setUmidadeFinalAlvo(String(r.umidade_final_alvo));
+    setValorArmazenamento(String(r.valor_armazenamento ?? 0.15));
     setEditingId(r.id);
   };
 
@@ -72,6 +74,7 @@ export default function RecebimentoPage() {
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
       peso_bruto: parseFloat(pesoBruto), umidade_inicial: parseFloat(umidadeInicial),
       umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,
+      valor_armazenamento: parseFloat(valorArmazenamento) || 0.15,
       ...calculos,
     };
     if (editingId) {
@@ -126,6 +129,7 @@ export default function RecebimentoPage() {
             <div className="space-y-2"><Label>Impureza (%)</Label><Input type="number" step="0.1" placeholder="2" value={impureza} onChange={e => setImpureza(e.target.value)} /></div>
             <div className="space-y-2"><Label>Taxa de Secagem (%)</Label><Input type="number" step="0.1" placeholder="8.5" value={taxaSecagem} onChange={e => setTaxaSecagem(e.target.value)} /></div>
             <div className="space-y-2"><Label>Umidade Final Alvo (%)</Label><Input type="number" step="0.1" placeholder="12" value={umidadeFinalAlvo} onChange={e => setUmidadeFinalAlvo(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Valor Armazenamento (R$/Saca) *</Label><Input type="number" step="0.01" placeholder="0.15" value={valorArmazenamento} onChange={e => setValorArmazenamento(e.target.value)} /></div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>

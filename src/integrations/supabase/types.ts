@@ -166,6 +166,7 @@ export type Database = {
           umidade_inicial: number
           updated_at: string
           user_id: string
+          valor_armazenamento: number
         }
         Insert: {
           created_at?: string
@@ -186,6 +187,7 @@ export type Database = {
           umidade_inicial: number
           updated_at?: string
           user_id: string
+          valor_armazenamento?: number
         }
         Update: {
           created_at?: string
@@ -206,6 +208,7 @@ export type Database = {
           umidade_inicial?: number
           updated_at?: string
           user_id?: string
+          valor_armazenamento?: number
         }
         Relationships: [
           {
