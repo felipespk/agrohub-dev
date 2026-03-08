@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAppData, Saida } from "@/contexts/AppContext";
 import { ArrowUpFromLine, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { maskPlaca, maskClassificacao } from "@/lib/masks";
 
 const categorias = ["Venda", "Transferência", "Devolução", "Outros"];
 
