@@ -14,6 +14,16 @@ interface LancamentoUnificado {
   tipo: "entrada" | "saida";
   placa: string;
   kg: number;
+  // Recebimento-only fields
+  pesoBruto?: number;
+  umidadeInicial?: number;
+  umidadeFinalAlvo?: number;
+  impureza?: number;
+  taxaSecagem?: number;
+  descontoUmidadeKg?: number;
+  descontoImpurezaKg?: number;
+  descontoSecagemKg?: number;
+  totalDescontos?: number;
 }
 
 export default function RelatorioPage() {
@@ -39,7 +49,21 @@ export default function RelatorioPage() {
         kgsEntrada: 0, kgsSaida: 0, lancamentos: [],
       };
       existing.kgsEntrada += r.peso_liquido;
-      existing.lancamentos.push({ id: r.id, data: r.data, tipo: "entrada", placa: r.placa_caminhao, kg: r.peso_liquido });
+      const descontoU = r.desconto_umidade_kg || 0;
+      const descontoI = r.desconto_impureza_kg || 0;
+      const descontoS = r.desconto_secagem_kg || 0;
+      existing.lancamentos.push({
+        id: r.id, data: r.data, tipo: "entrada", placa: r.placa_caminhao, kg: r.peso_liquido,
+        pesoBruto: r.peso_bruto,
+        umidadeInicial: r.umidade_inicial,
+        umidadeFinalAlvo: r.umidade_final_alvo,
+        impureza: r.impureza,
+        taxaSecagem: r.taxa_secagem_percentual,
+        descontoUmidadeKg: descontoU,
+        descontoImpurezaKg: descontoI,
+        descontoSecagemKg: descontoS,
+        totalDescontos: descontoU + descontoI + descontoS,
+      });
       map.set(key, existing);
     }
 
@@ -62,11 +86,17 @@ export default function RelatorioPage() {
   }, [filtroProdutorId, filtroGraoId, recebimentos, saidas]);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const fmt2 = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const exportCSV = () => {
-    const header = "Produtor,Tipo de Grão,Data,Operação,Placa,Kg\n";
+    const header = "Produtor,Tipo de Grão,Data,Operação,Placa,Peso Bruto,Umidade Ini,Umidade Alvo,Impureza,Tx Secagem,Descontos,Peso Líquido\n";
     const rows = grupos.flatMap(g =>
-      g.lancamentos.map(l => `${g.produtorNome},${g.tipoGraoNome},${l.data},${l.tipo === "entrada" ? "Entrada" : "Saída"},${l.placa},${l.kg}`)
+      g.lancamentos.map(l => {
+        if (l.tipo === "entrada") {
+          return `${g.produtorNome},${g.tipoGraoNome},${l.data},Entrada,${l.placa},${l.pesoBruto},${l.umidadeInicial},${l.umidadeFinalAlvo},${l.impureza},${l.taxaSecagem},${l.totalDescontos},${l.kg}`;
+        }
+        return `${g.produtorNome},${g.tipoGraoNome},${l.data},Saída,${l.placa},,,,,,${l.kg}`;
+      })
     ).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -133,10 +163,15 @@ export default function RelatorioPage() {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30">
-                          <TableHead className="w-28">Data</TableHead>
-                          <TableHead className="w-32">Operação</TableHead>
+                          <TableHead className="w-24">Data</TableHead>
+                          <TableHead className="w-28">Operação</TableHead>
                           <TableHead>Placa</TableHead>
-                          <TableHead className="text-right">Kg</TableHead>
+                          <TableHead className="text-right">Peso Bruto</TableHead>
+                          <TableHead className="text-right">Umid. Ini/Alvo</TableHead>
+                          <TableHead className="text-right">Impureza</TableHead>
+                          <TableHead className="text-right">Tx Secagem</TableHead>
+                          <TableHead className="text-right">Descontos (Kg)</TableHead>
+                          <TableHead className="text-right">Peso Líquido</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -155,6 +190,21 @@ export default function RelatorioPage() {
                               )}
                             </TableCell>
                             <TableCell className="font-mono text-sm">{l.placa}</TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {l.tipo === "entrada" ? fmt(l.pesoBruto!) : "—"}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {l.tipo === "entrada" ? `${fmt2(l.umidadeInicial!)}% / ${fmt2(l.umidadeFinalAlvo!)}%` : "—"}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {l.tipo === "entrada" ? `${fmt2(l.impureza!)}%` : "—"}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {l.tipo === "entrada" ? `${fmt2(l.taxaSecagem!)}%` : "—"}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums text-amber-600 dark:text-amber-400">
+                              {l.tipo === "entrada" ? `−${fmt(l.totalDescontos!)}` : "—"}
+                            </TableCell>
                             <TableCell className={`text-right font-semibold tabular-nums ${l.tipo === "entrada" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                               {l.tipo === "entrada" ? "+" : "−"}{fmt(l.kg)}
                             </TableCell>
