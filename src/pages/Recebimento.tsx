@@ -63,12 +63,11 @@ export default function RecebimentoPage() {
     };
     if (editingId) {
       const ok = await updateRecebimento(editingId, entry);
-      if (ok) toast.success("Recebimento atualizado!");
+      if (ok) { toast.success("Recebimento atualizado!"); clearForm(); }
     } else {
       const row = await addRecebimento(entry);
       if (row) toast.success(`Entrada salva! Peso líquido: ${calculos.peso_liquido.toFixed(0)} Kg`);
     }
-    clearForm();
   };
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
