@@ -89,67 +89,113 @@ export default function RelatorioPage() {
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const fmt2 = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const exportExcel = () => {
-    const rows = grupos.flatMap(g =>
-      g.lancamentos.map(l => {
-        const base: Record<string, string | number> = {
-          Produtor: g.produtorNome,
-          "Tipo de Grão": g.tipoGraoNome,
-          Data: l.data,
-          Operação: l.tipo === "entrada" ? "Entrada" : "Saída",
-          Placa: l.placa,
-        };
-        if (l.tipo === "entrada") {
-          base["Peso Bruto (Kg)"] = l.pesoBruto!;
-          base["Umidade Inicial (%)"] = l.umidadeInicial!;
-          base["Umidade Alvo (%)"] = l.umidadeFinalAlvo!;
-          base["Impureza (%)"] = l.impureza!;
-          base["Tx Secagem (%)"] = l.taxaSecagem!;
-          base["Desc. Umidade (Kg)"] = l.descontoUmidadeKg!;
-          base["Desc. Impureza (Kg)"] = l.descontoImpurezaKg!;
-          base["Desc. Secagem (Kg)"] = l.descontoSecagemKg!;
-          base["Total Descontos (Kg)"] = l.totalDescontos!;
-        } else {
-          base["Peso Bruto (Kg)"] = "";
-          base["Umidade Inicial (%)"] = "";
-          base["Umidade Alvo (%)"] = "";
-          base["Impureza (%)"] = "";
-          base["Tx Secagem (%)"] = "";
-          base["Desc. Umidade (Kg)"] = "";
-          base["Desc. Impureza (Kg)"] = "";
-          base["Desc. Secagem (Kg)"] = "";
-          base["Total Descontos (Kg)"] = "";
-        }
-        base["Peso Líquido (Kg)"] = l.kg;
-        return base;
-      })
-    );
+  const exportExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const ws = workbook.addWorksheet("Extrato de Estoque");
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [
-      { wch: 30 }, // Produtor
-      { wch: 18 }, // Tipo de Grão
-      { wch: 12 }, // Data
-      { wch: 10 }, // Operação
-      { wch: 10 }, // Placa
-      { wch: 16 }, // Peso Bruto
-      { wch: 16 }, // Umidade Ini
-      { wch: 14 }, // Umidade Alvo
-      { wch: 12 }, // Impureza
-      { wch: 14 }, // Tx Secagem
-      { wch: 16 }, // Desc Umidade
-      { wch: 16 }, // Desc Impureza
-      { wch: 16 }, // Desc Secagem
-      { wch: 18 }, // Total Descontos
-      { wch: 18 }, // Peso Líquido
+    // Define columns
+    const columns = [
+      { header: "Produtor", key: "produtor", width: 30 },
+      { header: "Tipo de Grão", key: "tipoGrao", width: 18 },
+      { header: "Data", key: "data", width: 12 },
+      { header: "Operação", key: "operacao", width: 12 },
+      { header: "Placa", key: "placa", width: 12 },
+      { header: "Peso Bruto (Kg)", key: "pesoBruto", width: 16 },
+      { header: "Umidade Ini (%)", key: "umidIni", width: 16 },
+      { header: "Umidade Alvo (%)", key: "umidAlvo", width: 16 },
+      { header: "Impureza (%)", key: "impureza", width: 14 },
+      { header: "Tx Secagem (%)", key: "txSecagem", width: 14 },
+      { header: "Desc. Umidade (Kg)", key: "descUmid", width: 18 },
+      { header: "Desc. Impureza (Kg)", key: "descImp", width: 18 },
+      { header: "Desc. Secagem (Kg)", key: "descSec", width: 18 },
+      { header: "Total Descontos (Kg)", key: "totalDesc", width: 20 },
+      { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
     ];
+    ws.columns = columns;
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Extrato de Estoque");
+    // Style header row
+    const headerRow = ws.getRow(1);
+    headerRow.eachCell((cell) => {
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E3A8A" } };
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFD1D5DB" } },
+        bottom: { style: "thin", color: { argb: "FFD1D5DB" } },
+        left: { style: "thin", color: { argb: "FFD1D5DB" } },
+        right: { style: "thin", color: { argb: "FFD1D5DB" } },
+      };
+    });
+    headerRow.height = 22;
 
+    const thinBorder: Partial<ExcelJS.Borders> = {
+      top: { style: "thin", color: { argb: "FFD1D5DB" } },
+      bottom: { style: "thin", color: { argb: "FFD1D5DB" } },
+      left: { style: "thin", color: { argb: "FFD1D5DB" } },
+      right: { style: "thin", color: { argb: "FFD1D5DB" } },
+    };
+
+    // Add data rows
+    for (const g of grupos) {
+      for (const l of g.lancamentos) {
+        const isEntrada = l.tipo === "entrada";
+        const row = ws.addRow({
+          produtor: g.produtorNome,
+          tipoGrao: g.tipoGraoNome,
+          data: l.data,
+          operacao: isEntrada ? "Entrada" : "Saída",
+          placa: l.placa,
+          pesoBruto: isEntrada ? l.pesoBruto : null,
+          umidIni: isEntrada ? l.umidadeInicial : null,
+          umidAlvo: isEntrada ? l.umidadeFinalAlvo : null,
+          impureza: isEntrada ? l.impureza : null,
+          txSecagem: isEntrada ? l.taxaSecagem : null,
+          descUmid: isEntrada ? l.descontoUmidadeKg : null,
+          descImp: isEntrada ? l.descontoImpurezaKg : null,
+          descSec: isEntrada ? l.descontoSecagemKg : null,
+          totalDesc: isEntrada ? l.totalDescontos : null,
+          pesoLiq: l.kg,
+        });
+
+        const bgColor = isEntrada ? "FFECFDF5" : "FFFEF2F2";
+        const fontColor = isEntrada ? "FF065F46" : "FF991B1B";
+
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.border = thinBorder;
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+          cell.font = { color: { argb: fontColor }, size: 10 };
+        });
+      }
+
+      // Summary row per group
+      const summaryRow = ws.addRow({
+        produtor: `TOTAL — ${g.produtorNome} / ${g.tipoGraoNome}`,
+        pesoBruto: null,
+        pesoLiq: g.saldo,
+        descUmid: null,
+        descImp: null,
+        descSec: null,
+        totalDesc: null,
+        operacao: `E: ${g.kgsEntrada} | S: ${g.kgsSaida}`,
+      });
+      summaryRow.eachCell({ includeEmpty: true }, (cell) => {
+        cell.border = thinBorder;
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF7ED" } };
+        cell.font = { bold: true, size: 10, color: { argb: "FF1E3A8A" } };
+      });
+    }
+
+    // Download
     const hoje = new Date();
     const nomeArquivo = `Relatorio_Estoque_${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${hoje.getFullYear()}.xlsx`;
-    XLSX.writeFile(wb, nomeArquivo);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nomeArquivo;
+    a.click();
+    URL.revokeObjectURL(url);
     toast.success("Planilha Excel exportada!");
   };
 
