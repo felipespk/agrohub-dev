@@ -29,8 +29,8 @@ export default function SaidaVendaPage() {
   };
 
   const handleEdit = (s: Saida) => {
-    setData(s.data); setPlaca(s.placa_caminhao); setCompradorId(s.comprador_id);
-    setCategoria(s.categoria); setClassificacao(s.classificacao || ""); setKgsExpedidos(String(s.kgs_expedidos));
+    setData(s.data); setPlaca(maskPlaca(s.placa_caminhao)); setCompradorId(s.comprador_id);
+    setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || "")); setKgsExpedidos(String(s.kgs_expedidos));
     setEditingId(s.id);
   };
 
