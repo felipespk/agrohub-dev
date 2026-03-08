@@ -63,7 +63,7 @@ export default function SaidaVendaPage() {
             <Select value={compradorId} onValueChange={setCompradorId}>
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>
-                {compradores.map(c => (
+                {[...compradores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => (
                   <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                 ))}
               </SelectContent>

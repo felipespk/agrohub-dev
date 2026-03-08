@@ -109,7 +109,7 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
             <TableHead>Nome</TableHead><TableHead>Documento</TableHead><TableHead>Fazenda</TableHead><TableHead>Cidade/UF</TableHead><TableHead>Telefone</TableHead><TableHead className="w-20">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {produtores.map(p => (
+            {[...produtores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.nome}</TableCell>
                 <TableCell className="font-mono text-sm">{p.tipoDocumento}: {p.documento}</TableCell>
@@ -158,7 +158,7 @@ function TiposGraoTab({ tiposGrao, setTiposGrao }: { tiposGrao: TipoGrao[]; setT
         <Table>
           <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Padrão</TableHead><TableHead className="w-20">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {tiposGrao.map(t => (
+            {[...tiposGrao].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.nome}</TableCell>
                 <TableCell>{t.umidadePadrao}%</TableCell>
@@ -204,7 +204,7 @@ function CompradoresTab({ compradores, setCompradores }: { compradores: Comprado
         <Table>
           <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Contato</TableHead><TableHead className="w-20">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {compradores.map(c => (
+            {[...compradores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.nome}</TableCell>
                 <TableCell>{c.contato}</TableCell>
