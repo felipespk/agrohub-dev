@@ -90,7 +90,7 @@ export default function RecebimentoPage() {
               <Select value={tipoGraoId} onValueChange={setTipoGraoId}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
-                  {tiposGrao.map((t) => (
+                  {[...tiposGrao].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map((t) => (
                     <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                   ))}
                 </SelectContent>

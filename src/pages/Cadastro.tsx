@@ -204,7 +204,7 @@ function CompradoresTab({ compradores, setCompradores }: { compradores: Comprado
         <Table>
           <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Contato</TableHead><TableHead className="w-20">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {compradores.map(c => (
+            {[...compradores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.nome}</TableCell>
                 <TableCell>{c.contato}</TableCell>
