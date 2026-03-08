@@ -102,6 +102,8 @@ interface AppContextType {
   deleteSaida: (id: string) => Promise<boolean>;
   addQuebra: (data: Omit<QuebraTecnica, "id" | "user_id">) => Promise<QuebraTecnica | null>;
   deleteQuebra: (id: string) => Promise<boolean>;
+  capacidadeSilo: number;
+  setCapacidadeSilo: (v: number) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -115,6 +117,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [saidas, setSaidas] = useState<Saida[]>([]);
   const [quebras, setQuebras] = useState<QuebraTecnica[]>([]);
   const [loading, setLoading] = useState(true);
+  const [capacidadeSilo, setCapacidadeSiloState] = useState<number>(() => {
+    const stored = localStorage.getItem("capacidadeSilo");
+    return stored ? Number(stored) : 5000000;
+  });
+  const setCapacidadeSilo = (v: number) => {
+    setCapacidadeSiloState(v);
+    localStorage.setItem("capacidadeSilo", String(v));
+  };
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -270,6 +280,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addRecebimento, updateRecebimento, deleteRecebimento,
       addSaida, updateSaida, deleteSaida,
       addQuebra, deleteQuebra,
+      capacidadeSilo, setCapacidadeSilo,
     }}>
       {children}
     </AppContext.Provider>

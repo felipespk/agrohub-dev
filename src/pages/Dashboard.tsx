@@ -1,20 +1,25 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
 } from "recharts";
-import { Package, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Wheat, TrendingUp, TrendingDown } from "lucide-react";
+import { Package, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Wheat, TrendingUp, TrendingDown, Settings2, Check } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useAppData } from "@/contexts/AppContext";
 
 const PIE_COLORS = [
   "hsl(152, 45%, 28%)", "hsl(42, 80%, 55%)", "hsl(210, 50%, 45%)",
   "hsl(350, 60%, 50%)", "hsl(280, 40%, 50%)",
 ];
+const EMPTY_COLOR = "hsl(210, 10%, 90%)";
 
 export default function Dashboard() {
-  const { recebimentos, saidas, quebras } = useAppData();
+  const { recebimentos, saidas, quebras, capacidadeSilo, setCapacidadeSilo } = useAppData();
+  const [editingCap, setEditingCap] = useState(false);
+  const [capInput, setCapInput] = useState(String(capacidadeSilo / 1000));
 
   const totalRecebido = recebimentos.reduce((s, r) => s + r.peso_liquido, 0);
   const totalExpedido = saidas.reduce((s, r) => s + r.kgs_expedidos, 0);
@@ -41,8 +46,11 @@ export default function Dashboard() {
       const nome = r.tipo_grao_nome || "Outros";
       map.set(nome, (map.get(nome) || 0) + r.peso_liquido);
     });
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [recebimentos]);
+    const grainSlices = Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+    const totalArmazenado = grainSlices.reduce((s, g) => s + g.value, 0);
+    const espacoVazio = Math.max(0, capacidadeSilo - totalArmazenado);
+    return { slices: [...grainSlices, { name: "Espaço Vazio", value: espacoVazio }], totalArmazenado };
+  }, [recebimentos, capacidadeSilo]);
 
   const ultimasMovimentacoes = useMemo(() => {
     const entradas = recebimentos.slice(0, 5).map(r => ({
@@ -101,20 +109,40 @@ export default function Dashboard() {
         </div>
 
         <div className="form-section">
-          <h2 className="font-display font-semibold text-lg text-foreground mb-4">Estoque por Tipo de Grão</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display font-semibold text-lg text-foreground">Ocupação do Silo</h2>
+            {editingCap ? (
+              <div className="flex items-center gap-2">
+                <Input type="number" className="w-28 h-8 text-sm" value={capInput} onChange={e => setCapInput(e.target.value)} placeholder="Ton" />
+                <span className="text-xs text-muted-foreground">ton</span>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { const v = parseFloat(capInput); if (v > 0) { setCapacidadeSilo(v * 1000); } setEditingCap(false); }}>
+                  <Check className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <button onClick={() => { setCapInput(String(capacidadeSilo / 1000)); setEditingCap(true); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <Settings2 className="h-3.5 w-3.5" /> {(capacidadeSilo / 1000).toLocaleString("pt-BR")} ton
+              </button>
+            )}
+          </div>
           <div className="h-72 flex items-center justify-center">
-            {pieData.length === 0 ? <p className="text-sm text-muted-foreground">Sem dados</p> : (
+            {pieData.slices.every(s => s.value === 0) ? <p className="text-sm text-muted-foreground">Sem dados</p> : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value"
+                  <Pie data={pieData.slices} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2} dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={11}>
-                    {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    {pieData.slices.map((entry, i) => (
+                      <Cell key={i} fill={entry.name === "Espaço Vazio" ? EMPTY_COLOR : PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `${value.toLocaleString("pt-BR")} Kg`} />
+                  <Tooltip formatter={(value: number) => `${(value / 1000).toFixed(1)} ton (${value.toLocaleString("pt-BR")} Kg)`} />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </div>
+          <p className="text-center text-xs text-muted-foreground mt-2">
+            Armazenado: <span className="font-semibold text-foreground">{(pieData.totalArmazenado / 1000).toFixed(1)} ton</span> de {(capacidadeSilo / 1000).toLocaleString("pt-BR")} ton ({capacidadeSilo > 0 ? ((pieData.totalArmazenado / capacidadeSilo) * 100).toFixed(1) : 0}%)
+          </p>
         </div>
       </div>
 
