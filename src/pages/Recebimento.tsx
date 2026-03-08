@@ -70,7 +70,7 @@ export default function RecebimentoPage() {
       data, placa_caminhao: placa.toUpperCase(),
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
       peso_bruto: parseFloat(pesoBruto), umidade_inicial: parseFloat(umidadeInicial),
-      umidade_final_alvo: umidadeFinalAlvo, impureza: parseFloat(impureza) || 0,
+      umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,
       ...calculos,
     };
     if (editingId) {
