@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAppData } from "@/contexts/AppContext";
 import { FileBarChart, Download, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 interface LancamentoUnificado {
   id: string;
