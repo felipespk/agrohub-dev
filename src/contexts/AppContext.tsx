@@ -46,6 +46,8 @@ export interface Recebimento {
   desconto_umidade_percent: number;
   desconto_umidade_kg: number;
   desconto_impureza_kg: number;
+  taxa_secagem_percentual: number;
+  desconto_secagem_kg: number;
   peso_liquido: number;
   created_at: string;
   // Joined fields
