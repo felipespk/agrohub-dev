@@ -14,7 +14,284 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      compradores: {
+        Row: {
+          contato: string | null
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contato?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contato?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      produtores: {
+        Row: {
+          cidade: string | null
+          created_at: string
+          documento: string
+          endereco_fazenda: string | null
+          estado: string | null
+          fazenda: string | null
+          id: string
+          inscricao_estadual: string | null
+          nome: string
+          telefone: string | null
+          tipo_documento: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string
+          documento: string
+          endereco_fazenda?: string | null
+          estado?: string | null
+          fazenda?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome: string
+          telefone?: string | null
+          tipo_documento?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string
+          documento?: string
+          endereco_fazenda?: string | null
+          estado?: string | null
+          fazenda?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome?: string
+          telefone?: string | null
+          tipo_documento?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quebras_tecnicas: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          justificativa: string
+          kg_ajuste: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          id?: string
+          justificativa: string
+          kg_ajuste: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          justificativa?: string
+          kg_ajuste?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recebimentos: {
+        Row: {
+          created_at: string
+          data: string
+          desconto_impureza_kg: number
+          desconto_umidade_kg: number
+          desconto_umidade_percent: number
+          id: string
+          impureza: number
+          peso_bruto: number
+          peso_liquido: number
+          placa_caminhao: string
+          produtor_id: string
+          tipo_grao_id: string
+          umidade_final_alvo: number
+          umidade_inicial: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          desconto_impureza_kg?: number
+          desconto_umidade_kg?: number
+          desconto_umidade_percent?: number
+          id?: string
+          impureza?: number
+          peso_bruto: number
+          peso_liquido?: number
+          placa_caminhao: string
+          produtor_id: string
+          tipo_grao_id: string
+          umidade_final_alvo?: number
+          umidade_inicial: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          desconto_impureza_kg?: number
+          desconto_umidade_kg?: number
+          desconto_umidade_percent?: number
+          id?: string
+          impureza?: number
+          peso_bruto?: number
+          peso_liquido?: number
+          placa_caminhao?: string
+          produtor_id?: string
+          tipo_grao_id?: string
+          umidade_final_alvo?: number
+          umidade_inicial?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recebimentos_produtor_id_fkey"
+            columns: ["produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recebimentos_tipo_grao_id_fkey"
+            columns: ["tipo_grao_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_grao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saidas: {
+        Row: {
+          categoria: string
+          classificacao: string | null
+          comprador_id: string
+          created_at: string
+          data: string
+          id: string
+          kgs_expedidos: number
+          placa_caminhao: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria?: string
+          classificacao?: string | null
+          comprador_id: string
+          created_at?: string
+          data?: string
+          id?: string
+          kgs_expedidos: number
+          placa_caminhao: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          classificacao?: string | null
+          comprador_id?: string
+          created_at?: string
+          data?: string
+          id?: string
+          kgs_expedidos?: number
+          placa_caminhao?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saidas_comprador_id_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "compradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tipos_grao: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          umidade_padrao: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          umidade_padrao?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          umidade_padrao?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
