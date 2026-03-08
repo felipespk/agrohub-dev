@@ -253,7 +253,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSaidas(prev => [mapped, ...prev]);
     return mapped;
   };
-  const updateSaida = async (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome">>) => {
+  const updateSaida = async (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">>) => {
     const { error } = await supabase.from("saidas").update(data).eq("id", id);
     if (error) { toast.error(error.message); return false; }
     await refresh();
