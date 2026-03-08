@@ -22,6 +22,7 @@ export default function RecebimentoPage() {
   const [taxaSecagem, setTaxaSecagem] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState("");
+  const [valorArmazenamento, setValorArmazenamento] = useState("0.15");
 
   const handleTipoGraoChange = (id: string) => {
     setTipoGraoId(id);
