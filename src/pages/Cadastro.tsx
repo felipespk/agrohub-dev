@@ -158,7 +158,7 @@ function TiposGraoTab({ tiposGrao, setTiposGrao }: { tiposGrao: TipoGrao[]; setT
         <Table>
           <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Padrão</TableHead><TableHead className="w-20">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {tiposGrao.map(t => (
+            {[...tiposGrao].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.nome}</TableCell>
                 <TableCell>{t.umidadePadrao}%</TableCell>
