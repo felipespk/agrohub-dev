@@ -42,7 +42,7 @@ export default function SaidaVendaPage() {
   const handleSalvar = async () => {
     if (!placa || !compradorId || !kgsExpedidos) { toast.error("Preencha Placa, Comprador e Kgs Expedidos."); return; }
     const entry = {
-      data, placa_caminhao: placa.toUpperCase(), comprador_id: compradorId,
+      data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(), comprador_id: compradorId,
       classificacao, kgs_expedidos: parseFloat(kgsExpedidos), categoria,
     };
     if (editingId) {
