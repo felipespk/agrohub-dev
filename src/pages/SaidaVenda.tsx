@@ -13,10 +13,12 @@ import { maskPlaca, maskClassificacao } from "@/lib/masks";
 const categorias = ["Venda", "Transferência", "Devolução", "Outros"];
 
 export default function SaidaVendaPage() {
-  const { compradores, saidas, addSaida, updateSaida, deleteSaida } = useAppData();
+  const { compradores, produtores, tiposGrao, saidas, addSaida, updateSaida, deleteSaida } = useAppData();
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
   const [placa, setPlaca] = useState("");
   const [compradorId, setCompradorId] = useState("");
+  const [produtorId, setProdutorId] = useState("");
+  const [tipoGraoId, setTipoGraoId] = useState("");
   const [categoria, setCategoria] = useState("Venda");
   const [classificacao, setClassificacao] = useState("");
   const [kgsExpedidos, setKgsExpedidos] = useState("");
@@ -24,12 +26,14 @@ export default function SaidaVendaPage() {
 
   const clearForm = () => {
     setData(new Date().toISOString().split("T")[0]);
-    setPlaca(""); setCompradorId(""); setCategoria("Venda"); setClassificacao(""); setKgsExpedidos("");
+    setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId("");
+    setCategoria("Venda"); setClassificacao(""); setKgsExpedidos("");
     setEditingId(null);
   };
 
   const handleEdit = (s: Saida) => {
     setData(s.data); setPlaca(maskPlaca(s.placa_caminhao)); setCompradorId(s.comprador_id);
+    setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || "");
     setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || "")); setKgsExpedidos(String(s.kgs_expedidos));
     setEditingId(s.id);
   };
@@ -40,9 +44,13 @@ export default function SaidaVendaPage() {
   };
 
   const handleSalvar = async () => {
-    if (!placa || !compradorId || !kgsExpedidos) { toast.error("Preencha Placa, Comprador e Kgs Expedidos."); return; }
+    if (!placa || !compradorId || !kgsExpedidos || !produtorId || !tipoGraoId) {
+      toast.error("Preencha Placa, Comprador, Produtor, Tipo de Grão e Kgs Expedidos.");
+      return;
+    }
     const entry = {
       data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(), comprador_id: compradorId,
+      produtor_id: produtorId, tipo_grao_id: tipoGraoId,
       classificacao, kgs_expedidos: parseFloat(kgsExpedidos), categoria,
     };
     if (editingId) {
@@ -69,6 +77,20 @@ export default function SaidaVendaPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2"><Label>Data</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} /></div>
           <div className="space-y-2"><Label>Placa *</Label><Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(maskPlaca(e.target.value))} /></div>
+          <div className="space-y-2">
+            <Label>Produtor *</Label>
+            <Select value={produtorId} onValueChange={setProdutorId}>
+              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>{produtores.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Tipo de Grão *</Label>
+            <Select value={tipoGraoId} onValueChange={setTipoGraoId}>
+              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>{tiposGrao.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label>Comprador *</Label>
             <Select value={compradorId} onValueChange={setCompradorId}>
@@ -103,7 +125,8 @@ export default function SaidaVendaPage() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Comprador</TableHead><TableHead>Categoria</TableHead>
+              <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
+              <TableHead>Comprador</TableHead><TableHead>Categoria</TableHead>
               <TableHead>Classificação</TableHead><TableHead className="text-right">Kgs</TableHead><TableHead className="w-24">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
@@ -111,6 +134,8 @@ export default function SaidaVendaPage() {
                 <TableRow key={s.id} className={editingId === s.id ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
                   <TableCell>{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
                   <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
+                  <TableCell>{s.produtor_nome || "—"}</TableCell>
+                  <TableCell>{s.tipo_grao_nome || "—"}</TableCell>
                   <TableCell>{s.comprador_nome}</TableCell>
                   <TableCell><Badge variant="outline">{s.categoria}</Badge></TableCell>
                   <TableCell>{s.classificacao}</TableCell>

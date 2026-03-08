@@ -61,12 +61,16 @@ export interface Saida {
   data: string;
   placa_caminhao: string;
   comprador_id: string;
+  produtor_id?: string | null;
+  tipo_grao_id?: string | null;
   classificacao: string;
   kgs_expedidos: number;
   categoria: string;
   created_at: string;
   // Joined
   comprador_nome?: string;
+  produtor_nome?: string;
+  tipo_grao_nome?: string;
 }
 
 export interface QuebraTecnica {
@@ -141,7 +145,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       supabase.from("tipos_grao").select("*").order("nome"),
       supabase.from("compradores").select("*").order("nome"),
       supabase.from("recebimentos").select("*, produtores(nome), tipos_grao(nome)").order("created_at", { ascending: false }),
-      supabase.from("saidas").select("*, compradores(nome)").order("created_at", { ascending: false }),
+      supabase.from("saidas").select("*, compradores(nome), produtores(nome), tipos_grao(nome)").order("created_at", { ascending: false }),
       supabase.from("quebras_tecnicas").select("*").order("created_at", { ascending: false }),
     ]);
     if (pRes.data) setProdutores(pRes.data as any);
@@ -155,6 +159,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (sRes.data) setSaidas(sRes.data.map((s: any) => ({
       ...s,
       comprador_nome: s.compradores?.nome || "",
+      produtor_nome: s.produtores?.nome || "",
+      tipo_grao_nome: s.tipos_grao?.nome || "",
     })));
     if (qRes.data) setQuebras(qRes.data as any);
     setLoading(false);
@@ -240,14 +246,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  const addSaida = async (data: Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome">) => {
-    const { data: row, error } = await supabase.from("saidas").insert({ ...data, user_id: user!.id }).select("*, compradores(nome)").single();
+  const addSaida = async (data: Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">) => {
+    const { data: row, error } = await supabase.from("saidas").insert({ ...data, user_id: user!.id }).select("*, compradores(nome), produtores(nome), tipos_grao(nome)").single();
     if (error) { toast.error(error.message); return null; }
-    const mapped = { ...row, comprador_nome: (row as any).compradores?.nome || "" } as any;
+    const mapped = { ...row, comprador_nome: (row as any).compradores?.nome || "", produtor_nome: (row as any).produtores?.nome || "", tipo_grao_nome: (row as any).tipos_grao?.nome || "" } as any;
     setSaidas(prev => [mapped, ...prev]);
     return mapped;
   };
-  const updateSaida = async (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome">>) => {
+  const updateSaida = async (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">>) => {
     const { error } = await supabase.from("saidas").update(data).eq("id", id);
     if (error) { toast.error(error.message); return false; }
     await refresh();

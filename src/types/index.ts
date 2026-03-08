@@ -50,6 +50,10 @@ export interface Saida {
   placaCaminhao: string;
   compradorId: string;
   compradorNome: string;
+  produtorId?: string;
+  produtorNome?: string;
+  tipoGraoId?: string;
+  tipoGraoNome?: string;
   classificacao: string;
   kgsExpedidos: number;
   categoria: CategoriaSaida;
