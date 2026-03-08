@@ -18,6 +18,7 @@ export default function RecebimentoPage() {
   const [pesoBruto, setPesoBruto] = useState("");
   const [umidadeInicial, setUmidadeInicial] = useState("");
   const [impureza, setImpureza] = useState("");
+  const [taxaSecagem, setTaxaSecagem] = useState("8.5");
   const [editingId, setEditingId] = useState<string | null>(null);
   const umidadeFinalAlvo = 12;
 
@@ -25,16 +26,18 @@ export default function RecebimentoPage() {
     const peso = parseFloat(pesoBruto) || 0;
     const umidade = parseFloat(umidadeInicial) || 0;
     const imp = parseFloat(impureza) || 0;
+    const secagem = parseFloat(taxaSecagem) || 0;
     const desconto_umidade_percent = umidade > 12 ? (umidade - 12) * 1.3 : 0;
     const desconto_umidade_kg = peso * (desconto_umidade_percent / 100);
     const desconto_impureza_kg = peso * (imp / 100);
-    const peso_liquido = Math.max(0, peso - desconto_umidade_kg - desconto_impureza_kg);
-    return { desconto_umidade_percent, desconto_umidade_kg, desconto_impureza_kg, peso_liquido };
-  }, [pesoBruto, umidadeInicial, impureza]);
+    const desconto_secagem_kg = peso * (secagem / 100);
+    const peso_liquido = Math.max(0, peso - desconto_umidade_kg - desconto_impureza_kg - desconto_secagem_kg);
+    return { desconto_umidade_percent, desconto_umidade_kg, desconto_impureza_kg, taxa_secagem_percentual: secagem, desconto_secagem_kg, peso_liquido };
+  }, [pesoBruto, umidadeInicial, impureza, taxaSecagem]);
 
   const clearForm = () => {
     setData(new Date().toISOString().split("T")[0]);
-    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza("");
+    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem("8.5");
     setEditingId(null);
   };
 
@@ -42,6 +45,7 @@ export default function RecebimentoPage() {
     setData(r.data); setPlaca(r.placa_caminhao); setProdutorId(r.produtor_id);
     setTipoGraoId(r.tipo_grao_id); setPesoBruto(String(r.peso_bruto));
     setUmidadeInicial(String(r.umidade_inicial)); setImpureza(String(r.impureza));
+    setTaxaSecagem(String(r.taxa_secagem_percentual || 0));
     setEditingId(r.id);
   };
 
@@ -105,6 +109,7 @@ export default function RecebimentoPage() {
             <div className="space-y-2"><Label>Peso Bruto (Kg) *</Label><Input type="number" placeholder="30000" value={pesoBruto} onChange={e => setPesoBruto(e.target.value)} /></div>
             <div className="space-y-2"><Label>Umidade Inicial (%) *</Label><Input type="number" step="0.1" placeholder="18" value={umidadeInicial} onChange={e => setUmidadeInicial(e.target.value)} /></div>
             <div className="space-y-2"><Label>Impureza (%)</Label><Input type="number" step="0.1" placeholder="2" value={impureza} onChange={e => setImpureza(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Taxa de Secagem (%)</Label><Input type="number" step="0.1" placeholder="8.5" value={taxaSecagem} onChange={e => setTaxaSecagem(e.target.value)} /></div>
             <div className="space-y-2"><Label>Umidade Final Alvo</Label><Input value="12%" disabled className="bg-muted" /></div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -126,8 +131,9 @@ export default function RecebimentoPage() {
             <ResultCard label="Desconto de Umidade" value={`${fmt(calculos.desconto_umidade_percent)}%`} />
             <ResultCard label="Kg Descontados (Umidade)" value={`${fmt(calculos.desconto_umidade_kg)} Kg`} />
             <ResultCard label="Kg Descontados (Impureza)" value={`${fmt(calculos.desconto_impureza_kg)} Kg`} />
+            <ResultCard label="Desconto de Secagem" value={`${fmt(calculos.desconto_secagem_kg)} Kg`} />
             <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
-              <p className="text-xs text-muted-foreground">Peso Líquido / Seco</p>
+              <p className="text-xs text-muted-foreground">Peso Líquido Final</p>
               <p className="text-2xl font-display font-bold text-primary">{fmt(calculos.peso_liquido)} Kg</p>
             </div>
           </div>
@@ -141,7 +147,7 @@ export default function RecebimentoPage() {
             <TableHeader><TableRow>
               <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
               <TableHead className="text-right">Peso Bruto</TableHead><TableHead className="text-right">Umidade</TableHead>
-              <TableHead className="text-right">Desc. Umid.</TableHead><TableHead className="text-right">Peso Líquido</TableHead><TableHead className="w-24">Ações</TableHead>
+              <TableHead className="text-right">Desc. Umid.</TableHead><TableHead className="text-right">Desc. Secagem</TableHead><TableHead className="text-right">Peso Líquido</TableHead><TableHead className="w-24">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {recebimentos.map(r => (
@@ -153,6 +159,7 @@ export default function RecebimentoPage() {
                   <TableCell className="text-right">{r.peso_bruto.toLocaleString("pt-BR")}</TableCell>
                   <TableCell className="text-right">{r.umidade_inicial}%</TableCell>
                   <TableCell className="text-right">{fmt(r.desconto_umidade_percent)}%</TableCell>
+                  <TableCell className="text-right">{fmt(r.desconto_secagem_kg || 0)} Kg</TableCell>
                   <TableCell className="text-right font-semibold">{r.peso_liquido.toLocaleString("pt-BR")}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
