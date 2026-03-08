@@ -159,12 +159,11 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
     if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
     if (editingId) {
       const ok = await updateTipoGrao(editingId, { nome: nome.trim(), umidade_padrao: parseFloat(umidade) || 12 });
-      if (ok) toast.success("Tipo de grão atualizado!");
+      if (ok) { toast.success("Tipo de grão atualizado!"); clearForm(); setOpen(false); }
     } else {
       const row = await addTipoGrao({ nome: nome.trim(), umidade_padrao: parseFloat(umidade) || 12 });
-      if (row) toast.success("Tipo de grão cadastrado!");
+      if (row) { toast.success("Tipo de grão cadastrado!"); setOpen(false); }
     }
-    clearForm(); setOpen(false);
   };
 
   const handleDelete = async (id: string) => {
