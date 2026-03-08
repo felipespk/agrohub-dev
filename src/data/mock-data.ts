@@ -1,4 +1,4 @@
-import { Produtor, TipoGrao, Comprador, Recebimento, Saida } from "@/types";
+import { Produtor, TipoGrao, Comprador, Recebimento, Saida, QuebraTecnica } from "@/types";
 
 export const produtoresMock: Produtor[] = [
   { id: "1", tipoDocumento: "CPF", documento: "123.456.789-00", nome: "João da Silva", fazenda: "Fazenda São João", enderecoFazenda: "Estrada Rural, Km 12", cidade: "Camaquã", estado: "RS", inscricaoEstadual: "096/1234567", telefone: "(51) 99999-0001" },
@@ -33,6 +33,11 @@ export const recebimentosMock: Recebimento[] = [
 export const saidasMock: Saida[] = [
   {
     id: "1", data: "2026-03-05", placaCaminhao: "DEF-9012", compradorId: "1", compradorNome: "Beneficiadora Sul",
-    classificacao: "71/61", kgsExpedidos: 15000, tipo: "venda", createdAt: "2026-03-05T08:00:00Z",
+    classificacao: "71/61", kgsExpedidos: 15000, categoria: "Venda", createdAt: "2026-03-05T08:00:00Z",
   },
+];
+
+export const quebrasMock: QuebraTecnica[] = [
+  { id: "1", data: "2026-03-02", kgAjuste: -150, justificativa: "Perda no secador - lote 01/03" },
+  { id: "2", data: "2026-03-04", kgAjuste: -80, justificativa: "Resíduo acumulado na esteira" },
 ];

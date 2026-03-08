@@ -42,6 +42,8 @@ export interface Recebimento {
   createdAt: string;
 }
 
+export type CategoriaSaida = 'Venda' | 'Transferência' | 'Devolução' | 'Outros';
+
 export interface Saida {
   id: string;
   data: string;
@@ -50,7 +52,7 @@ export interface Saida {
   compradorNome: string;
   classificacao: string;
   kgsExpedidos: number;
-  tipo: 'venda' | 'geral';
+  categoria: CategoriaSaida;
   createdAt: string;
 }
 
