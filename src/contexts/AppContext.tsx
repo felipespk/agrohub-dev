@@ -246,10 +246,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  const addSaida = async (data: Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome">) => {
-    const { data: row, error } = await supabase.from("saidas").insert({ ...data, user_id: user!.id }).select("*, compradores(nome)").single();
+  const addSaida = async (data: Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">) => {
+    const { data: row, error } = await supabase.from("saidas").insert({ ...data, user_id: user!.id }).select("*, compradores(nome), produtores(nome), tipos_grao(nome)").single();
     if (error) { toast.error(error.message); return null; }
-    const mapped = { ...row, comprador_nome: (row as any).compradores?.nome || "" } as any;
+    const mapped = { ...row, comprador_nome: (row as any).compradores?.nome || "", produtor_nome: (row as any).produtores?.nome || "", tipo_grao_nome: (row as any).tipos_grao?.nome || "" } as any;
     setSaidas(prev => [mapped, ...prev]);
     return mapped;
   };
