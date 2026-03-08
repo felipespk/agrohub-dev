@@ -234,6 +234,8 @@ export type Database = {
           id: string
           kgs_expedidos: number
           placa_caminhao: string
+          produtor_id: string | null
+          tipo_grao_id: string | null
           updated_at: string
           user_id: string
         }
@@ -246,6 +248,8 @@ export type Database = {
           id?: string
           kgs_expedidos: number
           placa_caminhao: string
+          produtor_id?: string | null
+          tipo_grao_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -258,6 +262,8 @@ export type Database = {
           id?: string
           kgs_expedidos?: number
           placa_caminhao?: string
+          produtor_id?: string | null
+          tipo_grao_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -267,6 +273,20 @@ export type Database = {
             columns: ["comprador_id"]
             isOneToOne: false
             referencedRelation: "compradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_produtor_id_fkey"
+            columns: ["produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_tipo_grao_id_fkey"
+            columns: ["tipo_grao_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_grao"
             referencedColumns: ["id"]
           },
         ]
