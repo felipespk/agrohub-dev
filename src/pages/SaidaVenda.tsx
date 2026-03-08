@@ -85,9 +85,16 @@ export default function SaidaVendaPage() {
           <div className="space-y-2"><Label>Classificação</Label><Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(e.target.value)} /></div>
           <div className="space-y-2"><Label>Kgs Expedidos *</Label><Input type="number" placeholder="15000" value={kgsExpedidos} onChange={e => setKgsExpedidos(e.target.value)} /></div>
         </div>
-        <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
-          <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Saída"}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+            <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Saída"}
+          </Button>
+          {!editingId && (
+            <Button variant="outline" onClick={clearForm} className="gap-2">
+              <X className="h-4 w-4" /> Limpar Formulário
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="form-section">

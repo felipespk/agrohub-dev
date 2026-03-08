@@ -232,12 +232,11 @@ function CompradoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
     if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
     if (editingId) {
       const ok = await updateComprador(editingId, { nome: nome.trim(), contato: contato.trim() });
-      if (ok) toast.success("Comprador atualizado!");
+      if (ok) { toast.success("Comprador atualizado!"); clearForm(); setOpen(false); }
     } else {
       const row = await addComprador({ nome: nome.trim(), contato: contato.trim() });
-      if (row) toast.success("Comprador cadastrado!");
+      if (row) { toast.success("Comprador cadastrado!"); setOpen(false); }
     }
-    clearForm(); setOpen(false);
   };
 
   const handleDelete = async (id: string) => {

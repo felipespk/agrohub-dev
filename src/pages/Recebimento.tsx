@@ -107,9 +107,16 @@ export default function RecebimentoPage() {
             <div className="space-y-2"><Label>Impureza (%)</Label><Input type="number" step="0.1" placeholder="2" value={impureza} onChange={e => setImpureza(e.target.value)} /></div>
             <div className="space-y-2"><Label>Umidade Final Alvo</Label><Input value="12%" disabled className="bg-muted" /></div>
           </div>
-          <Button onClick={handleSalvar} className={`w-full sm:w-auto gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
-            <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Entrada"}
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+              <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Entrada"}
+            </Button>
+            {!editingId && (
+              <Button variant="outline" onClick={clearForm} className="gap-2">
+                <X className="h-4 w-4" /> Limpar Formulário
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="results-section space-y-4">
