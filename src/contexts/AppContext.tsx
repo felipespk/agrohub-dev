@@ -117,6 +117,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [saidas, setSaidas] = useState<Saida[]>([]);
   const [quebras, setQuebras] = useState<QuebraTecnica[]>([]);
   const [loading, setLoading] = useState(true);
+  const [capacidadeSilo, setCapacidadeSiloState] = useState<number>(() => {
+    const stored = localStorage.getItem("capacidadeSilo");
+    return stored ? Number(stored) : 5000000;
+  });
+  const setCapacidadeSilo = (v: number) => {
+    setCapacidadeSiloState(v);
+    localStorage.setItem("capacidadeSilo", String(v));
+  };
 
   const refresh = useCallback(async () => {
     if (!user) {
