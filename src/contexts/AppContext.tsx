@@ -102,6 +102,8 @@ interface AppContextType {
   deleteSaida: (id: string) => Promise<boolean>;
   addQuebra: (data: Omit<QuebraTecnica, "id" | "user_id">) => Promise<QuebraTecnica | null>;
   deleteQuebra: (id: string) => Promise<boolean>;
+  capacidadeSilo: number;
+  setCapacidadeSilo: (v: number) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
