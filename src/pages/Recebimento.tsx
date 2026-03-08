@@ -118,7 +118,7 @@ export default function RecebimentoPage() {
             <div className="space-y-2"><Label>Umidade Inicial (%) *</Label><Input type="number" step="0.1" placeholder="18" value={umidadeInicial} onChange={e => setUmidadeInicial(e.target.value)} /></div>
             <div className="space-y-2"><Label>Impureza (%)</Label><Input type="number" step="0.1" placeholder="2" value={impureza} onChange={e => setImpureza(e.target.value)} /></div>
             <div className="space-y-2"><Label>Taxa de Secagem (%)</Label><Input type="number" step="0.1" placeholder="8.5" value={taxaSecagem} onChange={e => setTaxaSecagem(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Umidade Final Alvo</Label><Input value="12%" disabled className="bg-muted" /></div>
+            <div className="space-y-2"><Label>Umidade Final Alvo (%)</Label><Input type="number" step="0.1" placeholder="12" value={umidadeFinalAlvo} onChange={e => setUmidadeFinalAlvo(e.target.value)} /></div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
