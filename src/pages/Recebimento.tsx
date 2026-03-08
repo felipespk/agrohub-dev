@@ -20,24 +20,31 @@ export default function RecebimentoPage() {
   const [impureza, setImpureza] = useState("");
   const [taxaSecagem, setTaxaSecagem] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const umidadeFinalAlvo = 12;
+  const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState("12");
+
+  const handleTipoGraoChange = (id: string) => {
+    setTipoGraoId(id);
+    const grao = tiposGrao.find(t => t.id === id);
+    if (grao) setUmidadeFinalAlvo(String(grao.umidade_padrao));
+  };
 
   const calculos = useMemo(() => {
     const peso = parseFloat(pesoBruto) || 0;
     const umidade = parseFloat(umidadeInicial) || 0;
     const imp = parseFloat(impureza) || 0;
     const secagem = parseFloat(taxaSecagem) || 0;
-    const desconto_umidade_percent = umidade > 12 ? (umidade - 12) * 1.3 : 0;
+    const alvo = parseFloat(umidadeFinalAlvo) || 12;
+    const desconto_umidade_percent = umidade > alvo ? (umidade - alvo) * 1.3 : 0;
     const desconto_umidade_kg = peso * (desconto_umidade_percent / 100);
     const desconto_impureza_kg = peso * (imp / 100);
     const desconto_secagem_kg = peso * (secagem / 100);
     const peso_liquido = Math.max(0, peso - desconto_umidade_kg - desconto_impureza_kg - desconto_secagem_kg);
     return { desconto_umidade_percent, desconto_umidade_kg, desconto_impureza_kg, taxa_secagem_percentual: secagem, desconto_secagem_kg, peso_liquido };
-  }, [pesoBruto, umidadeInicial, impureza, taxaSecagem]);
+  }, [pesoBruto, umidadeInicial, impureza, taxaSecagem, umidadeFinalAlvo]);
 
   const clearForm = () => {
     setData(new Date().toISOString().split("T")[0]);
-    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem("");
+    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo("12");
     setEditingId(null);
   };
 
@@ -46,6 +53,7 @@ export default function RecebimentoPage() {
     setTipoGraoId(r.tipo_grao_id); setPesoBruto(String(r.peso_bruto));
     setUmidadeInicial(String(r.umidade_inicial)); setImpureza(String(r.impureza));
     setTaxaSecagem(String(r.taxa_secagem_percentual || 0));
+    setUmidadeFinalAlvo(String(r.umidade_final_alvo));
     setEditingId(r.id);
   };
 
@@ -62,7 +70,7 @@ export default function RecebimentoPage() {
       data, placa_caminhao: placa.toUpperCase(),
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
       peso_bruto: parseFloat(pesoBruto), umidade_inicial: parseFloat(umidadeInicial),
-      umidade_final_alvo: umidadeFinalAlvo, impureza: parseFloat(impureza) || 0,
+      umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,
       ...calculos,
     };
     if (editingId) {
@@ -101,7 +109,7 @@ export default function RecebimentoPage() {
             </div>
             <div className="space-y-2">
               <Label>Tipo de Grão *</Label>
-              <Select value={tipoGraoId} onValueChange={setTipoGraoId}>
+              <Select value={tipoGraoId} onValueChange={handleTipoGraoChange}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>{tiposGrao.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}</SelectContent>
               </Select>
@@ -110,7 +118,7 @@ export default function RecebimentoPage() {
             <div className="space-y-2"><Label>Umidade Inicial (%) *</Label><Input type="number" step="0.1" placeholder="18" value={umidadeInicial} onChange={e => setUmidadeInicial(e.target.value)} /></div>
             <div className="space-y-2"><Label>Impureza (%)</Label><Input type="number" step="0.1" placeholder="2" value={impureza} onChange={e => setImpureza(e.target.value)} /></div>
             <div className="space-y-2"><Label>Taxa de Secagem (%)</Label><Input type="number" step="0.1" placeholder="8.5" value={taxaSecagem} onChange={e => setTaxaSecagem(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Umidade Final Alvo</Label><Input value="12%" disabled className="bg-muted" /></div>
+            <div className="space-y-2"><Label>Umidade Final Alvo (%)</Label><Input type="number" step="0.1" placeholder="12" value={umidadeFinalAlvo} onChange={e => setUmidadeFinalAlvo(e.target.value)} /></div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
