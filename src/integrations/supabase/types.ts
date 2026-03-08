@@ -151,6 +151,7 @@ export type Database = {
           created_at: string
           data: string
           desconto_impureza_kg: number
+          desconto_secagem_kg: number
           desconto_umidade_kg: number
           desconto_umidade_percent: number
           id: string
@@ -159,6 +160,7 @@ export type Database = {
           peso_liquido: number
           placa_caminhao: string
           produtor_id: string
+          taxa_secagem_percentual: number
           tipo_grao_id: string
           umidade_final_alvo: number
           umidade_inicial: number
@@ -169,6 +171,7 @@ export type Database = {
           created_at?: string
           data?: string
           desconto_impureza_kg?: number
+          desconto_secagem_kg?: number
           desconto_umidade_kg?: number
           desconto_umidade_percent?: number
           id?: string
@@ -177,6 +180,7 @@ export type Database = {
           peso_liquido?: number
           placa_caminhao: string
           produtor_id: string
+          taxa_secagem_percentual?: number
           tipo_grao_id: string
           umidade_final_alvo?: number
           umidade_inicial: number
@@ -187,6 +191,7 @@ export type Database = {
           created_at?: string
           data?: string
           desconto_impureza_kg?: number
+          desconto_secagem_kg?: number
           desconto_umidade_kg?: number
           desconto_umidade_percent?: number
           id?: string
@@ -195,6 +200,7 @@ export type Database = {
           peso_liquido?: number
           placa_caminhao?: string
           produtor_id?: string
+          taxa_secagem_percentual?: number
           tipo_grao_id?: string
           umidade_final_alvo?: number
           umidade_inicial?: number
