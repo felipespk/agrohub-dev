@@ -46,12 +46,11 @@ export default function SaidaVendaPage() {
     };
     if (editingId) {
       const ok = await updateSaida(editingId, entry);
-      if (ok) toast.success("Saída atualizada!");
+      if (ok) { toast.success("Saída atualizada!"); clearForm(); }
     } else {
       const row = await addSaida(entry);
       if (row) toast.success(`Saída registrada! ${parseFloat(kgsExpedidos).toLocaleString("pt-BR")} Kg expedidos.`);
     }
-    clearForm();
   };
 
   return (
