@@ -14,11 +14,11 @@ export default function RelatorioPage() {
   const saldo = useMemo(() => {
     const map = new Map<string, { produtorNome: string; tipoGraoNome: string; kgsEntrada: number; kgsSaida: number }>();
     for (const r of recebimentos) {
-      if (filtroProdutorId !== "todos" && r.produtorId !== filtroProdutorId) continue;
-      if (filtroGraoId !== "todos" && r.tipoGraoId !== filtroGraoId) continue;
-      const key = `${r.produtorId}-${r.tipoGraoId}`;
-      const existing = map.get(key) || { produtorNome: r.produtorNome, tipoGraoNome: r.tipoGraoNome, kgsEntrada: 0, kgsSaida: 0 };
-      existing.kgsEntrada += r.pesoLiquido;
+      if (filtroProdutorId !== "todos" && r.produtor_id !== filtroProdutorId) continue;
+      if (filtroGraoId !== "todos" && r.tipo_grao_id !== filtroGraoId) continue;
+      const key = `${r.produtor_id}-${r.tipo_grao_id}`;
+      const existing = map.get(key) || { produtorNome: r.produtor_nome || "", tipoGraoNome: r.tipo_grao_nome || "", kgsEntrada: 0, kgsSaida: 0 };
+      existing.kgsEntrada += r.peso_liquido;
       map.set(key, existing);
     }
     return Array.from(map.entries()).map(([key, val]) => ({ key, ...val, saldo: val.kgsEntrada - val.kgsSaida }));
@@ -67,7 +67,8 @@ export default function RelatorioPage() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Produtor</TableHead><TableHead>Tipo de Grão</TableHead><TableHead className="text-right">Kgs Entrada (Líquido)</TableHead><TableHead className="text-right">Saldo (Kg)</TableHead>
+              <TableHead>Produtor</TableHead><TableHead>Tipo de Grão</TableHead>
+              <TableHead className="text-right">Kgs Entrada (Líquido)</TableHead><TableHead className="text-right">Saldo (Kg)</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {saldo.length === 0 ? (

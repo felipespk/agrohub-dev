@@ -5,48 +5,36 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAppData } from "@/contexts/AppContext";
-import { Produtor, TipoGrao, Comprador } from "@/types";
+import { useAppData, Produtor, TipoGrao, Comprador } from "@/contexts/AppContext";
 import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Edit2, X, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function CadastroPage() {
-  const { produtores, setProdutores, tiposGrao, setTiposGrao, compradores, setCompradores } = useAppData();
-
+  const ctx = useAppData();
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <div className="flex items-center gap-2">
-          <UserPlus className="h-6 w-6 text-primary" />
-          <h1 className="page-title">Cadastro</h1>
-        </div>
+        <div className="flex items-center gap-2"><UserPlus className="h-6 w-6 text-primary" /><h1 className="page-title">Cadastro</h1></div>
         <p className="page-subtitle">Gerencie produtores, tipos de grão e compradores</p>
       </div>
-
       <Tabs defaultValue="produtores" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="produtores">Produtores</TabsTrigger>
           <TabsTrigger value="graos">Tipos de Grão</TabsTrigger>
           <TabsTrigger value="compradores">Compradores</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="produtores">
-          <ProdutoresTab produtores={produtores} setProdutores={setProdutores} />
-        </TabsContent>
-        <TabsContent value="graos">
-          <TiposGraoTab tiposGrao={tiposGrao} setTiposGrao={setTiposGrao} />
-        </TabsContent>
-        <TabsContent value="compradores">
-          <CompradoresTab compradores={compradores} setCompradores={setCompradores} />
-        </TabsContent>
+        <TabsContent value="produtores"><ProdutoresTab ctx={ctx} /></TabsContent>
+        <TabsContent value="graos"><TiposGraoTab ctx={ctx} /></TabsContent>
+        <TabsContent value="compradores"><CompradoresTab ctx={ctx} /></TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; setProdutores: React.Dispatch<React.SetStateAction<Produtor[]>> }) {
-  const [tipoDocumento, setTipoDocumento] = useState<"CPF" | "CNPJ">("CPF");
+function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
+  const { produtores, addProdutor, updateProdutor, deleteProdutor } = ctx;
+  const [tipoDocumento, setTipoDocumento] = useState("CPF");
   const [documento, setDocumento] = useState("");
   const [nome, setNome] = useState("");
   const [fazenda, setFazenda] = useState("");
@@ -65,39 +53,38 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
   };
 
   const handleEdit = (p: Produtor) => {
-    setTipoDocumento(p.tipoDocumento); setDocumento(p.documento); setNome(p.nome);
-    setFazenda(p.fazenda); setEnderecoFazenda(p.enderecoFazenda); setCidade(p.cidade);
-    setEstado(p.estado); setInscricaoEstadual(p.inscricaoEstadual); setTelefone(p.telefone);
-    setEditingId(p.id);
-    setOpen(true);
+    setTipoDocumento(p.tipo_documento); setDocumento(p.documento); setNome(p.nome);
+    setFazenda(p.fazenda); setEnderecoFazenda(p.endereco_fazenda); setCidade(p.cidade);
+    setEstado(p.estado); setInscricaoEstadual(p.inscricao_estadual); setTelefone(p.telefone);
+    setEditingId(p.id); setOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!nome.trim() || !documento.trim()) { toast.error("Nome e Documento são obrigatórios."); return; }
     const data = {
-      tipoDocumento, documento: documento.trim(), nome: nome.trim(),
-      fazenda: fazenda.trim(), enderecoFazenda: enderecoFazenda.trim(), cidade: cidade.trim(),
-      estado: estado.trim(), inscricaoEstadual: inscricaoEstadual.trim(), telefone: telefone.trim(),
+      tipo_documento: tipoDocumento, documento: documento.trim(), nome: nome.trim(),
+      fazenda: fazenda.trim(), endereco_fazenda: enderecoFazenda.trim(), cidade: cidade.trim(),
+      estado: estado.trim(), inscricao_estadual: inscricaoEstadual.trim(), telefone: telefone.trim(),
     };
     if (editingId) {
-      setProdutores(prev => prev.map(p => p.id === editingId ? { ...p, ...data } : p));
-      toast.success("Produtor atualizado!");
+      const ok = await updateProdutor(editingId, data);
+      if (ok) toast.success("Produtor atualizado!");
     } else {
-      setProdutores(prev => [...prev, { id: crypto.randomUUID(), ...data }]);
-      toast.success("Produtor cadastrado!");
+      const row = await addProdutor(data);
+      if (row) toast.success("Produtor cadastrado!");
     }
-    clearForm();
-    setOpen(false);
+    clearForm(); setOpen(false);
   };
 
-  const handleDelete = (id: string) => { setProdutores(prev => prev.filter(p => p.id !== id)); toast.success("Produtor removido."); };
+  const handleDelete = async (id: string) => {
+    const ok = await deleteProdutor(id);
+    if (ok) toast.success("Produtor removido.");
+  };
 
   return (
     <div className="form-section space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
-          <UserPlus className="h-5 w-5 text-primary" /> Produtores
-        </h2>
+        <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2"><UserPlus className="h-5 w-5 text-primary" /> Produtores</h2>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) clearForm(); }}>
           <DialogTrigger asChild><Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Novo Produtor</Button></DialogTrigger>
           <DialogContent className="sm:max-w-2xl">
@@ -105,13 +92,13 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label>Tipo de Documento *</Label>
-                <Select value={tipoDocumento} onValueChange={(v: "CPF" | "CNPJ") => setTipoDocumento(v)}>
+                <Select value={tipoDocumento} onValueChange={setTipoDocumento}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="CPF">CPF</SelectItem><SelectItem value="CNPJ">CNPJ</SelectItem></SelectContent>
                 </Select>
               </div>
               <div className="space-y-2"><Label>Documento *</Label><Input value={documento} onChange={e => setDocumento(e.target.value)} placeholder={tipoDocumento === "CPF" ? "000.000.000-00" : "00.000.000/0001-00"} /></div>
-              <div className="space-y-2"><Label>Nome do Produtor *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome completo" /></div>
+              <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome completo" /></div>
               <div className="space-y-2"><Label>Fazenda</Label><Input value={fazenda} onChange={e => setFazenda(e.target.value)} placeholder="Nome da propriedade" /></div>
               <div className="space-y-2 sm:col-span-2"><Label>Endereço da Fazenda</Label><Input value={enderecoFazenda} onChange={e => setEnderecoFazenda(e.target.value)} placeholder="Estrada, Km, etc." /></div>
               <div className="space-y-2"><Label>Cidade</Label><Input value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Cidade" /></div>
@@ -123,11 +110,7 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
               <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                 <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
               </Button>
-              {editingId && (
-                <Button variant="outline" onClick={() => { clearForm(); setOpen(false); }} className="gap-2">
-                  <X className="h-4 w-4" /> Cancelar
-                </Button>
-              )}
+              {editingId && <Button variant="outline" onClick={() => { clearForm(); setOpen(false); }} className="gap-2"><X className="h-4 w-4" /> Cancelar</Button>}
             </div>
           </DialogContent>
         </Dialog>
@@ -138,10 +121,10 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
             <TableHead>Nome</TableHead><TableHead>Documento</TableHead><TableHead>Fazenda</TableHead><TableHead>Cidade/UF</TableHead><TableHead>Telefone</TableHead><TableHead className="w-24">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {[...produtores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(p => (
+            {produtores.map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.nome}</TableCell>
-                <TableCell className="font-mono text-sm">{p.tipoDocumento}: {p.documento}</TableCell>
+                <TableCell className="font-mono text-sm">{p.tipo_documento}: {p.documento}</TableCell>
                 <TableCell>{p.fazenda}</TableCell>
                 <TableCell>{p.cidade}{p.estado ? `/${p.estado}` : ""}</TableCell>
                 <TableCell>{p.telefone}</TableCell>
@@ -160,7 +143,8 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
   );
 }
 
-function TiposGraoTab({ tiposGrao, setTiposGrao }: { tiposGrao: TipoGrao[]; setTiposGrao: React.Dispatch<React.SetStateAction<TipoGrao[]>> }) {
+function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
+  const { tiposGrao, addTipoGrao, updateTipoGrao, deleteTipoGrao } = ctx;
   const [nome, setNome] = useState("");
   const [umidade, setUmidade] = useState("12");
   const [open, setOpen] = useState(false);
@@ -169,22 +153,25 @@ function TiposGraoTab({ tiposGrao, setTiposGrao }: { tiposGrao: TipoGrao[]; setT
   const clearForm = () => { setNome(""); setUmidade("12"); setEditingId(null); };
 
   const handleEdit = (t: TipoGrao) => {
-    setNome(t.nome); setUmidade(String(t.umidadePadrao)); setEditingId(t.id); setOpen(true);
+    setNome(t.nome); setUmidade(String(t.umidade_padrao)); setEditingId(t.id); setOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
     if (editingId) {
-      setTiposGrao(prev => prev.map(t => t.id === editingId ? { ...t, nome: nome.trim(), umidadePadrao: parseFloat(umidade) || 12 } : t));
-      toast.success("Tipo de grão atualizado!");
+      const ok = await updateTipoGrao(editingId, { nome: nome.trim(), umidade_padrao: parseFloat(umidade) || 12 });
+      if (ok) toast.success("Tipo de grão atualizado!");
     } else {
-      setTiposGrao(prev => [...prev, { id: crypto.randomUUID(), nome: nome.trim(), umidadePadrao: parseFloat(umidade) || 12 }]);
-      toast.success("Tipo de grão cadastrado!");
+      const row = await addTipoGrao({ nome: nome.trim(), umidade_padrao: parseFloat(umidade) || 12 });
+      if (row) toast.success("Tipo de grão cadastrado!");
     }
     clearForm(); setOpen(false);
   };
 
-  const handleDelete = (id: string) => { setTiposGrao(prev => prev.filter(t => t.id !== id)); toast.success("Tipo de grão removido."); };
+  const handleDelete = async (id: string) => {
+    const ok = await deleteTipoGrao(id);
+    if (ok) toast.success("Tipo de grão removido.");
+  };
 
   return (
     <div className="form-section space-y-4">
@@ -201,11 +188,7 @@ function TiposGraoTab({ tiposGrao, setTiposGrao }: { tiposGrao: TipoGrao[]; setT
                 <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                   <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
                 </Button>
-                {editingId && (
-                  <Button variant="outline" onClick={() => { clearForm(); setOpen(false); }} className="gap-2">
-                    <X className="h-4 w-4" /> Cancelar
-                  </Button>
-                )}
+                {editingId && <Button variant="outline" onClick={() => { clearForm(); setOpen(false); }} className="gap-2"><X className="h-4 w-4" /> Cancelar</Button>}
               </div>
             </div>
           </DialogContent>
@@ -215,10 +198,10 @@ function TiposGraoTab({ tiposGrao, setTiposGrao }: { tiposGrao: TipoGrao[]; setT
         <Table>
           <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Padrão</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {[...tiposGrao].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(t => (
+            {tiposGrao.map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.nome}</TableCell>
-                <TableCell>{t.umidadePadrao}%</TableCell>
+                <TableCell>{t.umidade_padrao}%</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
@@ -234,7 +217,8 @@ function TiposGraoTab({ tiposGrao, setTiposGrao }: { tiposGrao: TipoGrao[]; setT
   );
 }
 
-function CompradoresTab({ compradores, setCompradores }: { compradores: Comprador[]; setCompradores: React.Dispatch<React.SetStateAction<Comprador[]>> }) {
+function CompradoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
+  const { compradores, addComprador, updateComprador, deleteComprador } = ctx;
   const [nome, setNome] = useState("");
   const [contato, setContato] = useState("");
   const [open, setOpen] = useState(false);
@@ -243,22 +227,25 @@ function CompradoresTab({ compradores, setCompradores }: { compradores: Comprado
   const clearForm = () => { setNome(""); setContato(""); setEditingId(null); };
 
   const handleEdit = (c: Comprador) => {
-    setNome(c.nome); setContato(c.contato); setEditingId(c.id); setOpen(true);
+    setNome(c.nome); setContato(c.contato || ""); setEditingId(c.id); setOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
     if (editingId) {
-      setCompradores(prev => prev.map(c => c.id === editingId ? { ...c, nome: nome.trim(), contato: contato.trim() } : c));
-      toast.success("Comprador atualizado!");
+      const ok = await updateComprador(editingId, { nome: nome.trim(), contato: contato.trim() });
+      if (ok) toast.success("Comprador atualizado!");
     } else {
-      setCompradores(prev => [...prev, { id: crypto.randomUUID(), nome: nome.trim(), contato: contato.trim() }]);
-      toast.success("Comprador cadastrado!");
+      const row = await addComprador({ nome: nome.trim(), contato: contato.trim() });
+      if (row) toast.success("Comprador cadastrado!");
     }
     clearForm(); setOpen(false);
   };
 
-  const handleDelete = (id: string) => { setCompradores(prev => prev.filter(c => c.id !== id)); toast.success("Comprador removido."); };
+  const handleDelete = async (id: string) => {
+    const ok = await deleteComprador(id);
+    if (ok) toast.success("Comprador removido.");
+  };
 
   return (
     <div className="form-section space-y-4">
@@ -275,11 +262,7 @@ function CompradoresTab({ compradores, setCompradores }: { compradores: Comprado
                 <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                   <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
                 </Button>
-                {editingId && (
-                  <Button variant="outline" onClick={() => { clearForm(); setOpen(false); }} className="gap-2">
-                    <X className="h-4 w-4" /> Cancelar
-                  </Button>
-                )}
+                {editingId && <Button variant="outline" onClick={() => { clearForm(); setOpen(false); }} className="gap-2"><X className="h-4 w-4" /> Cancelar</Button>}
               </div>
             </div>
           </DialogContent>
@@ -289,7 +272,7 @@ function CompradoresTab({ compradores, setCompradores }: { compradores: Comprado
         <Table>
           <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Contato</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {[...compradores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => (
+            {compradores.map(c => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.nome}</TableCell>
                 <TableCell>{c.contato}</TableCell>

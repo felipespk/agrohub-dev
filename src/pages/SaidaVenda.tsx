@@ -5,19 +5,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useAppData } from "@/contexts/AppContext";
-import { CategoriaSaida, Saida } from "@/types";
+import { useAppData, Saida } from "@/contexts/AppContext";
 import { ArrowUpFromLine, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
-const categorias: CategoriaSaida[] = ["Venda", "Transferência", "Devolução", "Outros"];
+const categorias = ["Venda", "Transferência", "Devolução", "Outros"];
 
 export default function SaidaVendaPage() {
-  const { compradores, saidas, setSaidas } = useAppData();
+  const { compradores, saidas, addSaida, updateSaida, deleteSaida } = useAppData();
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
   const [placa, setPlaca] = useState("");
   const [compradorId, setCompradorId] = useState("");
-  const [categoria, setCategoria] = useState<CategoriaSaida>("Venda");
+  const [categoria, setCategoria] = useState("Venda");
   const [classificacao, setClassificacao] = useState("");
   const [kgsExpedidos, setKgsExpedidos] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -29,36 +28,28 @@ export default function SaidaVendaPage() {
   };
 
   const handleEdit = (s: Saida) => {
-    setData(s.data); setPlaca(s.placaCaminhao); setCompradorId(s.compradorId);
-    setCategoria(s.categoria); setClassificacao(s.classificacao); setKgsExpedidos(String(s.kgsExpedidos));
+    setData(s.data); setPlaca(s.placa_caminhao); setCompradorId(s.comprador_id);
+    setCategoria(s.categoria); setClassificacao(s.classificacao || ""); setKgsExpedidos(String(s.kgs_expedidos));
     setEditingId(s.id);
   };
 
-  const handleDelete = (id: string) => {
-    setSaidas(prev => prev.filter(s => s.id !== id));
-    toast.success("Saída removida.");
-    if (editingId === id) clearForm();
+  const handleDelete = async (id: string) => {
+    const ok = await deleteSaida(id);
+    if (ok) { toast.success("Saída removida."); if (editingId === id) clearForm(); }
   };
 
-  const handleSalvar = () => {
-    if (!placa || !compradorId || !kgsExpedidos) {
-      toast.error("Preencha Placa, Comprador e Kgs Expedidos.");
-      return;
-    }
-    const comprador = compradores.find(c => c.id === compradorId);
+  const handleSalvar = async () => {
+    if (!placa || !compradorId || !kgsExpedidos) { toast.error("Preencha Placa, Comprador e Kgs Expedidos."); return; }
     const entry = {
-      data, placaCaminhao: placa.toUpperCase(),
-      compradorId, compradorNome: comprador?.nome || "", classificacao,
-      kgsExpedidos: parseFloat(kgsExpedidos), categoria,
+      data, placa_caminhao: placa.toUpperCase(), comprador_id: compradorId,
+      classificacao, kgs_expedidos: parseFloat(kgsExpedidos), categoria,
     };
-
     if (editingId) {
-      setSaidas(prev => prev.map(s => s.id === editingId ? { ...s, ...entry } : s));
-      toast.success("Saída atualizada!");
+      const ok = await updateSaida(editingId, entry);
+      if (ok) toast.success("Saída atualizada!");
     } else {
-      const nova: Saida = { id: crypto.randomUUID(), ...entry, createdAt: new Date().toISOString() };
-      setSaidas(prev => [nova, ...prev]);
-      toast.success(`Saída registrada! ${parseFloat(kgsExpedidos).toLocaleString("pt-BR")} Kg expedidos.`);
+      const row = await addSaida(entry);
+      if (row) toast.success(`Saída registrada! ${parseFloat(kgsExpedidos).toLocaleString("pt-BR")} Kg expedidos.`);
     }
     clearForm();
   };
@@ -66,63 +57,34 @@ export default function SaidaVendaPage() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <div className="flex items-center gap-2">
-          <ArrowUpFromLine className="h-6 w-6 text-primary" />
-          <h1 className="page-title">Saída (Lançamento)</h1>
-        </div>
+        <div className="flex items-center gap-2"><ArrowUpFromLine className="h-6 w-6 text-primary" /><h1 className="page-title">Saída (Lançamento)</h1></div>
         <p className="page-subtitle">Registre saídas de grãos (vendas, transferências, devoluções)</p>
       </div>
 
       <div className="form-section space-y-5">
         <div className="flex items-center justify-between">
-          <h2 className="font-display font-semibold text-lg text-foreground">
-            {editingId ? "Editando Saída" : "Nova Saída"}
-          </h2>
-          {editingId && (
-            <Button variant="outline" size="sm" onClick={clearForm} className="gap-1">
-              <X className="h-4 w-4" /> Cancelar Edição
-            </Button>
-          )}
+          <h2 className="font-display font-semibold text-lg text-foreground">{editingId ? "Editando Saída" : "Nova Saída"}</h2>
+          {editingId && <Button variant="outline" size="sm" onClick={clearForm} className="gap-1"><X className="h-4 w-4" /> Cancelar Edição</Button>}
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-2">
-            <Label>Data</Label>
-            <Input type="date" value={data} onChange={e => setData(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Placa do Caminhão *</Label>
-            <Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(e.target.value)} className="uppercase" />
-          </div>
+          <div className="space-y-2"><Label>Data</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Placa *</Label><Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(e.target.value)} className="uppercase" /></div>
           <div className="space-y-2">
             <Label>Comprador *</Label>
             <Select value={compradorId} onValueChange={setCompradorId}>
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-              <SelectContent>
-                {[...compradores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                ))}
-              </SelectContent>
+              <SelectContent>{compradores.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Categoria da Saída *</Label>
-            <Select value={categoria} onValueChange={(v) => setCategoria(v as CategoriaSaida)}>
+            <Label>Categoria *</Label>
+            <Select value={categoria} onValueChange={setCategoria}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {categorias.map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
+              <SelectContent>{categorias.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Classificação do Grão</Label>
-            <Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Kgs Expedidos *</Label>
-            <Input type="number" placeholder="15000" value={kgsExpedidos} onChange={e => setKgsExpedidos(e.target.value)} />
-          </div>
+          <div className="space-y-2"><Label>Classificação</Label><Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Kgs Expedidos *</Label><Input type="number" placeholder="15000" value={kgsExpedidos} onChange={e => setKgsExpedidos(e.target.value)} /></div>
         </div>
         <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
           <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Saída"}
@@ -133,26 +95,19 @@ export default function SaidaVendaPage() {
         <h2 className="font-display font-semibold text-lg text-foreground mb-4">Saídas Registradas</h2>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Placa</TableHead>
-                <TableHead>Comprador</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Classificação</TableHead>
-                <TableHead className="text-right">Kgs Expedidos</TableHead>
-                <TableHead className="w-24">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow>
+              <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Comprador</TableHead><TableHead>Categoria</TableHead>
+              <TableHead>Classificação</TableHead><TableHead className="text-right">Kgs</TableHead><TableHead className="w-24">Ações</TableHead>
+            </TableRow></TableHeader>
             <TableBody>
               {saidas.map(s => (
                 <TableRow key={s.id} className={editingId === s.id ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
                   <TableCell>{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
-                  <TableCell className="font-mono">{s.placaCaminhao}</TableCell>
-                  <TableCell>{s.compradorNome}</TableCell>
+                  <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
+                  <TableCell>{s.comprador_nome}</TableCell>
                   <TableCell><Badge variant="outline">{s.categoria}</Badge></TableCell>
                   <TableCell>{s.classificacao}</TableCell>
-                  <TableCell className="text-right font-semibold">{s.kgsExpedidos.toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-right font-semibold">{s.kgs_expedidos.toLocaleString("pt-BR")}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(s)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
