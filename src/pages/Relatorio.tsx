@@ -182,7 +182,7 @@ export default function RelatorioPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" onClick={exportCSV} className="gap-2"><Download className="h-4 w-4" /> Exportar CSV</Button>
+          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel (.xlsx)</Button>
         </div>
 
         {grupos.length === 0 ? (
