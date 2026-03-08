@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppData } from "@/contexts/AppContext";
 import { Produtor, TipoGrao, Comprador } from "@/types";
-import { UserPlus, Wheat, ShoppingCart, Plus, Trash2 } from "lucide-react";
+import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Edit2, X, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -56,17 +56,37 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
   const [inscricaoEstadual, setInscricaoEstadual] = useState("");
   const [telefone, setTelefone] = useState("");
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const handleAdd = () => {
-    if (!nome.trim() || !documento.trim()) { toast.error("Nome e Documento são obrigatórios."); return; }
-    setProdutores(prev => [...prev, {
-      id: crypto.randomUUID(), tipoDocumento, documento: documento.trim(), nome: nome.trim(),
-      fazenda: fazenda.trim(), enderecoFazenda: enderecoFazenda.trim(), cidade: cidade.trim(),
-      estado: estado.trim(), inscricaoEstadual: inscricaoEstadual.trim(), telefone: telefone.trim(),
-    }]);
-    toast.success("Produtor cadastrado!");
+  const clearForm = () => {
     setTipoDocumento("CPF"); setDocumento(""); setNome(""); setFazenda("");
     setEnderecoFazenda(""); setCidade(""); setEstado(""); setInscricaoEstadual(""); setTelefone("");
+    setEditingId(null);
+  };
+
+  const handleEdit = (p: Produtor) => {
+    setTipoDocumento(p.tipoDocumento); setDocumento(p.documento); setNome(p.nome);
+    setFazenda(p.fazenda); setEnderecoFazenda(p.enderecoFazenda); setCidade(p.cidade);
+    setEstado(p.estado); setInscricaoEstadual(p.inscricaoEstadual); setTelefone(p.telefone);
+    setEditingId(p.id);
+    setOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!nome.trim() || !documento.trim()) { toast.error("Nome e Documento são obrigatórios."); return; }
+    const data = {
+      tipoDocumento, documento: documento.trim(), nome: nome.trim(),
+      fazenda: fazenda.trim(), enderecoFazenda: enderecoFazenda.trim(), cidade: cidade.trim(),
+      estado: estado.trim(), inscricaoEstadual: inscricaoEstadual.trim(), telefone: telefone.trim(),
+    };
+    if (editingId) {
+      setProdutores(prev => prev.map(p => p.id === editingId ? { ...p, ...data } : p));
+      toast.success("Produtor atualizado!");
+    } else {
+      setProdutores(prev => [...prev, { id: crypto.randomUUID(), ...data }]);
+      toast.success("Produtor cadastrado!");
+    }
+    clearForm();
     setOpen(false);
   };
 
@@ -78,10 +98,10 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
         <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2">
           <UserPlus className="h-5 w-5 text-primary" /> Produtores
         </h2>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) clearForm(); }}>
           <DialogTrigger asChild><Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Novo Produtor</Button></DialogTrigger>
           <DialogContent className="sm:max-w-2xl">
-            <DialogHeader><DialogTitle>Novo Produtor</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editingId ? "Editar Produtor" : "Novo Produtor"}</DialogTitle></DialogHeader>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label>Tipo de Documento *</Label>
@@ -99,14 +119,23 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
               <div className="space-y-2"><Label>Inscrição Estadual</Label><Input value={inscricaoEstadual} onChange={e => setInscricaoEstadual(e.target.value)} placeholder="000/0000000" /></div>
               <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(00) 00000-0000" /></div>
             </div>
-            <Button onClick={handleAdd} className="w-full mt-2">Salvar</Button>
+            <div className="flex gap-2 mt-2">
+              <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+                <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
+              </Button>
+              {editingId && (
+                <Button variant="outline" onClick={() => { clearForm(); setOpen(false); }} className="gap-2">
+                  <X className="h-4 w-4" /> Cancelar
+                </Button>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Nome</TableHead><TableHead>Documento</TableHead><TableHead>Fazenda</TableHead><TableHead>Cidade/UF</TableHead><TableHead>Telefone</TableHead><TableHead className="w-20">Ações</TableHead>
+            <TableHead>Nome</TableHead><TableHead>Documento</TableHead><TableHead>Fazenda</TableHead><TableHead>Cidade/UF</TableHead><TableHead>Telefone</TableHead><TableHead className="w-24">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {[...produtores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(p => (
@@ -116,7 +145,12 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
                 <TableCell>{p.fazenda}</TableCell>
                 <TableCell>{p.cidade}{p.estado ? `/${p.estado}` : ""}</TableCell>
                 <TableCell>{p.telefone}</TableCell>
-                <TableCell><Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(p)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -130,39 +164,67 @@ function TiposGraoTab({ tiposGrao, setTiposGrao }: { tiposGrao: TipoGrao[]; setT
   const [nome, setNome] = useState("");
   const [umidade, setUmidade] = useState("12");
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const handleAdd = () => {
-    if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
-    setTiposGrao(prev => [...prev, { id: crypto.randomUUID(), nome: nome.trim(), umidadePadrao: parseFloat(umidade) || 12 }]);
-    toast.success("Tipo de grão cadastrado!"); setNome(""); setUmidade("12"); setOpen(false);
+  const clearForm = () => { setNome(""); setUmidade("12"); setEditingId(null); };
+
+  const handleEdit = (t: TipoGrao) => {
+    setNome(t.nome); setUmidade(String(t.umidadePadrao)); setEditingId(t.id); setOpen(true);
   };
+
+  const handleSave = () => {
+    if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
+    if (editingId) {
+      setTiposGrao(prev => prev.map(t => t.id === editingId ? { ...t, nome: nome.trim(), umidadePadrao: parseFloat(umidade) || 12 } : t));
+      toast.success("Tipo de grão atualizado!");
+    } else {
+      setTiposGrao(prev => [...prev, { id: crypto.randomUUID(), nome: nome.trim(), umidadePadrao: parseFloat(umidade) || 12 }]);
+      toast.success("Tipo de grão cadastrado!");
+    }
+    clearForm(); setOpen(false);
+  };
+
   const handleDelete = (id: string) => { setTiposGrao(prev => prev.filter(t => t.id !== id)); toast.success("Tipo de grão removido."); };
 
   return (
     <div className="form-section space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2"><Wheat className="h-5 w-5 text-primary" /> Tipos de Grão</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) clearForm(); }}>
           <DialogTrigger asChild><Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Novo Tipo</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Novo Tipo de Grão</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editingId ? "Editar Tipo de Grão" : "Novo Tipo de Grão"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2"><Label>Nome do Grão *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Arroz Longo Fino" /></div>
               <div className="space-y-2"><Label>Umidade Padrão (%)</Label><Input type="number" value={umidade} onChange={e => setUmidade(e.target.value)} /></div>
-              <Button onClick={handleAdd} className="w-full">Salvar</Button>
+              <div className="flex gap-2">
+                <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+                  <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
+                </Button>
+                {editingId && (
+                  <Button variant="outline" onClick={() => { clearForm(); setOpen(false); }} className="gap-2">
+                    <X className="h-4 w-4" /> Cancelar
+                  </Button>
+                )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Padrão</TableHead><TableHead className="w-20">Ações</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Padrão</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
             {[...tiposGrao].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.nome}</TableCell>
                 <TableCell>{t.umidadePadrao}%</TableCell>
-                <TableCell><Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -176,39 +238,67 @@ function CompradoresTab({ compradores, setCompradores }: { compradores: Comprado
   const [nome, setNome] = useState("");
   const [contato, setContato] = useState("");
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const handleAdd = () => {
-    if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
-    setCompradores(prev => [...prev, { id: crypto.randomUUID(), nome: nome.trim(), contato: contato.trim() }]);
-    toast.success("Comprador cadastrado!"); setNome(""); setContato(""); setOpen(false);
+  const clearForm = () => { setNome(""); setContato(""); setEditingId(null); };
+
+  const handleEdit = (c: Comprador) => {
+    setNome(c.nome); setContato(c.contato); setEditingId(c.id); setOpen(true);
   };
+
+  const handleSave = () => {
+    if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
+    if (editingId) {
+      setCompradores(prev => prev.map(c => c.id === editingId ? { ...c, nome: nome.trim(), contato: contato.trim() } : c));
+      toast.success("Comprador atualizado!");
+    } else {
+      setCompradores(prev => [...prev, { id: crypto.randomUUID(), nome: nome.trim(), contato: contato.trim() }]);
+      toast.success("Comprador cadastrado!");
+    }
+    clearForm(); setOpen(false);
+  };
+
   const handleDelete = (id: string) => { setCompradores(prev => prev.filter(c => c.id !== id)); toast.success("Comprador removido."); };
 
   return (
     <div className="form-section space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-display font-semibold text-lg text-foreground flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-primary" /> Compradores</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) clearForm(); }}>
           <DialogTrigger asChild><Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Novo Comprador</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Novo Comprador</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editingId ? "Editar Comprador" : "Novo Comprador"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome do comprador" /></div>
               <div className="space-y-2"><Label>Contato</Label><Input value={contato} onChange={e => setContato(e.target.value)} placeholder="(00) 00000-0000" /></div>
-              <Button onClick={handleAdd} className="w-full">Salvar</Button>
+              <div className="flex gap-2">
+                <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+                  <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
+                </Button>
+                {editingId && (
+                  <Button variant="outline" onClick={() => { clearForm(); setOpen(false); }} className="gap-2">
+                    <X className="h-4 w-4" /> Cancelar
+                  </Button>
+                )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Contato</TableHead><TableHead className="w-20">Ações</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Contato</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
             {[...compradores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.nome}</TableCell>
                 <TableCell>{c.contato}</TableCell>
-                <TableCell><Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(c)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

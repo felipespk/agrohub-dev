@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAppData } from "@/contexts/AppContext";
 import { Recebimento } from "@/types";
-import { ArrowDownToLine, Calculator, Save } from "lucide-react";
+import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RecebimentoPage() {
@@ -19,6 +19,7 @@ export default function RecebimentoPage() {
   const [pesoBruto, setPesoBruto] = useState("");
   const [umidadeInicial, setUmidadeInicial] = useState("");
   const [impureza, setImpureza] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const umidadeFinalAlvo = 12;
 
   const calculos = useMemo(() => {
@@ -32,6 +33,25 @@ export default function RecebimentoPage() {
     return { descontoUmidadePercent, descontoUmidadeKg, descontoImpurezaKg, pesoLiquido };
   }, [pesoBruto, umidadeInicial, impureza]);
 
+  const clearForm = () => {
+    setData(new Date().toISOString().split("T")[0]);
+    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza("");
+    setEditingId(null);
+  };
+
+  const handleEdit = (r: Recebimento) => {
+    setData(r.data); setPlaca(r.placaCaminhao); setProdutorId(r.produtorId);
+    setTipoGraoId(r.tipoGraoId); setPesoBruto(String(r.pesoBruto));
+    setUmidadeInicial(String(r.umidadeInicial)); setImpureza(String(r.impureza));
+    setEditingId(r.id);
+  };
+
+  const handleDelete = (id: string) => {
+    setRecebimentos(prev => prev.filter(r => r.id !== id));
+    toast.success("Recebimento removido.");
+    if (editingId === id) clearForm();
+  };
+
   const handleSalvar = () => {
     if (!placa || !produtorId || !tipoGraoId || !pesoBruto || !umidadeInicial) {
       toast.error("Preencha todos os campos obrigatórios.");
@@ -39,15 +59,22 @@ export default function RecebimentoPage() {
     }
     const produtor = produtores.find((p) => p.id === produtorId);
     const tipoGrao = tiposGrao.find((t) => t.id === tipoGraoId);
-    const novo: Recebimento = {
-      id: crypto.randomUUID(), data, placaCaminhao: placa.toUpperCase(),
+    const entry = {
+      data, placaCaminhao: placa.toUpperCase(),
       produtorId, produtorNome: produtor?.nome || "", tipoGraoId, tipoGraoNome: tipoGrao?.nome || "",
       pesoBruto: parseFloat(pesoBruto), umidadeInicial: parseFloat(umidadeInicial), umidadeFinalAlvo,
-      impureza: parseFloat(impureza) || 0, ...calculos, createdAt: new Date().toISOString(),
+      impureza: parseFloat(impureza) || 0, ...calculos,
     };
-    setRecebimentos((prev) => [novo, ...prev]);
-    toast.success(`Entrada salva! Peso líquido: ${calculos.pesoLiquido.toFixed(0)} Kg`);
-    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza("");
+
+    if (editingId) {
+      setRecebimentos(prev => prev.map(r => r.id === editingId ? { ...r, ...entry } : r));
+      toast.success("Recebimento atualizado!");
+    } else {
+      const novo: Recebimento = { id: crypto.randomUUID(), ...entry, createdAt: new Date().toISOString() };
+      setRecebimentos(prev => [novo, ...prev]);
+      toast.success(`Entrada salva! Peso líquido: ${calculos.pesoLiquido.toFixed(0)} Kg`);
+    }
+    clearForm();
   };
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -64,7 +91,16 @@ export default function RecebimentoPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 form-section space-y-5">
-          <h2 className="font-display font-semibold text-lg text-foreground">Nova Entrada</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-display font-semibold text-lg text-foreground">
+              {editingId ? "Editando Entrada" : "Nova Entrada"}
+            </h2>
+            {editingId && (
+              <Button variant="outline" size="sm" onClick={clearForm} className="gap-1">
+                <X className="h-4 w-4" /> Cancelar Edição
+              </Button>
+            )}
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="data">Data</Label>
@@ -113,8 +149,8 @@ export default function RecebimentoPage() {
               <Input value="12%" disabled className="bg-muted" />
             </div>
           </div>
-          <Button onClick={handleSalvar} className="w-full sm:w-auto gap-2">
-            <Save className="h-4 w-4" /> Salvar Entrada
+          <Button onClick={handleSalvar} className={`w-full sm:w-auto gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+            <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Entrada"}
           </Button>
         </div>
 
@@ -150,11 +186,12 @@ export default function RecebimentoPage() {
                 <TableHead className="text-right">Umidade</TableHead>
                 <TableHead className="text-right">Desc. Umid.</TableHead>
                 <TableHead className="text-right">Peso Líquido</TableHead>
+                <TableHead className="w-24">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {recebimentos.map((r) => (
-                <TableRow key={r.id}>
+                <TableRow key={r.id} className={editingId === r.id ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
                   <TableCell>{new Date(r.data).toLocaleDateString("pt-BR")}</TableCell>
                   <TableCell className="font-mono">{r.placaCaminhao}</TableCell>
                   <TableCell>{r.produtorNome}</TableCell>
@@ -163,6 +200,12 @@ export default function RecebimentoPage() {
                   <TableCell className="text-right">{r.umidadeInicial}%</TableCell>
                   <TableCell className="text-right">{fmt(r.descontoUmidadePercent)}%</TableCell>
                   <TableCell className="text-right font-semibold">{r.pesoLiquido.toLocaleString("pt-BR")}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(r)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

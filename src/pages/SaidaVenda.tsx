@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useAppData } from "@/contexts/AppContext";
 import { CategoriaSaida, Saida } from "@/types";
-import { ArrowUpFromLine, Save } from "lucide-react";
+import { ArrowUpFromLine, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 const categorias: CategoriaSaida[] = ["Venda", "Transferência", "Devolução", "Outros"];
@@ -20,6 +20,25 @@ export default function SaidaVendaPage() {
   const [categoria, setCategoria] = useState<CategoriaSaida>("Venda");
   const [classificacao, setClassificacao] = useState("");
   const [kgsExpedidos, setKgsExpedidos] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const clearForm = () => {
+    setData(new Date().toISOString().split("T")[0]);
+    setPlaca(""); setCompradorId(""); setCategoria("Venda"); setClassificacao(""); setKgsExpedidos("");
+    setEditingId(null);
+  };
+
+  const handleEdit = (s: Saida) => {
+    setData(s.data); setPlaca(s.placaCaminhao); setCompradorId(s.compradorId);
+    setCategoria(s.categoria); setClassificacao(s.classificacao); setKgsExpedidos(String(s.kgsExpedidos));
+    setEditingId(s.id);
+  };
+
+  const handleDelete = (id: string) => {
+    setSaidas(prev => prev.filter(s => s.id !== id));
+    toast.success("Saída removida.");
+    if (editingId === id) clearForm();
+  };
 
   const handleSalvar = () => {
     if (!placa || !compradorId || !kgsExpedidos) {
@@ -27,14 +46,21 @@ export default function SaidaVendaPage() {
       return;
     }
     const comprador = compradores.find(c => c.id === compradorId);
-    const nova: Saida = {
-      id: crypto.randomUUID(), data, placaCaminhao: placa.toUpperCase(),
+    const entry = {
+      data, placaCaminhao: placa.toUpperCase(),
       compradorId, compradorNome: comprador?.nome || "", classificacao,
-      kgsExpedidos: parseFloat(kgsExpedidos), categoria, createdAt: new Date().toISOString(),
+      kgsExpedidos: parseFloat(kgsExpedidos), categoria,
     };
-    setSaidas(prev => [nova, ...prev]);
-    toast.success(`Saída registrada! ${parseFloat(kgsExpedidos).toLocaleString("pt-BR")} Kg expedidos.`);
-    setPlaca(""); setCompradorId(""); setCategoria("Venda"); setClassificacao(""); setKgsExpedidos("");
+
+    if (editingId) {
+      setSaidas(prev => prev.map(s => s.id === editingId ? { ...s, ...entry } : s));
+      toast.success("Saída atualizada!");
+    } else {
+      const nova: Saida = { id: crypto.randomUUID(), ...entry, createdAt: new Date().toISOString() };
+      setSaidas(prev => [nova, ...prev]);
+      toast.success(`Saída registrada! ${parseFloat(kgsExpedidos).toLocaleString("pt-BR")} Kg expedidos.`);
+    }
+    clearForm();
   };
 
   return (
@@ -48,7 +74,16 @@ export default function SaidaVendaPage() {
       </div>
 
       <div className="form-section space-y-5">
-        <h2 className="font-display font-semibold text-lg text-foreground">Nova Saída</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-display font-semibold text-lg text-foreground">
+            {editingId ? "Editando Saída" : "Nova Saída"}
+          </h2>
+          {editingId && (
+            <Button variant="outline" size="sm" onClick={clearForm} className="gap-1">
+              <X className="h-4 w-4" /> Cancelar Edição
+            </Button>
+          )}
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
             <Label>Data</Label>
@@ -89,8 +124,8 @@ export default function SaidaVendaPage() {
             <Input type="number" placeholder="15000" value={kgsExpedidos} onChange={e => setKgsExpedidos(e.target.value)} />
           </div>
         </div>
-        <Button onClick={handleSalvar} className="gap-2">
-          <Save className="h-4 w-4" /> Salvar Saída
+        <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+          <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Saída"}
         </Button>
       </div>
 
@@ -106,17 +141,24 @@ export default function SaidaVendaPage() {
                 <TableHead>Categoria</TableHead>
                 <TableHead>Classificação</TableHead>
                 <TableHead className="text-right">Kgs Expedidos</TableHead>
+                <TableHead className="w-24">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {saidas.map(s => (
-                <TableRow key={s.id}>
+                <TableRow key={s.id} className={editingId === s.id ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
                   <TableCell>{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
                   <TableCell className="font-mono">{s.placaCaminhao}</TableCell>
                   <TableCell>{s.compradorNome}</TableCell>
                   <TableCell><Badge variant="outline">{s.categoria}</Badge></TableCell>
                   <TableCell>{s.classificacao}</TableCell>
                   <TableCell className="text-right font-semibold">{s.kgsExpedidos.toLocaleString("pt-BR")}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(s)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
