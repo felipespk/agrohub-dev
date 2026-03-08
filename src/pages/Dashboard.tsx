@@ -109,20 +109,40 @@ export default function Dashboard() {
         </div>
 
         <div className="form-section">
-          <h2 className="font-display font-semibold text-lg text-foreground mb-4">Estoque por Tipo de Grão</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display font-semibold text-lg text-foreground">Ocupação do Silo</h2>
+            {editingCap ? (
+              <div className="flex items-center gap-2">
+                <Input type="number" className="w-28 h-8 text-sm" value={capInput} onChange={e => setCapInput(e.target.value)} placeholder="Ton" />
+                <span className="text-xs text-muted-foreground">ton</span>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { const v = parseFloat(capInput); if (v > 0) { setCapacidadeSilo(v * 1000); } setEditingCap(false); }}>
+                  <Check className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <button onClick={() => { setCapInput(String(capacidadeSilo / 1000)); setEditingCap(true); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <Settings2 className="h-3.5 w-3.5" /> {(capacidadeSilo / 1000).toLocaleString("pt-BR")} ton
+              </button>
+            )}
+          </div>
           <div className="h-72 flex items-center justify-center">
-            {pieData.length === 0 ? <p className="text-sm text-muted-foreground">Sem dados</p> : (
+            {pieData.slices.every(s => s.value === 0) ? <p className="text-sm text-muted-foreground">Sem dados</p> : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value"
+                  <Pie data={pieData.slices} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2} dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={11}>
-                    {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    {pieData.slices.map((entry, i) => (
+                      <Cell key={i} fill={entry.name === "Espaço Vazio" ? EMPTY_COLOR : PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `${value.toLocaleString("pt-BR")} Kg`} />
+                  <Tooltip formatter={(value: number) => `${(value / 1000).toFixed(1)} ton (${value.toLocaleString("pt-BR")} Kg)`} />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </div>
+          <p className="text-center text-xs text-muted-foreground mt-2">
+            Armazenado: <span className="font-semibold text-foreground">{(pieData.totalArmazenado / 1000).toFixed(1)} ton</span> de {(capacidadeSilo / 1000).toLocaleString("pt-BR")} ton ({capacidadeSilo > 0 ? ((pieData.totalArmazenado / capacidadeSilo) * 100).toFixed(1) : 0}%)
+          </p>
         </div>
       </div>
 
