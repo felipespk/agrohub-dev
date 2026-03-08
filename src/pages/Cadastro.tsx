@@ -68,12 +68,11 @@ function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
     };
     if (editingId) {
       const ok = await updateProdutor(editingId, data);
-      if (ok) toast.success("Produtor atualizado!");
+      if (ok) { toast.success("Produtor atualizado!"); clearForm(); setOpen(false); }
     } else {
       const row = await addProdutor(data);
-      if (row) toast.success("Produtor cadastrado!");
+      if (row) { toast.success("Produtor cadastrado!"); setOpen(false); }
     }
-    clearForm(); setOpen(false);
   };
 
   const handleDelete = async (id: string) => {
