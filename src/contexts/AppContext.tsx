@@ -49,6 +49,7 @@ export interface Recebimento {
   taxa_secagem_percentual: number;
   desconto_secagem_kg: number;
   peso_liquido: number;
+  valor_armazenamento: number;
   created_at: string;
   // Joined fields
   produtor_nome?: string;

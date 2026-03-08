@@ -12,8 +12,7 @@ interface FaturaArmazenamento {
   id: string;
   periodo: string;
   geradoEm: string;
-  valorUnitario: number;
-  itens: { produtorNome: string; saldoKg: number; sacos: number; total: number }[];
+  itens: { produtorNome: string; saldoKg: number; sacos: number; valorSaca: number; total: number }[];
   totalGeral: number;
   status: "pendente" | "pago";
 }
@@ -21,11 +20,8 @@ interface FaturaArmazenamento {
 const STORAGE_KEY = "faturas_armazenamento";
 
 function loadFaturas(): FaturaArmazenamento[] {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
 }
-
 function saveFaturas(f: FaturaArmazenamento[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(f));
 }
@@ -34,15 +30,19 @@ export default function ArmazenamentoPage() {
   const { recebimentos, saidas } = useAppData();
   const [faturas, setFaturas] = useState<FaturaArmazenamento[]>(loadFaturas);
   const [periodo, setPeriodo] = useState("");
-  const [valorUnit, setValorUnit] = useState("0.15");
 
-  // Compute per-produtor stock balance
+  // Per-produtor: saldo + valor armazenamento from most recent recebimento
   const saldoProdutores = useMemo(() => {
-    const map = new Map<string, { produtorNome: string; saldoKg: number }>();
+    const map = new Map<string, { produtorNome: string; saldoKg: number; valorSaca: number; lastDate: string }>();
 
     for (const r of recebimentos) {
-      const existing = map.get(r.produtor_id) || { produtorNome: r.produtor_nome || "", saldoKg: 0 };
+      const existing = map.get(r.produtor_id) || { produtorNome: r.produtor_nome || "", saldoKg: 0, valorSaca: 0.15, lastDate: "" };
       existing.saldoKg += r.peso_liquido;
+      // Use the most recent recebimento's valor_armazenamento
+      if (r.data > existing.lastDate || r.created_at > existing.lastDate) {
+        existing.valorSaca = r.valor_armazenamento ?? 0.15;
+        existing.lastDate = r.data;
+      }
       map.set(r.produtor_id, existing);
     }
 
@@ -53,31 +53,27 @@ export default function ArmazenamentoPage() {
     }
 
     return Array.from(map.entries())
-      .map(([id, val]) => ({ produtorId: id, ...val }))
+      .map(([id, val]) => ({ produtorId: id, produtorNome: val.produtorNome, saldoKg: val.saldoKg, valorSaca: val.valorSaca }))
       .filter(p => p.saldoKg > 0)
       .sort((a, b) => a.produtorNome.localeCompare(b.produtorNome, "pt-BR"));
   }, [recebimentos, saidas]);
 
-  const vu = parseFloat(valorUnit) || 0;
-
   const previewItens = useMemo(() => {
     return saldoProdutores.map(p => {
       const sacos = Math.ceil(p.saldoKg / 60);
-      return { produtorNome: p.produtorNome, saldoKg: p.saldoKg, sacos, total: sacos * vu };
+      return { produtorNome: p.produtorNome, saldoKg: p.saldoKg, sacos, valorSaca: p.valorSaca, total: sacos * p.valorSaca };
     });
-  }, [saldoProdutores, vu]);
+  }, [saldoProdutores]);
 
   const totalGeral = previewItens.reduce((sum, i) => sum + i.total, 0);
 
   const handleGerarFatura = () => {
     if (!periodo) { toast.error("Informe o período da fatura."); return; }
     if (previewItens.length === 0) { toast.error("Nenhum produtor com saldo positivo."); return; }
-
     const novaFatura: FaturaArmazenamento = {
       id: crypto.randomUUID(),
       periodo,
       geradoEm: new Date().toISOString(),
-      valorUnitario: vu,
       itens: previewItens,
       totalGeral,
       status: "pendente",
@@ -111,15 +107,13 @@ export default function ArmazenamentoPage() {
           <Warehouse className="h-6 w-6 text-primary" />
           <h1 className="page-title">Armazenamento</h1>
         </div>
-        <p className="page-subtitle">Faturamento calculado automaticamente com base no saldo de estoque</p>
+        <p className="page-subtitle">Faturamento calculado automaticamente — valor por saca definido no Recebimento</p>
       </div>
 
-      {/* Preview — Saldo atual por produtor */}
       <div className="form-section space-y-4">
         <h2 className="font-display font-semibold text-lg text-foreground">Saldo Atual por Produtor</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2"><Label>Período da Fatura *</Label><Input value={periodo} onChange={e => setPeriodo(e.target.value)} placeholder="Mar/2026 - 1ª Quinzena" /></div>
-          <div className="space-y-2"><Label>Valor por Saco (R$)</Label><Input type="number" step="0.01" value={valorUnit} onChange={e => setValorUnit(e.target.value)} /></div>
         </div>
 
         <div className="overflow-x-auto">
@@ -127,12 +121,13 @@ export default function ArmazenamentoPage() {
             <TableHeader><TableRow>
               <TableHead>Produtor</TableHead>
               <TableHead className="text-right">Saldo (Kg)</TableHead>
-              <TableHead className="text-right">Sacos (÷50)</TableHead>
-              <TableHead className="text-right">Valor Armazenamento</TableHead>
+              <TableHead className="text-right">Sacos (÷60)</TableHead>
+              <TableHead className="text-right">R$/Saca</TableHead>
+              <TableHead className="text-right">Total Armazenamento</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {previewItens.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum produtor com saldo positivo.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum produtor com saldo positivo.</TableCell></TableRow>
               ) : (
                 <>
                   {previewItens.map((item, i) => (
@@ -140,11 +135,12 @@ export default function ArmazenamentoPage() {
                       <TableCell className="font-medium">{item.produtorNome}</TableCell>
                       <TableCell className="text-right">{fmtKg(item.saldoKg)}</TableCell>
                       <TableCell className="text-right">{item.sacos.toLocaleString("pt-BR")}</TableCell>
+                      <TableCell className="text-right">{fmt(item.valorSaca)}</TableCell>
                       <TableCell className="text-right font-semibold">{fmt(item.total)}</TableCell>
                     </TableRow>
                   ))}
                   <TableRow className="bg-muted/50 font-bold">
-                    <TableCell colSpan={3} className="text-right">Total Geral</TableCell>
+                    <TableCell colSpan={4} className="text-right">Total Geral</TableCell>
                     <TableCell className="text-right text-primary">{fmt(totalGeral)}</TableCell>
                   </TableRow>
                 </>
@@ -158,7 +154,6 @@ export default function ArmazenamentoPage() {
         </Button>
       </div>
 
-      {/* Faturas geradas */}
       {faturas.length > 0 && (
         <div className="form-section space-y-4">
           <h2 className="font-display font-semibold text-lg text-foreground">Faturas Geradas</h2>
@@ -167,7 +162,6 @@ export default function ArmazenamentoPage() {
               <TableHeader><TableRow>
                 <TableHead>Período</TableHead>
                 <TableHead>Gerada em</TableHead>
-                <TableHead className="text-right">Valor Unit.</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead className="w-16">Ações</TableHead>
@@ -177,14 +171,9 @@ export default function ArmazenamentoPage() {
                   <TableRow key={f.id}>
                     <TableCell className="font-medium">{f.periodo}</TableCell>
                     <TableCell>{new Date(f.geradoEm).toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell className="text-right">{fmt(f.valorUnitario)}</TableCell>
                     <TableCell className="text-right font-semibold">{fmt(f.totalGeral)}</TableCell>
                     <TableCell className="text-center">
-                      <Badge
-                        variant={f.status === "pago" ? "default" : "destructive"}
-                        className="cursor-pointer"
-                        onClick={() => toggleStatus(f.id)}
-                      >
+                      <Badge variant={f.status === "pago" ? "default" : "destructive"} className="cursor-pointer" onClick={() => toggleStatus(f.id)}>
                         {f.status === "pago" ? "Pago" : "Pendente"}
                       </Badge>
                     </TableCell>
