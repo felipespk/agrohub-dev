@@ -83,7 +83,7 @@ export default function SaidaVendaPage() {
               <SelectContent>{categorias.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div className="space-y-2"><Label>Classificação</Label><Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Classificação</Label><Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(maskClassificacao(e.target.value))} /></div>
           <div className="space-y-2"><Label>Kgs Expedidos *</Label><Input type="number" placeholder="15000" value={kgsExpedidos} onChange={e => setKgsExpedidos(e.target.value)} /></div>
         </div>
         <div className="flex gap-2">

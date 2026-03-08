@@ -68,7 +68,7 @@ export default function RecebimentoPage() {
       toast.error("Preencha todos os campos obrigatórios."); return;
     }
     const entry = {
-      data, placa_caminhao: placa.toUpperCase(),
+      data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(),
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
       peso_bruto: parseFloat(pesoBruto), umidade_inicial: parseFloat(umidadeInicial),
       umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,

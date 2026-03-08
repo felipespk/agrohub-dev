@@ -255,7 +255,7 @@ function CompradoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
             <DialogHeader><DialogTitle>{editingId ? "Editar Comprador" : "Novo Comprador"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome do comprador" /></div>
-              <div className="space-y-2"><Label>Contato</Label><Input value={contato} onChange={e => setContato(e.target.value)} placeholder="(00) 00000-0000" /></div>
+              <div className="space-y-2"><Label>Contato</Label><Input value={contato} onChange={e => setContato(maskTelefone(e.target.value))} placeholder="(00) 00000-0000" /></div>
               <div className="flex gap-2">
                 <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                   <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
