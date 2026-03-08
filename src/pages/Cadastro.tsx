@@ -54,9 +54,9 @@ function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   };
 
   const handleEdit = (p: Produtor) => {
-    setTipoDocumento(p.tipo_documento); setDocumento(p.documento); setNome(p.nome);
+    setTipoDocumento(p.tipo_documento); setDocumento(maskDocumento(p.documento)); setNome(p.nome);
     setFazenda(p.fazenda); setEnderecoFazenda(p.endereco_fazenda); setCidade(p.cidade);
-    setEstado(p.estado); setInscricaoEstadual(p.inscricao_estadual); setTelefone(p.telefone);
+    setEstado(p.estado); setInscricaoEstadual(p.inscricao_estadual); setTelefone(maskTelefone(p.telefone));
     setEditingId(p.id); setOpen(true);
   };
 
