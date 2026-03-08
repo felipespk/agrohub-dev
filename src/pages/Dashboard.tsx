@@ -46,8 +46,11 @@ export default function Dashboard() {
       const nome = r.tipo_grao_nome || "Outros";
       map.set(nome, (map.get(nome) || 0) + r.peso_liquido);
     });
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [recebimentos]);
+    const grainSlices = Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+    const totalArmazenado = grainSlices.reduce((s, g) => s + g.value, 0);
+    const espacoVazio = Math.max(0, capacidadeSilo - totalArmazenado);
+    return { slices: [...grainSlices, { name: "Espaço Vazio", value: espacoVazio }], totalArmazenado };
+  }, [recebimentos, capacidadeSilo]);
 
   const ultimasMovimentacoes = useMemo(() => {
     const entradas = recebimentos.slice(0, 5).map(r => ({
