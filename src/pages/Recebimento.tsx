@@ -18,7 +18,7 @@ export default function RecebimentoPage() {
   const [pesoBruto, setPesoBruto] = useState("");
   const [umidadeInicial, setUmidadeInicial] = useState("");
   const [impureza, setImpureza] = useState("");
-  const [taxaSecagem, setTaxaSecagem] = useState("8.5");
+  const [taxaSecagem, setTaxaSecagem] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const umidadeFinalAlvo = 12;
 
@@ -37,7 +37,7 @@ export default function RecebimentoPage() {
 
   const clearForm = () => {
     setData(new Date().toISOString().split("T")[0]);
-    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem("8.5");
+    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem("");
     setEditingId(null);
   };
 
