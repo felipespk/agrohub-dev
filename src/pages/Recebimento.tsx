@@ -78,7 +78,13 @@ export default function RecebimentoPage() {
       if (ok) { toast.success("Recebimento atualizado!"); clearForm(); }
     } else {
       const row = await addRecebimento(entry);
-      if (row) toast.success(`Entrada salva! Peso líquido: ${calculos.peso_liquido.toFixed(0)} Kg`);
+      if (row) {
+        toast.success(`Entrada salva! Peso líquido: ${calculos.peso_liquido.toFixed(0)} Kg`);
+        setPlaca("");
+        setPesoBruto("");
+        setUmidadeInicial("");
+        setImpureza("");
+      }
     }
   };
 
