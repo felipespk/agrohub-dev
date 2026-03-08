@@ -9,6 +9,7 @@ import { useAppData, Produtor, TipoGrao, Comprador } from "@/contexts/AppContext
 import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Edit2, X, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { maskDocumento, maskTelefone } from "@/lib/masks";
 
 export default function CadastroPage() {
   const ctx = useAppData();
