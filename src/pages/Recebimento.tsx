@@ -79,7 +79,7 @@ export default function RecebimentoPage() {
               <Select value={produtorId} onValueChange={setProdutorId}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
-                  {produtores.map((p) => (
+                  {[...produtores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                   ))}
                 </SelectContent>
