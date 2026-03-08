@@ -1,6 +1,25 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { Produtor, TipoGrao, Comprador, Recebimento, Saida, QuebraTecnica } from "@/types";
 import { produtoresMock, tiposGraoMock, compradoresMock, recebimentosMock, saidasMock, quebrasMock } from "@/data/mock-data";
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function usePersistedState<T>(key: string, fallback: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const [state, setState] = useState<T>(() => loadFromStorage(key, fallback));
+
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(state));
+  }, [key, state]);
+
+  return [state, setState];
+}
 
 interface AppContextType {
   produtores: Produtor[];
@@ -20,12 +39,12 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [produtores, setProdutores] = useState<Produtor[]>(produtoresMock);
-  const [tiposGrao, setTiposGrao] = useState<TipoGrao[]>(tiposGraoMock);
-  const [compradores, setCompradores] = useState<Comprador[]>(compradoresMock);
-  const [recebimentos, setRecebimentos] = useState<Recebimento[]>(recebimentosMock);
-  const [saidas, setSaidas] = useState<Saida[]>(saidasMock);
-  const [quebras, setQuebras] = useState<QuebraTecnica[]>(quebrasMock);
+  const [produtores, setProdutores] = usePersistedState<Produtor[]>("gc_produtores", produtoresMock);
+  const [tiposGrao, setTiposGrao] = usePersistedState<TipoGrao[]>("gc_tiposGrao", tiposGraoMock);
+  const [compradores, setCompradores] = usePersistedState<Comprador[]>("gc_compradores", compradoresMock);
+  const [recebimentos, setRecebimentos] = usePersistedState<Recebimento[]>("gc_recebimentos", recebimentosMock);
+  const [saidas, setSaidas] = usePersistedState<Saida[]>("gc_saidas", saidasMock);
+  const [quebras, setQuebras] = usePersistedState<QuebraTecnica[]>("gc_quebras", quebrasMock);
 
   return (
     <AppContext.Provider value={{
