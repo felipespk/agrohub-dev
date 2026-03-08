@@ -1,17 +1,20 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
 } from "recharts";
-import { Package, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Wheat, TrendingUp, TrendingDown } from "lucide-react";
+import { Package, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Wheat, TrendingUp, TrendingDown, Settings2, Check } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useAppData } from "@/contexts/AppContext";
 
 const PIE_COLORS = [
   "hsl(152, 45%, 28%)", "hsl(42, 80%, 55%)", "hsl(210, 50%, 45%)",
   "hsl(350, 60%, 50%)", "hsl(280, 40%, 50%)",
 ];
+const EMPTY_COLOR = "hsl(210, 10%, 90%)";
 
 export default function Dashboard() {
   const { recebimentos, saidas, quebras } = useAppData();
