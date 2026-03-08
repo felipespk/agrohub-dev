@@ -109,7 +109,7 @@ function ProdutoresTab({ produtores, setProdutores }: { produtores: Produtor[]; 
             <TableHead>Nome</TableHead><TableHead>Documento</TableHead><TableHead>Fazenda</TableHead><TableHead>Cidade/UF</TableHead><TableHead>Telefone</TableHead><TableHead className="w-20">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {produtores.map(p => (
+            {[...produtores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.nome}</TableCell>
                 <TableCell className="font-mono text-sm">{p.tipoDocumento}: {p.documento}</TableCell>
