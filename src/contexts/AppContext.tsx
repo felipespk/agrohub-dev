@@ -61,12 +61,16 @@ export interface Saida {
   data: string;
   placa_caminhao: string;
   comprador_id: string;
+  produtor_id?: string | null;
+  tipo_grao_id?: string | null;
   classificacao: string;
   kgs_expedidos: number;
   categoria: string;
   created_at: string;
   // Joined
   comprador_nome?: string;
+  produtor_nome?: string;
+  tipo_grao_nome?: string;
 }
 
 export interface QuebraTecnica {
