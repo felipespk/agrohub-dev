@@ -7,12 +7,14 @@ import { FileBarChart, Download } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RelatorioPage() {
-  const { produtores, tiposGrao, recebimentos } = useAppData();
+  const { produtores, tiposGrao, recebimentos, saidas } = useAppData();
   const [filtroProdutorId, setFiltroProdutorId] = useState("todos");
   const [filtroGraoId, setFiltroGraoId] = useState("todos");
 
   const saldo = useMemo(() => {
     const map = new Map<string, { produtorNome: string; tipoGraoNome: string; kgsEntrada: number; kgsSecagem: number; kgsSaida: number }>();
+
+    // Sum recebimentos (entradas)
     for (const r of recebimentos) {
       if (filtroProdutorId !== "todos" && r.produtor_id !== filtroProdutorId) continue;
       if (filtroGraoId !== "todos" && r.tipo_grao_id !== filtroGraoId) continue;
@@ -22,14 +24,31 @@ export default function RelatorioPage() {
       existing.kgsSecagem += (r.desconto_secagem_kg || 0);
       map.set(key, existing);
     }
-    return Array.from(map.entries()).map(([key, val]) => ({ key, ...val, saldo: val.kgsEntrada - val.kgsSaida }));
-  }, [filtroProdutorId, filtroGraoId, recebimentos]);
+
+    // Subtract saídas
+    for (const s of saidas) {
+      if (!s.produtor_id || !s.tipo_grao_id) continue;
+      if (filtroProdutorId !== "todos" && s.produtor_id !== filtroProdutorId) continue;
+      if (filtroGraoId !== "todos" && s.tipo_grao_id !== filtroGraoId) continue;
+      const key = `${s.produtor_id}-${s.tipo_grao_id}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.kgsSaida += s.kgs_expedidos;
+      }
+    }
+
+    return Array.from(map.entries()).map(([key, val]) => ({
+      key,
+      ...val,
+      saldo: val.kgsEntrada - val.kgsSaida,
+    }));
+  }, [filtroProdutorId, filtroGraoId, recebimentos, saidas]);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   const exportCSV = () => {
-    const header = "Produtor,Tipo de Grão,Kgs Entrada (Líquido),Retido Secagem (Kg),Saldo\n";
-    const rows = saldo.map(s => `${s.produtorNome},${s.tipoGraoNome},${fmt(s.kgsEntrada)},${fmt(s.kgsSecagem)},${fmt(s.saldo)}`).join("\n");
+    const header = "Produtor,Tipo de Grão,Entrada (Líquido Kg),Retido Secagem (Kg),Saída (Kg),Saldo Atual (Kg)\n";
+    const rows = saldo.map(s => `${s.produtorNome},${s.tipoGraoNome},${fmt(s.kgsEntrada)},${fmt(s.kgsSecagem)},${fmt(s.kgsSaida)},${fmt(s.saldo)}`).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "relatorio-estoque.csv"; a.click();
@@ -40,8 +59,8 @@ export default function RelatorioPage() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <div className="flex items-center gap-2"><FileBarChart className="h-6 w-6 text-primary" /><h1 className="page-title">Relatório</h1></div>
-        <p className="page-subtitle">Saldo de estoque por produtor e tipo de grão</p>
+        <div className="flex items-center gap-2"><FileBarChart className="h-6 w-6 text-primary" /><h1 className="page-title">Relatório de Estoque</h1></div>
+        <p className="page-subtitle">Saldo calculado automaticamente a partir dos recebimentos e saídas</p>
       </div>
       <div className="form-section space-y-4">
         <div className="flex flex-wrap items-end gap-4">
@@ -73,17 +92,19 @@ export default function RelatorioPage() {
               <TableHead>Produtor</TableHead><TableHead>Tipo de Grão</TableHead>
               <TableHead className="text-right">Entrada (Líquido Kg)</TableHead>
               <TableHead className="text-right">Retido Secagem (Kg)</TableHead>
-              <TableHead className="text-right">Saldo Final (Kg)</TableHead>
+              <TableHead className="text-right">Saída (Kg)</TableHead>
+              <TableHead className="text-right">Saldo Atual (Kg)</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {saldo.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum registro encontrado.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum registro encontrado.</TableCell></TableRow>
               ) : saldo.map(s => (
                 <TableRow key={s.key}>
                   <TableCell className="font-medium">{s.produtorNome}</TableCell>
                   <TableCell>{s.tipoGraoNome}</TableCell>
                   <TableCell className="text-right">{fmt(s.kgsEntrada)}</TableCell>
                   <TableCell className="text-right text-amber-600 font-medium">{fmt(s.kgsSecagem)}</TableCell>
+                  <TableCell className="text-right text-destructive font-medium">{fmt(s.kgsSaida)}</TableCell>
                   <TableCell className="text-right font-semibold text-primary">{fmt(s.saldo)}</TableCell>
                 </TableRow>
               ))}

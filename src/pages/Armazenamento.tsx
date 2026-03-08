@@ -1,67 +1,108 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Armazenamento } from "@/types";
-import { Warehouse, Save, Edit2, Trash2, X } from "lucide-react";
+import { useAppData } from "@/contexts/AppContext";
+import { Warehouse, Receipt, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-const mockArmazenamento: Armazenamento[] = [
-  { id: "1", periodo: "Mar/2026 - 1ª Quinzena", toneladasArmazenadas: 50.71, quantidadeSacos: 845, valorUnitario: 3.5, total: 2957.5, status: "pago" },
-  { id: "2", periodo: "Mar/2026 - 2ª Quinzena", toneladasArmazenadas: 48.2, quantidadeSacos: 803, valorUnitario: 3.5, total: 2811.0, status: "pendente" },
-];
+interface FaturaArmazenamento {
+  id: string;
+  periodo: string;
+  geradoEm: string;
+  valorUnitario: number;
+  itens: { produtorNome: string; saldoKg: number; sacos: number; total: number }[];
+  totalGeral: number;
+  status: "pendente" | "pago";
+}
+
+const STORAGE_KEY = "faturas_armazenamento";
+
+function loadFaturas(): FaturaArmazenamento[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch { return []; }
+}
+
+function saveFaturas(f: FaturaArmazenamento[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(f));
+}
 
 export default function ArmazenamentoPage() {
-  const [registros, setRegistros] = useState<Armazenamento[]>(mockArmazenamento);
+  const { recebimentos, saidas } = useAppData();
+  const [faturas, setFaturas] = useState<FaturaArmazenamento[]>(loadFaturas);
   const [periodo, setPeriodo] = useState("");
-  const [toneladas, setToneladas] = useState("");
-  const [sacos, setSacos] = useState("");
-  const [valorUnit, setValorUnit] = useState("3.50");
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [valorUnit, setValorUnit] = useState("0.15");
 
-  const clearForm = () => {
-    setPeriodo(""); setToneladas(""); setSacos(""); setValorUnit("3.50");
-    setEditingId(null);
-  };
+  // Compute per-produtor stock balance
+  const saldoProdutores = useMemo(() => {
+    const map = new Map<string, { produtorNome: string; saldoKg: number }>();
 
-  const handleSalvar = () => {
-    if (!periodo || !toneladas || !sacos) { toast.error("Preencha todos os campos."); return; }
-    const ton = parseFloat(toneladas);
-    const qtd = parseInt(sacos);
-    const vu = parseFloat(valorUnit) || 3.5;
-    const total = qtd * vu;
-
-    if (editingId) {
-      setRegistros(prev => prev.map(r => r.id === editingId ? { ...r, periodo, toneladasArmazenadas: ton, quantidadeSacos: qtd, valorUnitario: vu, total } : r));
-      toast.success("Lançamento atualizado!");
-      setEditingId(null);
-    } else {
-      setRegistros(prev => [{ id: crypto.randomUUID(), periodo, toneladasArmazenadas: ton, quantidadeSacos: qtd, valorUnitario: vu, total, status: "pendente" }, ...prev]);
-      toast.success("Registro de armazenamento adicionado!");
+    for (const r of recebimentos) {
+      const existing = map.get(r.produtor_id) || { produtorNome: r.produtor_nome || "", saldoKg: 0 };
+      existing.saldoKg += r.peso_liquido;
+      map.set(r.produtor_id, existing);
     }
-  };
 
-  const handleEdit = (r: Armazenamento) => {
-    setPeriodo(r.periodo);
-    setToneladas(String(r.toneladasArmazenadas));
-    setSacos(String(r.quantidadeSacos));
-    setValorUnit(String(r.valorUnitario));
-    setEditingId(r.id);
-  };
+    for (const s of saidas) {
+      if (!s.produtor_id) continue;
+      const existing = map.get(s.produtor_id);
+      if (existing) existing.saldoKg -= s.kgs_expedidos;
+    }
 
-  const handleDelete = (id: string) => {
-    setRegistros(prev => prev.filter(r => r.id !== id));
-    toast.success("Registro removido.");
-    if (editingId === id) clearForm();
+    return Array.from(map.entries())
+      .map(([id, val]) => ({ produtorId: id, ...val }))
+      .filter(p => p.saldoKg > 0)
+      .sort((a, b) => a.produtorNome.localeCompare(b.produtorNome, "pt-BR"));
+  }, [recebimentos, saidas]);
+
+  const vu = parseFloat(valorUnit) || 0;
+
+  const previewItens = useMemo(() => {
+    return saldoProdutores.map(p => {
+      const sacos = Math.ceil(p.saldoKg / 50);
+      return { produtorNome: p.produtorNome, saldoKg: p.saldoKg, sacos, total: sacos * vu };
+    });
+  }, [saldoProdutores, vu]);
+
+  const totalGeral = previewItens.reduce((sum, i) => sum + i.total, 0);
+
+  const handleGerarFatura = () => {
+    if (!periodo) { toast.error("Informe o período da fatura."); return; }
+    if (previewItens.length === 0) { toast.error("Nenhum produtor com saldo positivo."); return; }
+
+    const novaFatura: FaturaArmazenamento = {
+      id: crypto.randomUUID(),
+      periodo,
+      geradoEm: new Date().toISOString(),
+      valorUnitario: vu,
+      itens: previewItens,
+      totalGeral,
+      status: "pendente",
+    };
+    const updated = [novaFatura, ...faturas];
+    setFaturas(updated);
+    saveFaturas(updated);
+    toast.success(`Fatura "${periodo}" gerada com sucesso!`);
   };
 
   const toggleStatus = (id: string) => {
-    setRegistros(prev => prev.map(r => r.id === id ? { ...r, status: r.status === "pago" ? "pendente" : "pago" } : r));
+    const updated = faturas.map(f => f.id === id ? { ...f, status: (f.status === "pago" ? "pendente" : "pago") as "pago" | "pendente" } : f);
+    setFaturas(updated);
+    saveFaturas(updated);
+  };
+
+  const handleDelete = (id: string) => {
+    const updated = faturas.filter(f => f.id !== id);
+    setFaturas(updated);
+    saveFaturas(updated);
+    toast.success("Fatura removida.");
   };
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const fmtKg = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -70,76 +111,93 @@ export default function ArmazenamentoPage() {
           <Warehouse className="h-6 w-6 text-primary" />
           <h1 className="page-title">Armazenamento</h1>
         </div>
-        <p className="page-subtitle">Faturamento quinzenal/mensal de armazenamento</p>
+        <p className="page-subtitle">Faturamento calculado automaticamente com base no saldo de estoque</p>
       </div>
 
-      <div className="form-section space-y-5">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display font-semibold text-lg text-foreground">{editingId ? "Editando Lançamento" : "Novo Lançamento"}</h2>
-          {editingId && <Button variant="outline" size="sm" onClick={clearForm} className="gap-1"><X className="h-4 w-4" /> Cancelar Edição</Button>}
+      {/* Preview — Saldo atual por produtor */}
+      <div className="form-section space-y-4">
+        <h2 className="font-display font-semibold text-lg text-foreground">Saldo Atual por Produtor</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-2"><Label>Período da Fatura *</Label><Input value={periodo} onChange={e => setPeriodo(e.target.value)} placeholder="Mar/2026 - 1ª Quinzena" /></div>
+          <div className="space-y-2"><Label>Valor por Saco (R$)</Label><Input type="number" step="0.01" value={valorUnit} onChange={e => setValorUnit(e.target.value)} /></div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-2"><Label>Período *</Label><Input value={periodo} onChange={e => setPeriodo(e.target.value)} placeholder="Mar/2026 - 1ª Quinzena" /></div>
-          <div className="space-y-2"><Label>Toneladas Armazenadas *</Label><Input type="number" value={toneladas} onChange={e => setToneladas(e.target.value)} placeholder="50" /></div>
-          <div className="space-y-2"><Label>Quantidade de Sacos *</Label><Input type="number" value={sacos} onChange={e => setSacos(e.target.value)} placeholder="845" /></div>
-          <div className="space-y-2"><Label>Valor Unitário (R$)</Label><Input type="number" step="0.01" value={valorUnit} onChange={e => setValorUnit(e.target.value)} /></div>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
-            <Save className="h-4 w-4" /> {editingId ? "Atualizar Lançamento" : "Salvar Lançamento"}
-          </Button>
-          {!editingId && (
-            <Button variant="outline" onClick={clearForm} className="gap-2">
-              <X className="h-4 w-4" /> Limpar Formulário
-            </Button>
-          )}
-        </div>
-      </div>
 
-      <div className="form-section">
-        <h2 className="font-display font-semibold text-lg text-foreground mb-4">Cobranças de Armazenamento</h2>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Período</TableHead>
-                <TableHead className="text-right">Toneladas</TableHead>
-                <TableHead className="text-right">Sacos</TableHead>
-                <TableHead className="text-right">Valor Unit.</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="w-24">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow>
+              <TableHead>Produtor</TableHead>
+              <TableHead className="text-right">Saldo (Kg)</TableHead>
+              <TableHead className="text-right">Sacos (÷50)</TableHead>
+              <TableHead className="text-right">Valor Armazenamento</TableHead>
+            </TableRow></TableHeader>
             <TableBody>
-              {registros.map(r => (
-                <TableRow key={r.id} className={editingId === r.id ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
-                  <TableCell className="font-medium">{r.periodo}</TableCell>
-                  <TableCell className="text-right">{r.toneladasArmazenadas.toLocaleString("pt-BR")}</TableCell>
-                  <TableCell className="text-right">{r.quantidadeSacos.toLocaleString("pt-BR")}</TableCell>
-                  <TableCell className="text-right">{fmt(r.valorUnitario)}</TableCell>
-                  <TableCell className="text-right font-semibold">{fmt(r.total)}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge
-                      variant={r.status === "pago" ? "default" : "destructive"}
-                      className="cursor-pointer"
-                      onClick={() => toggleStatus(r.id)}
-                    >
-                      {r.status === "pago" ? "Pago" : "Pendente"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(r)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {previewItens.length === 0 ? (
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum produtor com saldo positivo.</TableCell></TableRow>
+              ) : (
+                <>
+                  {previewItens.map((item, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">{item.produtorNome}</TableCell>
+                      <TableCell className="text-right">{fmtKg(item.saldoKg)}</TableCell>
+                      <TableCell className="text-right">{item.sacos.toLocaleString("pt-BR")}</TableCell>
+                      <TableCell className="text-right font-semibold">{fmt(item.total)}</TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="bg-muted/50 font-bold">
+                    <TableCell colSpan={3} className="text-right">Total Geral</TableCell>
+                    <TableCell className="text-right text-primary">{fmt(totalGeral)}</TableCell>
+                  </TableRow>
+                </>
+              )}
             </TableBody>
           </Table>
         </div>
+
+        <Button onClick={handleGerarFatura} className="gap-2" disabled={previewItens.length === 0}>
+          <Receipt className="h-4 w-4" /> Gerar Faturamento do Período
+        </Button>
       </div>
+
+      {/* Faturas geradas */}
+      {faturas.length > 0 && (
+        <div className="form-section space-y-4">
+          <h2 className="font-display font-semibold text-lg text-foreground">Faturas Geradas</h2>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Período</TableHead>
+                <TableHead>Gerada em</TableHead>
+                <TableHead className="text-right">Valor Unit.</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="w-16">Ações</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {faturas.map(f => (
+                  <TableRow key={f.id}>
+                    <TableCell className="font-medium">{f.periodo}</TableCell>
+                    <TableCell>{new Date(f.geradoEm).toLocaleDateString("pt-BR")}</TableCell>
+                    <TableCell className="text-right">{fmt(f.valorUnitario)}</TableCell>
+                    <TableCell className="text-right font-semibold">{fmt(f.totalGeral)}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant={f.status === "pago" ? "default" : "destructive"}
+                        className="cursor-pointer"
+                        onClick={() => toggleStatus(f.id)}
+                      >
+                        {f.status === "pago" ? "Pago" : "Pendente"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(f.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
