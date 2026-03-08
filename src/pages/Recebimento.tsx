@@ -46,7 +46,7 @@ export default function RecebimentoPage() {
 
   const clearForm = () => {
     setData(new Date().toISOString().split("T")[0]);
-    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo("");
+    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setValorArmazenamento("0.15");
     setEditingId(null);
   };
 
