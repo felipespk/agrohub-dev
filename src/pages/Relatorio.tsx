@@ -2,30 +2,47 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import { useAppData } from "@/contexts/AppContext";
-import { FileBarChart, Download } from "lucide-react";
+import { FileBarChart, Download, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { toast } from "sonner";
+
+interface LancamentoUnificado {
+  id: string;
+  data: string;
+  tipo: "entrada" | "saida";
+  placa: string;
+  kg: number;
+}
 
 export default function RelatorioPage() {
   const { produtores, tiposGrao, recebimentos, saidas } = useAppData();
   const [filtroProdutorId, setFiltroProdutorId] = useState("todos");
   const [filtroGraoId, setFiltroGraoId] = useState("todos");
 
-  const saldo = useMemo(() => {
-    const map = new Map<string, { produtorNome: string; tipoGraoNome: string; kgsEntrada: number; kgsSecagem: number; kgsSaida: number }>();
+  const grupos = useMemo(() => {
+    const map = new Map<string, {
+      produtorId: string; tipoGraoId: string;
+      produtorNome: string; tipoGraoNome: string;
+      kgsEntrada: number; kgsSaida: number;
+      lancamentos: LancamentoUnificado[];
+    }>();
 
-    // Sum recebimentos (entradas)
     for (const r of recebimentos) {
       if (filtroProdutorId !== "todos" && r.produtor_id !== filtroProdutorId) continue;
       if (filtroGraoId !== "todos" && r.tipo_grao_id !== filtroGraoId) continue;
       const key = `${r.produtor_id}-${r.tipo_grao_id}`;
-      const existing = map.get(key) || { produtorNome: r.produtor_nome || "", tipoGraoNome: r.tipo_grao_nome || "", kgsEntrada: 0, kgsSecagem: 0, kgsSaida: 0 };
+      const existing = map.get(key) || {
+        produtorId: r.produtor_id, tipoGraoId: r.tipo_grao_id,
+        produtorNome: r.produtor_nome || "", tipoGraoNome: r.tipo_grao_nome || "",
+        kgsEntrada: 0, kgsSaida: 0, lancamentos: [],
+      };
       existing.kgsEntrada += r.peso_liquido;
-      existing.kgsSecagem += (r.desconto_secagem_kg || 0);
+      existing.lancamentos.push({ id: r.id, data: r.data, tipo: "entrada", placa: r.placa_caminhao, kg: r.peso_liquido });
       map.set(key, existing);
     }
 
-    // Subtract saídas
     for (const s of saidas) {
       if (!s.produtor_id || !s.tipo_grao_id) continue;
       if (filtroProdutorId !== "todos" && s.produtor_id !== filtroProdutorId) continue;
@@ -34,24 +51,26 @@ export default function RelatorioPage() {
       const existing = map.get(key);
       if (existing) {
         existing.kgsSaida += s.kgs_expedidos;
+        existing.lancamentos.push({ id: s.id, data: s.data, tipo: "saida", placa: s.placa_caminhao, kg: s.kgs_expedidos });
       }
     }
 
-    return Array.from(map.entries()).map(([key, val]) => ({
-      key,
-      ...val,
-      saldo: val.kgsEntrada - val.kgsSaida,
-    }));
+    return Array.from(map.entries()).map(([key, val]) => {
+      val.lancamentos.sort((a, b) => a.data.localeCompare(b.data));
+      return { key, ...val, saldo: val.kgsEntrada - val.kgsSaida };
+    });
   }, [filtroProdutorId, filtroGraoId, recebimentos, saidas]);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   const exportCSV = () => {
-    const header = "Produtor,Tipo de Grão,Entrada (Líquido Kg),Retido Secagem (Kg),Saída (Kg),Saldo Atual (Kg)\n";
-    const rows = saldo.map(s => `${s.produtorNome},${s.tipoGraoNome},${fmt(s.kgsEntrada)},${fmt(s.kgsSecagem)},${fmt(s.kgsSaida)},${fmt(s.saldo)}`).join("\n");
+    const header = "Produtor,Tipo de Grão,Data,Operação,Placa,Kg\n";
+    const rows = grupos.flatMap(g =>
+      g.lancamentos.map(l => `${g.produtorNome},${g.tipoGraoNome},${l.data},${l.tipo === "entrada" ? "Entrada" : "Saída"},${l.placa},${l.kg}`)
+    ).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "relatorio-estoque.csv"; a.click();
+    const a = document.createElement("a"); a.href = url; a.download = "extrato-estoque.csv"; a.click();
     URL.revokeObjectURL(url);
     toast.success("CSV exportado!");
   };
@@ -59,9 +78,10 @@ export default function RelatorioPage() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <div className="flex items-center gap-2"><FileBarChart className="h-6 w-6 text-primary" /><h1 className="page-title">Relatório de Estoque</h1></div>
-        <p className="page-subtitle">Saldo calculado automaticamente a partir dos recebimentos e saídas</p>
+        <div className="flex items-center gap-2"><FileBarChart className="h-6 w-6 text-primary" /><h1 className="page-title">Extrato de Estoque</h1></div>
+        <p className="page-subtitle">Histórico detalhado de movimentações por produtor e tipo de grão</p>
       </div>
+
       <div className="form-section space-y-4">
         <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-2 min-w-[200px]">
@@ -86,31 +106,83 @@ export default function RelatorioPage() {
           </div>
           <Button variant="outline" onClick={exportCSV} className="gap-2"><Download className="h-4 w-4" /> Exportar CSV</Button>
         </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Produtor</TableHead><TableHead>Tipo de Grão</TableHead>
-              <TableHead className="text-right">Entrada (Líquido Kg)</TableHead>
-              <TableHead className="text-right">Retido Secagem (Kg)</TableHead>
-              <TableHead className="text-right">Saída (Kg)</TableHead>
-              <TableHead className="text-right">Saldo Atual (Kg)</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {saldo.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum registro encontrado.</TableCell></TableRow>
-              ) : saldo.map(s => (
-                <TableRow key={s.key}>
-                  <TableCell className="font-medium">{s.produtorNome}</TableCell>
-                  <TableCell>{s.tipoGraoNome}</TableCell>
-                  <TableCell className="text-right">{fmt(s.kgsEntrada)}</TableCell>
-                  <TableCell className="text-right text-amber-600 font-medium">{fmt(s.kgsSecagem)}</TableCell>
-                  <TableCell className="text-right text-destructive font-medium">{fmt(s.kgsSaida)}</TableCell>
-                  <TableCell className="text-right font-semibold text-primary">{fmt(s.saldo)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+
+        {grupos.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12">Nenhum registro encontrado.</div>
+        ) : (
+          <Accordion type="multiple" className="space-y-3">
+            {grupos.map(g => (
+              <AccordionItem key={g.key} value={g.key} className="border rounded-lg overflow-hidden">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+                  <div className="flex flex-1 items-center justify-between gap-4 mr-4">
+                    <div className="flex items-center gap-3 text-left">
+                      <div>
+                        <span className="font-semibold text-foreground">{g.produtorNome}</span>
+                        <span className="mx-2 text-muted-foreground">·</span>
+                        <span className="text-muted-foreground">{g.tipoGraoNome}</span>
+                      </div>
+                      <Badge variant="outline" className="text-xs">{g.lancamentos.length} lançamentos</Badge>
+                    </div>
+                    <span className={`font-display font-bold text-lg tabular-nums ${g.saldo >= 0 ? "text-primary" : "text-destructive"}`}>
+                      {fmt(g.saldo)} Kg
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-0 pb-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead className="w-28">Data</TableHead>
+                          <TableHead className="w-32">Operação</TableHead>
+                          <TableHead>Placa</TableHead>
+                          <TableHead className="text-right">Kg</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {g.lancamentos.map(l => (
+                          <TableRow key={l.id}>
+                            <TableCell className="tabular-nums">{new Date(l.data).toLocaleDateString("pt-BR")}</TableCell>
+                            <TableCell>
+                              {l.tipo === "entrada" ? (
+                                <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 hover:bg-emerald-100 gap-1">
+                                  <ArrowDownToLine className="h-3 w-3" /> Entrada
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400 hover:bg-red-100 gap-1">
+                                  <ArrowUpFromLine className="h-3 w-3" /> Saída
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">{l.placa}</TableCell>
+                            <TableCell className={`text-right font-semibold tabular-nums ${l.tipo === "entrada" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                              {l.tipo === "entrada" ? "+" : "−"}{fmt(l.kg)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {/* Summary footer */}
+                  <div className="grid grid-cols-3 divide-x border-t bg-muted/20">
+                    <div className="p-3 text-center">
+                      <p className="text-xs text-muted-foreground">Total Entradas</p>
+                      <p className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">+{fmt(g.kgsEntrada)} Kg</p>
+                    </div>
+                    <div className="p-3 text-center">
+                      <p className="text-xs text-muted-foreground">Total Saídas</p>
+                      <p className="font-semibold text-red-600 dark:text-red-400 tabular-nums">−{fmt(g.kgsSaida)} Kg</p>
+                    </div>
+                    <div className="p-3 text-center">
+                      <p className="text-xs text-muted-foreground">Saldo Final</p>
+                      <p className={`font-bold text-lg tabular-nums ${g.saldo >= 0 ? "text-primary" : "text-destructive"}`}>{fmt(g.saldo)} Kg</p>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
       </div>
     </div>
   );
