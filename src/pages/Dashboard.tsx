@@ -17,7 +17,9 @@ const PIE_COLORS = [
 const EMPTY_COLOR = "hsl(210, 10%, 90%)";
 
 export default function Dashboard() {
-  const { recebimentos, saidas, quebras } = useAppData();
+  const { recebimentos, saidas, quebras, capacidadeSilo, setCapacidadeSilo } = useAppData();
+  const [editingCap, setEditingCap] = useState(false);
+  const [capInput, setCapInput] = useState(String(capacidadeSilo / 1000));
 
   const totalRecebido = recebimentos.reduce((s, r) => s + r.peso_liquido, 0);
   const totalExpedido = saidas.reduce((s, r) => s + r.kgs_expedidos, 0);
