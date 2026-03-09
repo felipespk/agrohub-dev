@@ -25,8 +25,9 @@ interface LancamentoUnificado {
   descontoImpurezaKg?: number;
   descontoSecagemKg?: number;
   totalDescontos?: number;
-  // Saída field
+  // Saída fields
   umidadeSaida?: number;
+  classificacao?: string;
 }
 
 export default function RelatorioPage() {
