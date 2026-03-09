@@ -116,7 +116,7 @@ export default function ExpedicaoPage() {
         produtor_id: s.produtor_id,
         categoria: s.categoria,
         kgs_expedidos: s.kgs_expedidos,
-        umidade_saida: umidade,
+        umidade_saida: umidadeReal,
         peso_ajustado: Math.max(0, peso_ajustado),
         ajuste_kg,
         tipo_ajuste,
