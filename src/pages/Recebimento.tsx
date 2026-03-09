@@ -296,6 +296,7 @@ export default function RecebimentoPage() {
                   <TableCell>{r.tipo_grao_nome}</TableCell>
                   <TableCell className="text-right tabular-nums">{r.peso_bruto.toLocaleString("pt-BR")}</TableCell>
                   <TableCell className="text-right tabular-nums">{r.umidade_inicial}%</TableCell>
+                  <TableCell className="text-right tabular-nums text-amber-600 dark:text-amber-400">{fmt(r.desconto_umidade_kg || 0)} Kg</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(r.desconto_impureza_kg || 0)} Kg</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(r.desconto_secagem_kg || 0)} Kg</TableCell>
                   <TableCell className="text-right font-semibold tabular-nums">{r.peso_liquido.toLocaleString("pt-BR")}</TableCell>
