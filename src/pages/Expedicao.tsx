@@ -118,6 +118,7 @@ export default function ExpedicaoPage() {
               <TableHead className="text-right">Peso Ajustado</TableHead>
               <TableHead className="text-right">Sacos</TableHead>
               <TableHead className="text-right">Toneladas</TableHead>
+              <TableHead className="text-right">Taxa (R$)</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {saidasComAjuste.map(s => (
@@ -145,6 +146,7 @@ export default function ExpedicaoPage() {
                   <TableCell className="text-right font-semibold tabular-nums text-primary">{fmtKg(s.peso_ajustado)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmtSacos(s.peso_ajustado)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmtTon(s.peso_ajustado)}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">{fmtBRL(s.valor_expedicao)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -157,6 +159,7 @@ export default function ExpedicaoPage() {
               <TableCell className="text-right font-bold tabular-nums text-primary">{fmtKg(totalPesoAjustado)}</TableCell>
               <TableCell className="text-right font-bold tabular-nums">{fmtSacos(totalPesoAjustado)}</TableCell>
               <TableCell className="text-right font-bold tabular-nums">{fmtTon(totalPesoAjustado)}</TableCell>
+              <TableCell className="text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{fmtBRL(totalValorExpedicao)}</TableCell>
             </TableRow></TableFooter>
           </Table>
         </div>
