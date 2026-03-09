@@ -182,14 +182,18 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   const { tiposGrao, addTipoGrao, updateTipoGrao, deleteTipoGrao } = ctx;
   const [nome, setNome] = useState("");
   const [umidade, setUmidade] = useState("12");
+  const [taxaAgio, setTaxaAgio] = useState("1.3");
+  const [taxaDesagio, setTaxaDesagio] = useState("1.5");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const clearForm = () => { setNome(""); setUmidade("12"); setEditingId(null); setErrors({}); };
+  const clearForm = () => { setNome(""); setUmidade("12"); setTaxaAgio("1.3"); setTaxaDesagio("1.5"); setEditingId(null); setErrors({}); };
 
   const handleEdit = (t: TipoGrao) => {
-    setNome(t.nome); setUmidade(String(t.umidade_padrao)); setEditingId(t.id); setOpen(true);
+    setNome(t.nome); setUmidade(String(t.umidade_padrao));
+    setTaxaAgio(String(t.taxa_agio)); setTaxaDesagio(String(t.taxa_desagio));
+    setEditingId(t.id); setOpen(true);
     setErrors({});
   };
 
@@ -200,11 +204,17 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
       return;
     }
     setErrors({});
+    const payload = {
+      nome: nome.trim(),
+      umidade_padrao: parseFloat(umidade) || 12,
+      taxa_agio: parseFloat(taxaAgio) || 1.3,
+      taxa_desagio: parseFloat(taxaDesagio) || 1.5,
+    };
     if (editingId) {
-      const ok = await updateTipoGrao(editingId, { nome: nome.trim(), umidade_padrao: parseFloat(umidade) || 12 });
+      const ok = await updateTipoGrao(editingId, payload);
       if (ok) { toast.success("Tipo de grão atualizado!"); clearForm(); setOpen(false); }
     } else {
-      const row = await addTipoGrao({ nome: nome.trim(), umidade_padrao: parseFloat(umidade) || 12 });
+      const row = await addTipoGrao(payload);
       if (row) { toast.success("Tipo de grão cadastrado!"); setOpen(false); }
     }
   };
@@ -233,7 +243,9 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
                 />
                 {errors.nome && <p className="text-xs text-destructive">{errors.nome}</p>}
               </div>
-              <div className="space-y-1"><Label>Umidade Padrão (%)</Label><Input type="number" value={umidade} onChange={e => setUmidade(e.target.value)} /></div>
+              <div className="space-y-1"><Label>Umidade Base (%)</Label><Input type="number" step="0.1" value={umidade} onChange={e => setUmidade(e.target.value)} /></div>
+              <div className="space-y-1"><Label>Taxa Ágio (%/ponto)</Label><Input type="number" step="0.1" value={taxaAgio} onChange={e => setTaxaAgio(e.target.value)} /><p className="text-xs text-muted-foreground">Acréscimo quando úmido acima da base</p></div>
+              <div className="space-y-1"><Label>Taxa Deságio (%/ponto)</Label><Input type="number" step="0.1" value={taxaDesagio} onChange={e => setTaxaDesagio(e.target.value)} /><p className="text-xs text-muted-foreground">Desconto quando seco abaixo da base</p></div>
               <div className="flex gap-2">
                 <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                   <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
@@ -246,12 +258,14 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
       </div>
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Padrão</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Base</TableHead><TableHead>Ágio (%)</TableHead><TableHead>Deságio (%)</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
             {tiposGrao.map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.nome}</TableCell>
                 <TableCell>{t.umidade_padrao}%</TableCell>
+                <TableCell>{t.taxa_agio}%</TableCell>
+                <TableCell>{t.taxa_desagio}%</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>

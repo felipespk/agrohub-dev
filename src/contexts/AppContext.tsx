@@ -23,6 +23,8 @@ export interface TipoGrao {
   user_id: string;
   nome: string;
   umidade_padrao: number;
+  taxa_agio: number;
+  taxa_desagio: number;
 }
 
 export interface Comprador {
@@ -69,6 +71,12 @@ export interface Saida {
   umidade_saida: number;
   categoria: string;
   valor_expedicao: number;
+  recebimento_id?: string | null;
+  umidade_combinada: number;
+  peso_ajustado: number;
+  dias_armazenados: number;
+  quinzenas_cobradas: number;
+  valor_armazenamento_exp: number;
   created_at: string;
   // Joined
   comprador_nome?: string;
