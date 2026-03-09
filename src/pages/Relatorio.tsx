@@ -199,10 +199,6 @@ export default function RelatorioPage() {
       right: { style: "thin", color: { argb: "FFD1D5DB" } },
     };
 
-    const parseDate = (d: string) => {
-      const [y, m, day] = d.split("-").map(Number);
-      return new Date(y, m - 1, day);
-    };
 
     // Add data rows
     for (const g of grupos) {
