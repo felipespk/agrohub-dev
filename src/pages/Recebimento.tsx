@@ -178,10 +178,11 @@ export default function RecebimentoPage() {
             <div className="space-y-1">
               <Label>Peso Bruto (Kg) *</Label>
               <Input
-                type="number"
-                placeholder="30000"
+                type="text"
+                inputMode="numeric"
+                placeholder="30.000"
                 value={pesoBruto}
-                onChange={e => { setPesoBruto(e.target.value); clearError("pesoBruto"); }}
+                onChange={e => { setPesoBruto(maskKg(e.target.value)); clearError("pesoBruto"); }}
                 className={cn(errors.pesoBruto && "border-destructive focus-visible:ring-destructive")}
               />
               {errors.pesoBruto && <p className="text-xs text-destructive">{errors.pesoBruto}</p>}

@@ -174,10 +174,11 @@ export default function SaidaVendaPage() {
           <div className="space-y-1">
             <Label>Peso (Kg) *</Label>
             <Input
-              type="number"
-              placeholder="15000"
+              type="text"
+              inputMode="numeric"
+              placeholder="15.000"
               value={kgsExpedidos}
-              onChange={e => { setKgsExpedidos(e.target.value); clearError("kgsExpedidos"); }}
+              onChange={e => { setKgsExpedidos(maskKg(e.target.value)); clearError("kgsExpedidos"); }}
               className={cn(errors.kgsExpedidos && "border-destructive focus-visible:ring-destructive")}
             />
             {errors.kgsExpedidos && <p className="text-xs text-destructive">{errors.kgsExpedidos}</p>}
