@@ -25,6 +25,7 @@ export default function SaidaVendaPage() {
   const [classificacao, setClassificacao] = useState("");
   const [kgsExpedidos, setKgsExpedidos] = useState("");
   const [umidadeSaida, setUmidadeSaida] = useState("");
+  const [taxaPorTonelada, setTaxaPorTonelada] = useState("15");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -35,7 +36,7 @@ export default function SaidaVendaPage() {
     setData(getBrazilDateInputValue());
     setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId("");
     setCategoria("Venda"); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
-    setEditingId(null);
+    setTaxaPorTonelada("15"); setEditingId(null);
     setErrors({});
   };
 
@@ -44,6 +45,9 @@ export default function SaidaVendaPage() {
     setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || "");
     setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || ""));
     setKgsExpedidos(String(s.kgs_expedidos)); setUmidadeSaida(String(s.umidade_saida || ""));
+    // Recalculate taxa from saved valor_expedicao
+    const tons = s.kgs_expedidos / 1000;
+    setTaxaPorTonelada(tons > 0 ? String(Math.round((s.valor_expedicao / tons) * 100) / 100) : "15");
     setEditingId(s.id);
     setErrors({});
   };
@@ -70,8 +74,9 @@ export default function SaidaVendaPage() {
     setErrors({});
 
     const kgs = parseFloat(kgsExpedidos);
+    const taxa = parseFloat(taxaPorTonelada.replace(",", ".")) || 15;
     const toneladas = kgs / 1000;
-    const valorExpedicao = toneladas * 15; // R$ 15 por tonelada
+    const valorExpedicao = toneladas * taxa;
 
     const entry = {
       data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(), comprador_id: compradorId,
@@ -91,6 +96,7 @@ export default function SaidaVendaPage() {
         setClassificacao("");
         setKgsExpedidos("");
         setUmidadeSaida("");
+        setTaxaPorTonelada("15");
       }
     }
   };
@@ -179,6 +185,23 @@ export default function SaidaVendaPage() {
               className={cn(errors.umidadeSaida && "border-destructive focus-visible:ring-destructive")}
             />
             {errors.umidadeSaida && <p className="text-xs text-destructive">{errors.umidadeSaida}</p>}
+          </div>
+          <div className="space-y-1">
+            <Label>Taxa por Tonelada (R$)</Label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              placeholder="15"
+              value={taxaPorTonelada}
+              onChange={e => setTaxaPorTonelada(e.target.value)}
+            />
+            {kgsExpedidos && parseFloat(kgsExpedidos) > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Valor: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                  (parseFloat(kgsExpedidos) / 1000) * (parseFloat(taxaPorTonelada.replace(",", ".")) || 15)
+                )}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex gap-2">

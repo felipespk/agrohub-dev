@@ -3,8 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/contexts/AppContext";
-import { useFarm } from "@/contexts/FarmContext";
-import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X, Info } from "lucide-react";
+import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -37,7 +36,6 @@ interface SaidaComAjuste {
 
 export default function ExpedicaoPage() {
   const { saidas, recebimentos } = useAppData();
-  const { taxaExpedicao } = useFarm();
   
   // Filter states
   const [filterProdutor, setFilterProdutor] = useState<string>("");
@@ -117,7 +115,7 @@ export default function ExpedicaoPage() {
         peso_ajustado: Math.max(0, peso_ajustado),
         ajuste_kg,
         tipo_ajuste,
-        valor_expedicao: s.valor_expedicao || (s.kgs_expedidos / 1000) * taxaExpedicao,
+        valor_expedicao: s.valor_expedicao || 0,
         diasArmazenados,
         diasCobrados,
         quinzenas,
@@ -126,7 +124,7 @@ export default function ExpedicaoPage() {
         dataEntrada,
       };
     });
-  }, [saidas, recebimentos, taxaExpedicao]);
+  }, [saidas, recebimentos]);
 
   // Extract unique produtores and compradores for filter options
   const produtoresUnicos = useMemo(() => {
@@ -182,10 +180,6 @@ export default function ExpedicaoPage() {
       <div className="page-header">
         <div className="flex items-center gap-2"><Truck className="h-6 w-6 text-primary" /><h1 className="page-title">Expedição</h1></div>
         <p className="page-subtitle">Resumo consolidado de expedições com ajuste de umidade (base: {UMIDADE_IDEAL}%) e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
-        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-          <Info className="h-3 w-3" />
-          Calculado com base em {fmtBRL(taxaExpedicao)}/ton
-        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
