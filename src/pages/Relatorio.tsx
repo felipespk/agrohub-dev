@@ -122,9 +122,11 @@ export default function RelatorioPage() {
       { header: "Desc. Impureza (Kg)", key: "descImp", width: 18 },
       { header: "Desc. Secagem (Kg)", key: "descSec", width: 18 },
       { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
-      { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
     ];
     ws.columns = columns;
+
+    // Formatar coluna de Data como dd/mm/yy
+    ws.getColumn("data").numFmt = "dd/mm/yy";
 
     // Style header row
     const headerRow = ws.getRow(1);
