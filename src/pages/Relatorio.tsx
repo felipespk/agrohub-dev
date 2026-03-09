@@ -243,7 +243,7 @@ export default function RelatorioPage() {
           rowData = {
             produtor: g.produtorNome,
             tipoGrao: g.tipoGraoNome,
-            data: parseDate(l.data),
+            data: parseLocalDate(l.data),
             operacao: isEntrada ? "Entrada" : "Saída",
             placa: l.placa,
             pesoBruto: isEntrada ? l.pesoBruto : "—",
