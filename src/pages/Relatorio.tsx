@@ -258,7 +258,21 @@ export default function RelatorioPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel (.xlsx)</Button>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Operação</label>
+            <ToggleGroup type="single" value={filterMode} onValueChange={v => v && setFilterMode(v as FilterMode)} className="justify-start">
+              <ToggleGroupItem value="all" className="gap-1 text-xs px-3">
+                <List className="h-3.5 w-3.5" /> Tudo
+              </ToggleGroupItem>
+              <ToggleGroupItem value="in" className="gap-1 text-xs px-3">
+                <ArrowDownToLine className="h-3.5 w-3.5" /> Entradas
+              </ToggleGroupItem>
+              <ToggleGroupItem value="out" className="gap-1 text-xs px-3">
+                <ArrowUpFromLine className="h-3.5 w-3.5" /> Saídas
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+          <Button variant="outline" onClick={exportExcel} className="gap-2 self-end"><Download className="h-4 w-4" /> Exportar Excel (.xlsx)</Button>
         </div>
 
         {grupos.length === 0 ? (
