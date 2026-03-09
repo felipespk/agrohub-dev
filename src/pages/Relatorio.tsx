@@ -163,7 +163,8 @@ export default function RelatorioPage() {
 
     // Add data rows
     for (const g of grupos) {
-      for (const l of g.lancamentos) {
+      const lancamentosFiltrados = filterLancamentos(g.lancamentos);
+      for (const l of lancamentosFiltrados) {
         const isEntrada = l.tipo === "entrada";
         const row = ws.addRow({
           produtor: g.produtorNome,
