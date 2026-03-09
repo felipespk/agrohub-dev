@@ -37,6 +37,7 @@ interface SaidaComAjuste {
 
 export default function ExpedicaoPage() {
   const { saidas, recebimentos } = useAppData();
+  const { taxaExpedicao } = useFarm();
   
   // Filter states
   const [filterProdutor, setFilterProdutor] = useState<string>("");
