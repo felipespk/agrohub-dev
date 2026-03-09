@@ -9,12 +9,13 @@ import { useAppData, Saida } from "@/contexts/AppContext";
 import { ArrowUpFromLine, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { maskPlaca, maskClassificacao } from "@/lib/masks";
+import { getBrazilDateInputValue } from "@/lib/date";
 
 const categorias = ["Venda", "Transferência", "Devolução", "Outros"];
 
 export default function SaidaVendaPage() {
   const { compradores, produtores, tiposGrao, saidas, addSaida, updateSaida, deleteSaida } = useAppData();
-  const [data, setData] = useState(new Date().toISOString().split("T")[0]);
+  const [data, setData] = useState(getBrazilDateInputValue());
   const [placa, setPlaca] = useState("");
   const [compradorId, setCompradorId] = useState("");
   const [produtorId, setProdutorId] = useState("");
@@ -25,7 +26,7 @@ export default function SaidaVendaPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const clearForm = () => {
-    setData(new Date().toISOString().split("T")[0]);
+    setData(getBrazilDateInputValue());
     setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId("");
     setCategoria("Venda"); setClassificacao(""); setKgsExpedidos("");
     setEditingId(null);

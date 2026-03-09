@@ -8,11 +8,12 @@ import { useAppData, Recebimento } from "@/contexts/AppContext";
 import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { maskPlaca } from "@/lib/masks";
+import { getBrazilDateInputValue } from "@/lib/date";
 
 export default function RecebimentoPage() {
   const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento } = useAppData();
 
-  const [data, setData] = useState(new Date().toISOString().split("T")[0]);
+  const [data, setData] = useState(getBrazilDateInputValue());
   const [placa, setPlaca] = useState("");
   const [produtorId, setProdutorId] = useState("");
   const [tipoGraoId, setTipoGraoId] = useState("");
@@ -45,7 +46,7 @@ export default function RecebimentoPage() {
   }, [pesoBruto, umidadeInicial, impureza, taxaSecagem, umidadeFinalAlvo]);
 
   const clearForm = () => {
-    setData(new Date().toISOString().split("T")[0]);
+    setData(getBrazilDateInputValue());
     setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setValorArmazenamento("0.15");
     setEditingId(null);
   };
