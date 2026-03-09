@@ -39,22 +39,25 @@ function ProtectedRoutes() {
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <AppProvider>
-      <AppLayout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/recebimento" element={<Recebimento />} />
-          <Route path="/saida-venda" element={<SaidaVenda />} />
-          <Route path="/saida-geral" element={<SaidaGeral />} />
-          <Route path="/armazenamento" element={<ArmazenamentoPage />} />
-          <Route path="/expedicao" element={<Expedicao />} />
-          <Route path="/relatorio" element={<Relatorio />} />
-          <Route path="/quebra-tecnica" element={<QuebraTecnica />} />
-          <Route path="/cadastro" element={<Cadastro />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AppLayout>
-    </AppProvider>
+    <FarmProvider>
+      <AppProvider>
+        <AppLayout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/recebimento" element={<Recebimento />} />
+            <Route path="/saida-venda" element={<SaidaVenda />} />
+            <Route path="/saida-geral" element={<SaidaGeral />} />
+            <Route path="/armazenamento" element={<ArmazenamentoPage />} />
+            <Route path="/expedicao" element={<Expedicao />} />
+            <Route path="/relatorio" element={<Relatorio />} />
+            <Route path="/quebra-tecnica" element={<QuebraTecnica />} />
+            <Route path="/cadastro" element={<Cadastro />} />
+            <Route path="/conta" element={<Conta />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AppLayout>
+      </AppProvider>
+    </FarmProvider>
   );
 }
 
