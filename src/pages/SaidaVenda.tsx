@@ -75,7 +75,7 @@ export default function SaidaVendaPage() {
     }
     setErrors({});
 
-    const kgs = parseFloat(kgsExpedidos);
+    const kgs = parseFloat(unmaskKg(kgsExpedidos));
     const taxa = parseFloat(taxaPorTonelada.replace(",", ".")) || 15;
     const toneladas = kgs / 1000;
     const valorExpedicao = toneladas * taxa;
