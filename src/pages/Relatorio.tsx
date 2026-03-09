@@ -107,19 +107,49 @@ export default function RelatorioPage() {
 
   const exportExcel = async () => {
     const workbook = new ExcelJS.Workbook();
-    const ws = workbook.addWorksheet("Extrato de Estoque");
+    const sheetName = filterMode === "in" ? "Entradas" : filterMode === "out" ? "Saídas" : "Extrato de Estoque";
+    const ws = workbook.addWorksheet(sheetName);
 
-    // Page Setup para impressão
+    // Page Setup
     ws.pageSetup.orientation = "landscape";
     ws.pageSetup.fitToPage = true;
     ws.pageSetup.fitToWidth = 1;
     ws.pageSetup.fitToHeight = 0;
     ws.pageSetup.margins = { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 };
 
-    const columns = [
+    // Dynamic columns based on filterMode
+    const baseColumns = [
       { header: "Produtor", key: "produtor", width: 30 },
       { header: "Tipo de Grão", key: "tipoGrao", width: 18 },
       { header: "Data", key: "data", width: 12 },
+    ];
+
+    const entradaColumns = [
+      { header: "Placa", key: "placa", width: 12 },
+      { header: "Peso Bruto (Kg)", key: "pesoBruto", width: 16 },
+      { header: "Umidade Ini (%)", key: "umidIni", width: 16 },
+      { header: "Umidade Alvo (%)", key: "umidAlvo", width: 16 },
+      { header: "Impureza (%)", key: "impureza", width: 14 },
+      { header: "Tx Secagem (%)", key: "txSecagem", width: 14 },
+      { header: "Desc. Umidade (Kg)", key: "ajusteUmid", width: 20 },
+      { header: "Desc. Impureza (Kg)", key: "descImp", width: 18 },
+      { header: "Desc. Secagem (Kg)", key: "descSec", width: 18 },
+      { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
+    ];
+
+    const saidaColumns = [
+      { header: "Placa", key: "placa", width: 12 },
+      { header: "Comprador", key: "comprador_destino", width: 24 },
+      { header: "Categoria", key: "categoria", width: 14 },
+      { header: "Peso (Kg)", key: "pesoKg", width: 16 },
+      { header: "Umidade Saída (%)", key: "umidSaida", width: 18 },
+      { header: "Classificação", key: "classificacao", width: 14 },
+      { header: "Sacos", key: "sacos", width: 12 },
+      { header: "Toneladas", key: "toneladas", width: 14 },
+      { header: "Taxa Exp. (R$)", key: "taxaExp", width: 16 },
+    ];
+
+    const allColumns = [
       { header: "Operação", key: "operacao", width: 12 },
       { header: "Placa", key: "placa", width: 12 },
       { header: "Peso Bruto (Kg)", key: "pesoBruto", width: 16 },
@@ -134,9 +164,16 @@ export default function RelatorioPage() {
       { header: "Desc. Secagem (Kg)", key: "descSec", width: 18 },
       { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
     ];
-    ws.columns = columns;
 
-    // Formatar coluna de Data como dd/mm/yy
+    if (filterMode === "in") {
+      ws.columns = [...baseColumns, ...entradaColumns];
+    } else if (filterMode === "out") {
+      ws.columns = [...baseColumns, ...saidaColumns];
+    } else {
+      ws.columns = [...baseColumns, ...allColumns];
+    }
+
+    // Format date column
     ws.getColumn("data").numFmt = "dd/mm/yy";
 
     // Style header row
@@ -161,34 +198,72 @@ export default function RelatorioPage() {
       right: { style: "thin", color: { argb: "FFD1D5DB" } },
     };
 
+    const parseDate = (d: string) => {
+      const [y, m, day] = d.split("-").map(Number);
+      return new Date(y, m - 1, day);
+    };
+
     // Add data rows
     for (const g of grupos) {
       const lancamentosFiltrados = filterLancamentos(g.lancamentos);
+
       for (const l of lancamentosFiltrados) {
         const isEntrada = l.tipo === "entrada";
-        const row = ws.addRow({
-          produtor: g.produtorNome,
-          tipoGrao: g.tipoGraoNome,
-          data: (() => {
-            // Converte string YYYY-MM-DD para Date no fuso local (evita shift de UTC)
-            const [y, m, d] = l.data.split("-").map(Number);
-            return new Date(y, m - 1, d);
-          })(),
-          operacao: isEntrada ? "Entrada" : "Saída",
-          placa: l.placa,
-          pesoBruto: isEntrada ? l.pesoBruto : null,
-          umidIni: isEntrada ? l.umidadeInicial : null,
-          umidAlvo: isEntrada ? l.umidadeFinalAlvo : null,
-          umidSaida: !isEntrada ? l.umidadeSaida : null,
-          classificacao: !isEntrada ? (l.classificacao || "") : null,
-          impureza: isEntrada ? l.impureza : null,
-          txSecagem: isEntrada ? l.taxaSecagem : null,
-          ajusteUmid: isEntrada ? l.descontoUmidadeKg : null,
-          descImp: isEntrada ? l.descontoImpurezaKg : null,
-          descSec: isEntrada ? l.descontoSecagemKg : null,
-          pesoLiq: l.kg,
-        });
+        let rowData: Record<string, any>;
 
+        if (filterMode === "in") {
+          rowData = {
+            produtor: g.produtorNome,
+            tipoGrao: g.tipoGraoNome,
+            data: parseDate(l.data),
+            placa: l.placa,
+            pesoBruto: l.pesoBruto,
+            umidIni: l.umidadeInicial,
+            umidAlvo: l.umidadeFinalAlvo,
+            impureza: l.impureza,
+            txSecagem: l.taxaSecagem,
+            ajusteUmid: l.descontoUmidadeKg,
+            descImp: l.descontoImpurezaKg,
+            descSec: l.descontoSecagemKg,
+            pesoLiq: l.kg,
+          };
+        } else if (filterMode === "out") {
+          rowData = {
+            produtor: g.produtorNome,
+            tipoGrao: g.tipoGraoNome,
+            data: parseDate(l.data),
+            placa: l.placa,
+            comprador_destino: "", // saidas don't have comprador in lancamento; filled from context if needed
+            categoria: "",
+            pesoKg: l.kg,
+            umidSaida: l.umidadeSaida,
+            classificacao: l.classificacao || "",
+            sacos: Math.ceil(l.kg / 60),
+            toneladas: Math.round((l.kg / 1000) * 1000) / 1000,
+            taxaExp: "", // stored in saida record
+          };
+        } else {
+          rowData = {
+            produtor: g.produtorNome,
+            tipoGrao: g.tipoGraoNome,
+            data: parseDate(l.data),
+            operacao: isEntrada ? "Entrada" : "Saída",
+            placa: l.placa,
+            pesoBruto: isEntrada ? l.pesoBruto : "—",
+            umidIni: isEntrada ? l.umidadeInicial : "—",
+            umidAlvo: isEntrada ? l.umidadeFinalAlvo : "—",
+            umidSaida: !isEntrada ? l.umidadeSaida : "—",
+            classificacao: !isEntrada ? (l.classificacao || "—") : "—",
+            impureza: isEntrada ? l.impureza : "—",
+            txSecagem: isEntrada ? l.taxaSecagem : "—",
+            ajusteUmid: isEntrada ? l.descontoUmidadeKg : "—",
+            descImp: isEntrada ? l.descontoImpurezaKg : "—",
+            descSec: isEntrada ? l.descontoSecagemKg : "—",
+            pesoLiq: l.kg,
+          };
+        }
+
+        const row = ws.addRow(rowData);
         const bgColor = isEntrada ? "FFECFDF5" : "FFFEF2F2";
         const fontColor = isEntrada ? "FF065F46" : "FF991B1B";
 
@@ -199,21 +274,26 @@ export default function RelatorioPage() {
         });
       }
 
-      // Summary row per group (recalcula com base nos filtrados)
+      // Summary row per group
       const kgsEntradaFiltrado = lancamentosFiltrados.filter(l => l.tipo === "entrada").reduce((s, l) => s + l.kg, 0);
       const kgsSaidaFiltrado = lancamentosFiltrados.filter(l => l.tipo === "saida").reduce((s, l) => s + l.kg, 0);
       const saldoFiltrado = kgsEntradaFiltrado - kgsSaidaFiltrado;
 
       if (lancamentosFiltrados.length > 0) {
-        const summaryRow = ws.addRow({
+        const summaryData: Record<string, any> = {
           produtor: `TOTAL — ${g.produtorNome} / ${g.tipoGraoNome}`,
-          pesoBruto: null,
-          pesoLiq: saldoFiltrado,
-          ajusteUmid: null,
-          descImp: null,
-          descSec: null,
-          operacao: `E: ${kgsEntradaFiltrado} | S: ${kgsSaidaFiltrado}`,
-        });
+        };
+
+        if (filterMode === "in") {
+          summaryData.pesoLiq = kgsEntradaFiltrado;
+        } else if (filterMode === "out") {
+          summaryData.pesoKg = kgsSaidaFiltrado;
+        } else {
+          summaryData.operacao = `E: ${kgsEntradaFiltrado} | S: ${kgsSaidaFiltrado}`;
+          summaryData.pesoLiq = saldoFiltrado;
+        }
+
+        const summaryRow = ws.addRow(summaryData);
         summaryRow.eachCell({ includeEmpty: true }, (cell) => {
           cell.border = thinBorder;
           cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF7ED" } };
@@ -222,7 +302,7 @@ export default function RelatorioPage() {
       }
     }
 
-    // Download com nome baseado no filtro
+    // Download
     const hoje = new Date();
     const filterSuffix = filterMode === "in" ? "_Entradas" : filterMode === "out" ? "_Saidas" : "";
     const nomeArquivo = `Relatorio_Estoque${filterSuffix}_${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${hoje.getFullYear()}.xlsx`;
