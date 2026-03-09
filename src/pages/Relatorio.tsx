@@ -98,7 +98,13 @@ export default function RelatorioPage() {
     const workbook = new ExcelJS.Workbook();
     const ws = workbook.addWorksheet("Extrato de Estoque");
 
-    // Define columns
+    // Page Setup para impressão
+    ws.pageSetup.orientation = "landscape";
+    ws.pageSetup.fitToPage = true;
+    ws.pageSetup.fitToWidth = 1;
+    ws.pageSetup.fitToHeight = 0;
+    ws.pageSetup.margins = { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 };
+
     const columns = [
       { header: "Produtor", key: "produtor", width: 30 },
       { header: "Tipo de Grão", key: "tipoGrao", width: 18 },
