@@ -10,6 +10,7 @@ import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Edit2, X, Save } from "luc
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { maskDocumento, maskTelefone } from "@/lib/masks";
+import { cn } from "@/lib/utils";
 
 export default function CadastroPage() {
   const ctx = useAppData();
@@ -46,11 +47,16 @@ function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   const [telefone, setTelefone] = useState("");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const clearError = (field: string) =>
+    setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
 
   const clearForm = () => {
     setTipoDocumento("CPF"); setDocumento(""); setNome(""); setFazenda("");
     setEnderecoFazenda(""); setCidade(""); setEstado(""); setInscricaoEstadual(""); setTelefone("");
     setEditingId(null);
+    setErrors({});
   };
 
   const handleEdit = (p: Produtor) => {
@@ -58,10 +64,21 @@ function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
     setFazenda(p.fazenda); setEnderecoFazenda(p.endereco_fazenda); setCidade(p.cidade);
     setEstado(p.estado); setInscricaoEstadual(p.inscricao_estadual); setTelefone(maskTelefone(p.telefone));
     setEditingId(p.id); setOpen(true);
+    setErrors({});
   };
 
   const handleSave = async () => {
-    if (!nome.trim() || !documento.trim()) { toast.error("Nome e Documento são obrigatórios."); return; }
+    const newErrors: Record<string, string> = {};
+    if (!nome.trim()) newErrors.nome = "Nome é obrigatório";
+    if (!documento.trim()) newErrors.documento = "Documento é obrigatório";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Preencha todos os campos obrigatórios!");
+      return;
+    }
+    setErrors({});
+
     const data = {
       tipo_documento: tipoDocumento, documento: documento.trim(), nome: nome.trim(),
       fazenda: fazenda.trim(), endereco_fazenda: enderecoFazenda.trim(), cidade: cidade.trim(),
@@ -90,21 +107,39 @@ function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader><DialogTitle>{editingId ? "Editar Produtor" : "Novo Produtor"}</DialogTitle></DialogHeader>
             <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Tipo de Documento *</Label>
                 <Select value={tipoDocumento} onValueChange={setTipoDocumento}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="CPF">CPF</SelectItem><SelectItem value="CNPJ">CNPJ</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label>Documento *</Label><Input value={documento} onChange={e => setDocumento(maskDocumento(e.target.value))} placeholder={tipoDocumento === "CPF" ? "000.000.000-00" : "00.000.000/0001-00"} /></div>
-              <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome completo" /></div>
-              <div className="space-y-2"><Label>Fazenda</Label><Input value={fazenda} onChange={e => setFazenda(e.target.value)} placeholder="Nome da propriedade" /></div>
-              <div className="space-y-2 sm:col-span-2"><Label>Endereço da Fazenda</Label><Input value={enderecoFazenda} onChange={e => setEnderecoFazenda(e.target.value)} placeholder="Estrada, Km, etc." /></div>
-              <div className="space-y-2"><Label>Cidade</Label><Input value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Cidade" /></div>
-              <div className="space-y-2"><Label>Estado (UF)</Label><Input value={estado} onChange={e => setEstado(e.target.value)} placeholder="RS" maxLength={2} className="uppercase" /></div>
-              <div className="space-y-2"><Label>Inscrição Estadual</Label><Input value={inscricaoEstadual} onChange={e => setInscricaoEstadual(e.target.value)} placeholder="000/0000000" /></div>
-              <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(maskTelefone(e.target.value))} placeholder="(00) 00000-0000" /></div>
+              <div className="space-y-1">
+                <Label>Documento *</Label>
+                <Input
+                  value={documento}
+                  onChange={e => { setDocumento(maskDocumento(e.target.value)); clearError("documento"); }}
+                  placeholder={tipoDocumento === "CPF" ? "000.000.000-00" : "00.000.000/0001-00"}
+                  className={cn(errors.documento && "border-destructive focus-visible:ring-destructive")}
+                />
+                {errors.documento && <p className="text-xs text-destructive">{errors.documento}</p>}
+              </div>
+              <div className="space-y-1">
+                <Label>Nome *</Label>
+                <Input
+                  value={nome}
+                  onChange={e => { setNome(e.target.value); clearError("nome"); }}
+                  placeholder="Nome completo"
+                  className={cn(errors.nome && "border-destructive focus-visible:ring-destructive")}
+                />
+                {errors.nome && <p className="text-xs text-destructive">{errors.nome}</p>}
+              </div>
+              <div className="space-y-1"><Label>Fazenda</Label><Input value={fazenda} onChange={e => setFazenda(e.target.value)} placeholder="Nome da propriedade" /></div>
+              <div className="space-y-1 sm:col-span-2"><Label>Endereço da Fazenda</Label><Input value={enderecoFazenda} onChange={e => setEnderecoFazenda(e.target.value)} placeholder="Estrada, Km, etc." /></div>
+              <div className="space-y-1"><Label>Cidade</Label><Input value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Cidade" /></div>
+              <div className="space-y-1"><Label>Estado (UF)</Label><Input value={estado} onChange={e => setEstado(e.target.value)} placeholder="RS" maxLength={2} className="uppercase" /></div>
+              <div className="space-y-1"><Label>Inscrição Estadual</Label><Input value={inscricaoEstadual} onChange={e => setInscricaoEstadual(e.target.value)} placeholder="000/0000000" /></div>
+              <div className="space-y-1"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(maskTelefone(e.target.value))} placeholder="(00) 00000-0000" /></div>
             </div>
             <div className="flex gap-2 mt-2">
               <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
@@ -149,15 +184,22 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   const [umidade, setUmidade] = useState("12");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const clearForm = () => { setNome(""); setUmidade("12"); setEditingId(null); };
+  const clearForm = () => { setNome(""); setUmidade("12"); setEditingId(null); setErrors({}); };
 
   const handleEdit = (t: TipoGrao) => {
     setNome(t.nome); setUmidade(String(t.umidade_padrao)); setEditingId(t.id); setOpen(true);
+    setErrors({});
   };
 
   const handleSave = async () => {
-    if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
+    if (!nome.trim()) {
+      setErrors({ nome: "Nome do grão é obrigatório" });
+      toast.error("Preencha todos os campos obrigatórios!");
+      return;
+    }
+    setErrors({});
     if (editingId) {
       const ok = await updateTipoGrao(editingId, { nome: nome.trim(), umidade_padrao: parseFloat(umidade) || 12 });
       if (ok) { toast.success("Tipo de grão atualizado!"); clearForm(); setOpen(false); }
@@ -181,8 +223,17 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
           <DialogContent>
             <DialogHeader><DialogTitle>{editingId ? "Editar Tipo de Grão" : "Novo Tipo de Grão"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2"><Label>Nome do Grão *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Arroz Longo Fino" /></div>
-              <div className="space-y-2"><Label>Umidade Padrão (%)</Label><Input type="number" value={umidade} onChange={e => setUmidade(e.target.value)} /></div>
+              <div className="space-y-1">
+                <Label>Nome do Grão *</Label>
+                <Input
+                  value={nome}
+                  onChange={e => { setNome(e.target.value); setErrors({}); }}
+                  placeholder="Ex: Arroz Longo Fino"
+                  className={cn(errors.nome && "border-destructive focus-visible:ring-destructive")}
+                />
+                {errors.nome && <p className="text-xs text-destructive">{errors.nome}</p>}
+              </div>
+              <div className="space-y-1"><Label>Umidade Padrão (%)</Label><Input type="number" value={umidade} onChange={e => setUmidade(e.target.value)} /></div>
               <div className="flex gap-2">
                 <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                   <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
@@ -222,15 +273,22 @@ function CompradoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   const [contato, setContato] = useState("");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const clearForm = () => { setNome(""); setContato(""); setEditingId(null); };
+  const clearForm = () => { setNome(""); setContato(""); setEditingId(null); setErrors({}); };
 
   const handleEdit = (c: Comprador) => {
     setNome(c.nome); setContato(maskTelefone(c.contato || "")); setEditingId(c.id); setOpen(true);
+    setErrors({});
   };
 
   const handleSave = async () => {
-    if (!nome.trim()) { toast.error("Nome é obrigatório."); return; }
+    if (!nome.trim()) {
+      setErrors({ nome: "Nome do comprador é obrigatório" });
+      toast.error("Preencha todos os campos obrigatórios!");
+      return;
+    }
+    setErrors({});
     if (editingId) {
       const ok = await updateComprador(editingId, { nome: nome.trim(), contato: contato.trim() });
       if (ok) { toast.success("Comprador atualizado!"); clearForm(); setOpen(false); }
@@ -254,8 +312,17 @@ function CompradoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
           <DialogContent>
             <DialogHeader><DialogTitle>{editingId ? "Editar Comprador" : "Novo Comprador"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome do comprador" /></div>
-              <div className="space-y-2"><Label>Contato</Label><Input value={contato} onChange={e => setContato(maskTelefone(e.target.value))} placeholder="(00) 00000-0000" /></div>
+              <div className="space-y-1">
+                <Label>Nome *</Label>
+                <Input
+                  value={nome}
+                  onChange={e => { setNome(e.target.value); setErrors({}); }}
+                  placeholder="Nome do comprador"
+                  className={cn(errors.nome && "border-destructive focus-visible:ring-destructive")}
+                />
+                {errors.nome && <p className="text-xs text-destructive">{errors.nome}</p>}
+              </div>
+              <div className="space-y-1"><Label>Contato</Label><Input value={contato} onChange={e => setContato(maskTelefone(e.target.value))} placeholder="(00) 00000-0000" /></div>
               <div className="flex gap-2">
                 <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                   <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}

@@ -8,16 +8,32 @@ import { useAppData } from "@/contexts/AppContext";
 import { AlertTriangle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { getBrazilDateInputValue } from "@/lib/date";
+import { cn } from "@/lib/utils";
 
 export default function QuebraTecnicaPage() {
   const { quebras, addQuebra, deleteQuebra } = useAppData();
   const [open, setOpen] = useState(false);
-  const [data, setData] = useState(new Date().toISOString().split("T")[0]);
+  const [data, setData] = useState(getBrazilDateInputValue());
   const [kgAjuste, setKgAjuste] = useState("");
   const [justificativa, setJustificativa] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const clearError = (field: string) =>
+    setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
 
   const handleAdd = async () => {
-    if (!kgAjuste || !justificativa.trim()) { toast.error("Preencha Kg de ajuste e justificativa."); return; }
+    const newErrors: Record<string, string> = {};
+    if (!kgAjuste || kgAjuste === "0") newErrors.kgAjuste = "Informe o Kg de ajuste (diferente de zero)";
+    if (!justificativa.trim()) newErrors.justificativa = "Justificativa é obrigatória";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Preencha todos os campos obrigatórios!");
+      return;
+    }
+    setErrors({});
+
     const row = await addQuebra({ data, kg_ajuste: parseFloat(kgAjuste), justificativa: justificativa.trim() });
     if (row) {
       toast.success("Quebra técnica registrada.");
@@ -45,14 +61,36 @@ export default function QuebraTecnicaPage() {
       <div className="form-section">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-semibold text-lg text-foreground">Registros de Quebra</h2>
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) { setErrors({}); setKgAjuste(""); setJustificativa(""); } }}>
             <DialogTrigger asChild><Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Novo Ajuste</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Registrar Quebra Técnica</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <div className="space-y-2"><Label>Data</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} /></div>
-                <div className="space-y-2"><Label>Kg de Ajuste * <span className="text-xs text-muted-foreground">(negativo = perda)</span></Label><Input type="number" value={kgAjuste} onChange={e => setKgAjuste(e.target.value)} placeholder="-150" /></div>
-                <div className="space-y-2"><Label>Justificativa *</Label><Textarea value={justificativa} onChange={e => setJustificativa(e.target.value)} placeholder="Descreva o motivo do ajuste..." /></div>
+                <div className="space-y-1">
+                  <Label>Data</Label>
+                  <Input type="date" value={data} onChange={e => setData(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Kg de Ajuste * <span className="text-xs text-muted-foreground">(negativo = perda)</span></Label>
+                  <Input
+                    type="number"
+                    value={kgAjuste}
+                    onChange={e => { setKgAjuste(e.target.value); clearError("kgAjuste"); }}
+                    placeholder="-150"
+                    className={cn(errors.kgAjuste && "border-destructive focus-visible:ring-destructive")}
+                  />
+                  {errors.kgAjuste && <p className="text-xs text-destructive">{errors.kgAjuste}</p>}
+                </div>
+                <div className="space-y-1">
+                  <Label>Justificativa *</Label>
+                  <Textarea
+                    value={justificativa}
+                    onChange={e => { setJustificativa(e.target.value); clearError("justificativa"); }}
+                    placeholder="Descreva o motivo do ajuste..."
+                    className={cn(errors.justificativa && "border-destructive focus-visible:ring-destructive")}
+                  />
+                  {errors.justificativa && <p className="text-xs text-destructive">{errors.justificativa}</p>}
+                </div>
                 <Button onClick={handleAdd} className="w-full">Salvar</Button>
               </div>
             </DialogContent>
