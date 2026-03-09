@@ -182,14 +182,18 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   const { tiposGrao, addTipoGrao, updateTipoGrao, deleteTipoGrao } = ctx;
   const [nome, setNome] = useState("");
   const [umidade, setUmidade] = useState("12");
+  const [taxaAgio, setTaxaAgio] = useState("1.3");
+  const [taxaDesagio, setTaxaDesagio] = useState("1.5");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const clearForm = () => { setNome(""); setUmidade("12"); setEditingId(null); setErrors({}); };
+  const clearForm = () => { setNome(""); setUmidade("12"); setTaxaAgio("1.3"); setTaxaDesagio("1.5"); setEditingId(null); setErrors({}); };
 
   const handleEdit = (t: TipoGrao) => {
-    setNome(t.nome); setUmidade(String(t.umidade_padrao)); setEditingId(t.id); setOpen(true);
+    setNome(t.nome); setUmidade(String(t.umidade_padrao));
+    setTaxaAgio(String(t.taxa_agio)); setTaxaDesagio(String(t.taxa_desagio));
+    setEditingId(t.id); setOpen(true);
     setErrors({});
   };
 
@@ -200,11 +204,17 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
       return;
     }
     setErrors({});
+    const payload = {
+      nome: nome.trim(),
+      umidade_padrao: parseFloat(umidade) || 12,
+      taxa_agio: parseFloat(taxaAgio) || 1.3,
+      taxa_desagio: parseFloat(taxaDesagio) || 1.5,
+    };
     if (editingId) {
-      const ok = await updateTipoGrao(editingId, { nome: nome.trim(), umidade_padrao: parseFloat(umidade) || 12 });
+      const ok = await updateTipoGrao(editingId, payload);
       if (ok) { toast.success("Tipo de grão atualizado!"); clearForm(); setOpen(false); }
     } else {
-      const row = await addTipoGrao({ nome: nome.trim(), umidade_padrao: parseFloat(umidade) || 12 });
+      const row = await addTipoGrao(payload);
       if (row) { toast.success("Tipo de grão cadastrado!"); setOpen(false); }
     }
   };
