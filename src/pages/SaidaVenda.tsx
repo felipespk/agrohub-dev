@@ -96,6 +96,7 @@ export default function SaidaVendaPage() {
         setClassificacao("");
         setKgsExpedidos("");
         setUmidadeSaida("");
+        setTaxaPorTonelada("15");
       }
     }
   };
