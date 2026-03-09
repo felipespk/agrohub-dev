@@ -92,7 +92,7 @@ export default function SaidaVendaPage() {
     } else {
       const row = await addSaida(entry);
       if (row) {
-        toast.success(`Saída registrada! ${parseFloat(kgsExpedidos).toLocaleString("pt-BR")} Kg expedidos.`);
+        toast.success(`Saída registrada! ${parseFloat(unmaskKg(kgsExpedidos)).toLocaleString("pt-BR")} Kg expedidos.`);
         // Partial reset: limpa apenas campos transacionais, mantém cabeçalho para lançamentos em lote
         setPlaca("");
         setClassificacao("");
