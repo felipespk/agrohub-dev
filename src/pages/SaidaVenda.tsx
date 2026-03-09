@@ -76,7 +76,13 @@ export default function SaidaVendaPage() {
       if (ok) { toast.success("Saída atualizada!"); clearForm(); }
     } else {
       const row = await addSaida(entry);
-      if (row) toast.success(`Saída registrada! ${parseFloat(kgsExpedidos).toLocaleString("pt-BR")} Kg expedidos.`);
+      if (row) {
+        toast.success(`Saída registrada! ${parseFloat(kgsExpedidos).toLocaleString("pt-BR")} Kg expedidos.`);
+        // Partial reset: limpa apenas campos transacionais, mantém cabeçalho para lançamentos em lote
+        setPlaca("");
+        setClassificacao("");
+        setKgsExpedidos("");
+      }
     }
   };
 
