@@ -79,7 +79,7 @@ export default function ExpedicaoPage() {
         <p className="page-subtitle">Resumo consolidado de expedições com ajuste de umidade (base: {UMIDADE_IDEAL}%)</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-5">
         <div className="kpi-card">
           <p className="text-xs text-muted-foreground">Peso Bruto Total</p>
           <p className="text-2xl font-display font-bold text-foreground">{fmtKg(totalPesoBruto)} Kg</p>
@@ -95,6 +95,10 @@ export default function ExpedicaoPage() {
         <div className="kpi-card">
           <p className="text-xs text-muted-foreground">Total de Toneladas</p>
           <p className="text-2xl font-display font-bold text-foreground">{fmtTon(totalPesoAjustado)}</p>
+        </div>
+        <div className="kpi-card border-emerald-500/30 bg-emerald-500/5">
+          <p className="text-xs text-muted-foreground">Taxa de Expedição</p>
+          <p className="text-2xl font-display font-bold text-emerald-600 dark:text-emerald-400">{fmtBRL(totalValorExpedicao)}</p>
         </div>
       </div>
 
