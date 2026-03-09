@@ -182,10 +182,9 @@ export default function RelatorioPage() {
         produtor: `TOTAL — ${g.produtorNome} / ${g.tipoGraoNome}`,
         pesoBruto: null,
         pesoLiq: g.saldo,
-        descUmid: null,
+        ajusteUmid: null,
         descImp: null,
         descSec: null,
-        totalDesc: null,
         operacao: `E: ${g.kgsEntrada} | S: ${g.kgsSaida}`,
       });
       summaryRow.eachCell({ includeEmpty: true }, (cell) => {

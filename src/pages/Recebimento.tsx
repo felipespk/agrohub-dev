@@ -341,11 +341,19 @@ export default function RecebimentoPage() {
   );
 }
 
-function ResultCard({ label, value }: { label: string; value: string }) {
+function ResultCard({ label, value, variant }: { label: string; value: string; variant?: "bonus" | "discount" | "neutral" }) {
   return (
-    <div className="rounded-lg bg-card border p-3">
+    <div className={cn(
+      "rounded-lg border p-3",
+      variant === "bonus" && "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
+      variant === "discount" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+      !variant && "bg-card",
+    )}>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-semibold text-foreground">{value}</p>
+      <p className={cn(
+        "text-lg font-semibold",
+        variant === "bonus" ? "text-emerald-600 dark:text-emerald-400" : variant === "discount" ? "text-amber-600 dark:text-amber-400" : "text-foreground",
+      )}>{value}</p>
     </div>
   );
 }
