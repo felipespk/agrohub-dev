@@ -1,9 +1,10 @@
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft,
-  Warehouse, Truck, FileBarChart, AlertTriangle, UserPlus, Wheat, LogOut
+  Warehouse, Truck, FileBarChart, AlertTriangle, UserPlus, Wheat, LogOut, Settings
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFarm } from "@/contexts/FarmContext";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
