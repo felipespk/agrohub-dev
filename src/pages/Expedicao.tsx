@@ -126,7 +126,7 @@ export default function ExpedicaoPage() {
         dataEntrada,
       };
     });
-  }, [saidas, recebimentos]);
+  }, [saidas, recebimentos, taxaExpedicao]);
 
   // Extract unique produtores and compradores for filter options
   const produtoresUnicos = useMemo(() => {
