@@ -122,7 +122,7 @@ export default function RecebimentoPage() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <div className="flex items-center gap-2"><ArrowDownToLine className="h-6 w-6 text-primary" /><h1 className="page-title">Recebimento de Arroz</h1></div>
+        <div className="flex items-center gap-2"><ArrowDownToLine className="h-6 w-6 text-primary" /><h1 className="page-title">Recebimento de Grãos</h1></div>
         <p className="page-subtitle">Registre a entrada de grãos com cálculos automáticos de secagem</p>
       </div>
 

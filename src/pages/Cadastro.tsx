@@ -228,7 +228,7 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
                 <Input
                   value={nome}
                   onChange={e => { setNome(e.target.value); setErrors({}); }}
-                  placeholder="Ex: Arroz Longo Fino"
+                  placeholder="Ex: Soja, Milho, Arroz..."
                   className={cn(errors.nome && "border-destructive focus-visible:ring-destructive")}
                 />
                 {errors.nome && <p className="text-xs text-destructive">{errors.nome}</p>}
