@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAppData, Recebimento } from "@/contexts/AppContext";
 import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { maskPlaca } from "@/lib/masks";
+import { maskPlaca, maskKg, unmaskKg } from "@/lib/masks";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
