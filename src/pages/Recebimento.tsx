@@ -275,8 +275,8 @@ export default function RecebimentoPage() {
           <Table>
             <TableHeader><TableRow>
               <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
-              <TableHead className="text-right">Peso Bruto</TableHead><TableHead className="text-right">Umidade</TableHead>
-              <TableHead className="text-right">Desc. Umid.</TableHead><TableHead className="text-right">Desc. Secagem</TableHead><TableHead className="text-right">Peso Líquido</TableHead><TableHead className="w-24">Ações</TableHead>
+              <TableHead className="text-right">Peso Bruto</TableHead><TableHead className="text-right">Umidade (%)</TableHead>
+              <TableHead className="text-right">Desc. Impureza</TableHead><TableHead className="text-right">Desc. Secagem</TableHead><TableHead className="text-right">Peso Líquido</TableHead><TableHead className="w-24">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {recebimentos.map(r => (
@@ -285,11 +285,11 @@ export default function RecebimentoPage() {
                   <TableCell className="font-mono">{r.placa_caminhao}</TableCell>
                   <TableCell>{r.produtor_nome}</TableCell>
                   <TableCell>{r.tipo_grao_nome}</TableCell>
-                  <TableCell className="text-right">{r.peso_bruto.toLocaleString("pt-BR")}</TableCell>
-                  <TableCell className="text-right">{r.umidade_inicial}%</TableCell>
-                  <TableCell className="text-right">{fmt(r.desconto_umidade_percent)}%</TableCell>
-                  <TableCell className="text-right">{fmt(r.desconto_secagem_kg || 0)} Kg</TableCell>
-                  <TableCell className="text-right font-semibold">{r.peso_liquido.toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-right tabular-nums">{r.peso_bruto.toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-right tabular-nums">{r.umidade_inicial}%</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmt(r.desconto_impureza_kg || 0)} Kg</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmt(r.desconto_secagem_kg || 0)} Kg</TableCell>
+                  <TableCell className="text-right font-semibold tabular-nums">{r.peso_liquido.toLocaleString("pt-BR")}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(r)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
