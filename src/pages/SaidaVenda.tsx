@@ -45,6 +45,9 @@ export default function SaidaVendaPage() {
     setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || "");
     setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || ""));
     setKgsExpedidos(String(s.kgs_expedidos)); setUmidadeSaida(String(s.umidade_saida || ""));
+    // Recalculate taxa from saved valor_expedicao
+    const tons = s.kgs_expedidos / 1000;
+    setTaxaPorTonelada(tons > 0 ? String(Math.round((s.valor_expedicao / tons) * 100) / 100) : "15");
     setEditingId(s.id);
     setErrors({});
   };
