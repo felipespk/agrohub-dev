@@ -4,10 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAppData } from "@/contexts/AppContext";
-import { FileBarChart, Download, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { FileBarChart, Download, ArrowDownToLine, ArrowUpFromLine, List } from "lucide-react";
 import { toast } from "sonner";
 import ExcelJS from "exceljs";
+
+type FilterMode = "all" | "in" | "out";
 
 interface LancamentoUnificado {
   id: string;
@@ -33,6 +36,14 @@ export default function RelatorioPage() {
   const { produtores, tiposGrao, recebimentos, saidas } = useAppData();
   const [filtroProdutorId, setFiltroProdutorId] = useState("todos");
   const [filtroGraoId, setFiltroGraoId] = useState("todos");
+  const [filterMode, setFilterMode] = useState<FilterMode>("all");
+
+  // Função para filtrar lançamentos pelo modo
+  const filterLancamentos = (lancamentos: LancamentoUnificado[]) => {
+    if (filterMode === "in") return lancamentos.filter(l => l.tipo === "entrada");
+    if (filterMode === "out") return lancamentos.filter(l => l.tipo === "saida");
+    return lancamentos;
+  };
 
   const grupos = useMemo(() => {
     const map = new Map<string, {
@@ -152,7 +163,8 @@ export default function RelatorioPage() {
 
     // Add data rows
     for (const g of grupos) {
-      for (const l of g.lancamentos) {
+      const lancamentosFiltrados = filterLancamentos(g.lancamentos);
+      for (const l of lancamentosFiltrados) {
         const isEntrada = l.tipo === "entrada";
         const row = ws.addRow({
           produtor: g.produtorNome,
@@ -187,26 +199,33 @@ export default function RelatorioPage() {
         });
       }
 
-      // Summary row per group
-      const summaryRow = ws.addRow({
-        produtor: `TOTAL — ${g.produtorNome} / ${g.tipoGraoNome}`,
-        pesoBruto: null,
-        pesoLiq: g.saldo,
-        ajusteUmid: null,
-        descImp: null,
-        descSec: null,
-        operacao: `E: ${g.kgsEntrada} | S: ${g.kgsSaida}`,
-      });
-      summaryRow.eachCell({ includeEmpty: true }, (cell) => {
-        cell.border = thinBorder;
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF7ED" } };
-        cell.font = { bold: true, size: 10, color: { argb: "FF1E3A8A" } };
-      });
+      // Summary row per group (recalcula com base nos filtrados)
+      const kgsEntradaFiltrado = lancamentosFiltrados.filter(l => l.tipo === "entrada").reduce((s, l) => s + l.kg, 0);
+      const kgsSaidaFiltrado = lancamentosFiltrados.filter(l => l.tipo === "saida").reduce((s, l) => s + l.kg, 0);
+      const saldoFiltrado = kgsEntradaFiltrado - kgsSaidaFiltrado;
+
+      if (lancamentosFiltrados.length > 0) {
+        const summaryRow = ws.addRow({
+          produtor: `TOTAL — ${g.produtorNome} / ${g.tipoGraoNome}`,
+          pesoBruto: null,
+          pesoLiq: saldoFiltrado,
+          ajusteUmid: null,
+          descImp: null,
+          descSec: null,
+          operacao: `E: ${kgsEntradaFiltrado} | S: ${kgsSaidaFiltrado}`,
+        });
+        summaryRow.eachCell({ includeEmpty: true }, (cell) => {
+          cell.border = thinBorder;
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF7ED" } };
+          cell.font = { bold: true, size: 10, color: { argb: "FF1E3A8A" } };
+        });
+      }
     }
 
-    // Download
+    // Download com nome baseado no filtro
     const hoje = new Date();
-    const nomeArquivo = `Relatorio_Estoque_${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${hoje.getFullYear()}.xlsx`;
+    const filterSuffix = filterMode === "in" ? "_Entradas" : filterMode === "out" ? "_Saidas" : "";
+    const nomeArquivo = `Relatorio_Estoque${filterSuffix}_${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${hoje.getFullYear()}.xlsx`;
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const url = URL.createObjectURL(blob);
@@ -247,7 +266,21 @@ export default function RelatorioPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel (.xlsx)</Button>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Operação</label>
+            <ToggleGroup type="single" value={filterMode} onValueChange={v => v && setFilterMode(v as FilterMode)} className="justify-start">
+              <ToggleGroupItem value="all" className="gap-1 text-xs px-3">
+                <List className="h-3.5 w-3.5" /> Tudo
+              </ToggleGroupItem>
+              <ToggleGroupItem value="in" className="gap-1 text-xs px-3">
+                <ArrowDownToLine className="h-3.5 w-3.5" /> Entradas
+              </ToggleGroupItem>
+              <ToggleGroupItem value="out" className="gap-1 text-xs px-3">
+                <ArrowUpFromLine className="h-3.5 w-3.5" /> Saídas
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+          <Button variant="outline" onClick={exportExcel} className="gap-2 self-end"><Download className="h-4 w-4" /> Exportar Excel (.xlsx)</Button>
         </div>
 
         {grupos.length === 0 ? (
@@ -289,7 +322,7 @@ export default function RelatorioPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {g.lancamentos.map(l => (
+                        {filterLancamentos(g.lancamentos).map(l => (
                           <TableRow key={l.id}>
                             <TableCell className="tabular-nums">{new Date(l.data).toLocaleDateString("pt-BR")}</TableCell>
                             <TableCell>
