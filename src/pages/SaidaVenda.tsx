@@ -36,7 +36,7 @@ export default function SaidaVendaPage() {
     setData(getBrazilDateInputValue());
     setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId("");
     setCategoria("Venda"); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
-    setEditingId(null);
+    setTaxaPorTonelada("15"); setEditingId(null);
     setErrors({});
   };
 
