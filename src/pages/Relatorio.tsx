@@ -24,7 +24,6 @@ interface LancamentoUnificado {
   descontoUmidadeKg?: number;
   descontoImpurezaKg?: number;
   descontoSecagemKg?: number;
-  totalDescontos?: number;
   // Saída fields
   umidadeSaida?: number;
   classificacao?: string;
@@ -66,7 +65,6 @@ export default function RelatorioPage() {
         descontoUmidadeKg: descontoU,
         descontoImpurezaKg: descontoI,
         descontoSecagemKg: descontoS,
-        totalDescontos: descontoU + descontoI + descontoS,
       });
       map.set(key, existing);
     }
@@ -114,10 +112,10 @@ export default function RelatorioPage() {
       { header: "Classificação", key: "classificacao", width: 14 },
       { header: "Impureza (%)", key: "impureza", width: 14 },
       { header: "Tx Secagem (%)", key: "txSecagem", width: 14 },
-      { header: "Desc. Umidade (Kg)", key: "descUmid", width: 18 },
+      { header: "Ajuste Umidade (Kg)", key: "ajusteUmid", width: 20 },
       { header: "Desc. Impureza (Kg)", key: "descImp", width: 18 },
       { header: "Desc. Secagem (Kg)", key: "descSec", width: 18 },
-      { header: "Total Descontos (Kg)", key: "totalDesc", width: 20 },
+      { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
       { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
     ];
     ws.columns = columns;
@@ -161,10 +159,9 @@ export default function RelatorioPage() {
           classificacao: !isEntrada ? (l.classificacao || "") : null,
           impureza: isEntrada ? l.impureza : null,
           txSecagem: isEntrada ? l.taxaSecagem : null,
-          descUmid: isEntrada ? l.descontoUmidadeKg : null,
+          ajusteUmid: isEntrada ? l.descontoUmidadeKg : null,
           descImp: isEntrada ? l.descontoImpurezaKg : null,
           descSec: isEntrada ? l.descontoSecagemKg : null,
-          totalDesc: isEntrada ? l.totalDescontos : null,
           pesoLiq: l.kg,
         });
 
@@ -183,10 +180,9 @@ export default function RelatorioPage() {
         produtor: `TOTAL — ${g.produtorNome} / ${g.tipoGraoNome}`,
         pesoBruto: null,
         pesoLiq: g.saldo,
-        descUmid: null,
+        ajusteUmid: null,
         descImp: null,
         descSec: null,
-        totalDesc: null,
         operacao: `E: ${g.kgsEntrada} | S: ${g.kgsSaida}`,
       });
       summaryRow.eachCell({ includeEmpty: true }, (cell) => {
@@ -276,7 +272,7 @@ export default function RelatorioPage() {
                           <TableHead className="text-center">Classificação</TableHead>
                           <TableHead className="text-right">Impureza</TableHead>
                           <TableHead className="text-right">Tx Secagem</TableHead>
-                          <TableHead className="text-right">Descontos (Kg)</TableHead>
+                          <TableHead className="text-right">Ajuste Umidade (Kg)</TableHead>
                           <TableHead className="text-right">Peso Líquido</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -313,8 +309,15 @@ export default function RelatorioPage() {
                             <TableCell className="text-right tabular-nums">
                               {l.tipo === "entrada" ? `${fmt2(l.taxaSecagem!)}%` : "—"}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-amber-600 dark:text-amber-400">
-                              {l.tipo === "entrada" ? `−${fmt(l.totalDescontos!)}` : "—"}
+                            <TableCell className="text-right tabular-nums">
+                              {l.tipo === "entrada"
+                                ? (() => {
+                                    const kg = l.descontoUmidadeKg || 0;
+                                    if (kg > 0) return <span className="text-amber-600 dark:text-amber-400">−{fmt(kg)}</span>;
+                                    if (kg < 0) return <span className="text-emerald-600 dark:text-emerald-400">+{fmt(Math.abs(kg))}</span>;
+                                    return "0";
+                                  })()
+                                : "—"}
                             </TableCell>
                             <TableCell className={`text-right font-semibold tabular-nums ${l.tipo === "entrada" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                               {l.tipo === "entrada" ? "+" : "−"}{fmt(l.kg)}

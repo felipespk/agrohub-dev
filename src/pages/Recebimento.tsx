@@ -43,12 +43,44 @@ export default function RecebimentoPage() {
     const imp = parseFloat(impureza) || 0;
     const secagem = parseFloat(taxaSecagem) || 0;
     const alvo = parseFloat(umidadeFinalAlvo) || 12;
-    const desconto_umidade_percent = umidade > alvo ? (umidade - alvo) * 1.3 : 0;
-    const desconto_umidade_kg = peso * (desconto_umidade_percent / 100);
+
+    const delta = umidade - alvo;
+    let desconto_umidade_percent = 0;
+    let ajuste_umidade_kg = 0;
+    let tipo_ajuste: "desconto" | "acrescimo" | "neutro" = "neutro";
+
+    if (delta > 0) {
+      // Acima do ideal → desconto de 1.3% por ponto
+      desconto_umidade_percent = delta * 1.3;
+      ajuste_umidade_kg = peso * (desconto_umidade_percent / 100);
+      tipo_ajuste = "desconto";
+    } else if (delta < 0) {
+      // Abaixo do ideal → acréscimo de 1.5% por ponto
+      desconto_umidade_percent = Math.abs(delta) * 1.5;
+      ajuste_umidade_kg = peso * (desconto_umidade_percent / 100);
+      tipo_ajuste = "acrescimo";
+    }
+
     const desconto_impureza_kg = peso * (imp / 100);
     const desconto_secagem_kg = peso * (secagem / 100);
-    const peso_liquido = Math.max(0, peso - desconto_umidade_kg - desconto_impureza_kg - desconto_secagem_kg);
-    return { desconto_umidade_percent, desconto_umidade_kg, desconto_impureza_kg, taxa_secagem_percentual: secagem, desconto_secagem_kg, peso_liquido };
+
+    // Desconto subtrai, acréscimo soma
+    const peso_liquido = Math.max(0,
+      tipo_ajuste === "acrescimo"
+        ? peso + ajuste_umidade_kg - desconto_impureza_kg - desconto_secagem_kg
+        : peso - ajuste_umidade_kg - desconto_impureza_kg - desconto_secagem_kg
+    );
+
+    return {
+      desconto_umidade_percent,
+      desconto_umidade_kg: tipo_ajuste === "acrescimo" ? -ajuste_umidade_kg : ajuste_umidade_kg,
+      ajuste_umidade_kg,
+      tipo_ajuste,
+      desconto_impureza_kg,
+      taxa_secagem_percentual: secagem,
+      desconto_secagem_kg,
+      peso_liquido,
+    };
   }, [pesoBruto, umidadeInicial, impureza, taxaSecagem, umidadeFinalAlvo]);
 
   const clearForm = () => {
@@ -251,8 +283,17 @@ export default function RecebimentoPage() {
           <div className="flex items-center gap-2"><Calculator className="h-5 w-5 text-primary" /><h2 className="font-display font-semibold text-lg text-foreground">Resultados</h2></div>
           <p className="text-xs text-muted-foreground">Cálculos em tempo real</p>
           <div className="space-y-3">
-            <ResultCard label="Desconto de Umidade" value={`${fmt(calculos.desconto_umidade_percent)}%`} />
-            <ResultCard label="Kg Descontados (Umidade)" value={`${fmt(calculos.desconto_umidade_kg)} Kg`} />
+            <ResultCard
+              label={`Ajuste de Umidade (${calculos.desconto_umidade_percent.toFixed(2)}%)`}
+              value={
+                calculos.tipo_ajuste === "neutro"
+                  ? "0,00 Kg (sem ajuste)"
+                  : calculos.tipo_ajuste === "desconto"
+                    ? `−${fmt(calculos.ajuste_umidade_kg)} Kg (Desconto)`
+                    : `+${fmt(calculos.ajuste_umidade_kg)} Kg (Acréscimo)`
+              }
+              variant={calculos.tipo_ajuste === "acrescimo" ? "bonus" : calculos.tipo_ajuste === "desconto" ? "discount" : "neutral"}
+            />
             <ResultCard label="Kg Descontados (Impureza)" value={`${fmt(calculos.desconto_impureza_kg)} Kg`} />
             <ResultCard label="Desconto de Secagem" value={`${fmt(calculos.desconto_secagem_kg)} Kg`} />
             <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
@@ -300,11 +341,19 @@ export default function RecebimentoPage() {
   );
 }
 
-function ResultCard({ label, value }: { label: string; value: string }) {
+function ResultCard({ label, value, variant }: { label: string; value: string; variant?: "bonus" | "discount" | "neutral" }) {
   return (
-    <div className="rounded-lg bg-card border p-3">
+    <div className={cn(
+      "rounded-lg border p-3",
+      variant === "bonus" && "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
+      variant === "discount" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+      !variant && "bg-card",
+    )}>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-semibold text-foreground">{value}</p>
+      <p className={cn(
+        "text-lg font-semibold",
+        variant === "bonus" ? "text-emerald-600 dark:text-emerald-400" : variant === "discount" ? "text-amber-600 dark:text-amber-400" : "text-foreground",
+      )}>{value}</p>
     </div>
   );
 }
