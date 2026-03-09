@@ -153,7 +153,7 @@ export default function SaidaVendaPage() {
             <Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(maskClassificacao(e.target.value))} />
           </div>
           <div className="space-y-1">
-            <Label>Kgs Expedidos *</Label>
+            <Label>Peso (Kg) *</Label>
             <Input
               type="number"
               placeholder="15000"
