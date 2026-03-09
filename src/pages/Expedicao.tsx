@@ -17,6 +17,7 @@ interface SaidaComAjuste {
   peso_ajustado: number;
   ajuste_kg: number;
   tipo_ajuste: "desconto" | "acrescimo" | "neutro";
+  valor_expedicao: number;
 }
 
 export default function ExpedicaoPage() {
@@ -56,17 +57,20 @@ export default function ExpedicaoPage() {
         peso_ajustado: Math.max(0, peso_ajustado),
         ajuste_kg,
         tipo_ajuste,
+        valor_expedicao: s.valor_expedicao || (s.kgs_expedidos / 1000) * 15,
       };
     });
   }, [saidas]);
 
   const totalPesoBruto = saidasComAjuste.reduce((sum, s) => sum + s.kgs_expedidos, 0);
   const totalPesoAjustado = saidasComAjuste.reduce((sum, s) => sum + s.peso_ajustado, 0);
+  const totalValorExpedicao = saidasComAjuste.reduce((sum, s) => sum + s.valor_expedicao, 0);
 
   const fmtKg = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const fmtSacos = (kgs: number) => (kgs / 60).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtTon = (kgs: number) => (kgs / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
   const fmtPct = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const fmtBRL = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -75,7 +79,7 @@ export default function ExpedicaoPage() {
         <p className="page-subtitle">Resumo consolidado de expedições com ajuste de umidade (base: {UMIDADE_IDEAL}%)</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-5">
         <div className="kpi-card">
           <p className="text-xs text-muted-foreground">Peso Bruto Total</p>
           <p className="text-2xl font-display font-bold text-foreground">{fmtKg(totalPesoBruto)} Kg</p>
@@ -91,6 +95,10 @@ export default function ExpedicaoPage() {
         <div className="kpi-card">
           <p className="text-xs text-muted-foreground">Total de Toneladas</p>
           <p className="text-2xl font-display font-bold text-foreground">{fmtTon(totalPesoAjustado)}</p>
+        </div>
+        <div className="kpi-card border-emerald-500/30 bg-emerald-500/5">
+          <p className="text-xs text-muted-foreground">Taxa de Expedição</p>
+          <p className="text-2xl font-display font-bold text-emerald-600 dark:text-emerald-400">{fmtBRL(totalValorExpedicao)}</p>
         </div>
       </div>
 
@@ -110,6 +118,7 @@ export default function ExpedicaoPage() {
               <TableHead className="text-right">Peso Ajustado</TableHead>
               <TableHead className="text-right">Sacos</TableHead>
               <TableHead className="text-right">Toneladas</TableHead>
+              <TableHead className="text-right">Taxa (R$)</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {saidasComAjuste.map(s => (
@@ -137,6 +146,7 @@ export default function ExpedicaoPage() {
                   <TableCell className="text-right font-semibold tabular-nums text-primary">{fmtKg(s.peso_ajustado)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmtSacos(s.peso_ajustado)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmtTon(s.peso_ajustado)}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">{fmtBRL(s.valor_expedicao)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -149,6 +159,7 @@ export default function ExpedicaoPage() {
               <TableCell className="text-right font-bold tabular-nums text-primary">{fmtKg(totalPesoAjustado)}</TableCell>
               <TableCell className="text-right font-bold tabular-nums">{fmtSacos(totalPesoAjustado)}</TableCell>
               <TableCell className="text-right font-bold tabular-nums">{fmtTon(totalPesoAjustado)}</TableCell>
+              <TableCell className="text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{fmtBRL(totalValorExpedicao)}</TableCell>
             </TableRow></TableFooter>
           </Table>
         </div>

@@ -68,6 +68,7 @@ export interface Saida {
   kgs_expedidos: number;
   umidade_saida: number;
   categoria: string;
+  valor_expedicao: number;
   created_at: string;
   // Joined
   comprador_nome?: string;
