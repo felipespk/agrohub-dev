@@ -228,7 +228,7 @@ export default function RelatorioPage() {
           rowData = {
             produtor: g.produtorNome,
             tipoGrao: g.tipoGraoNome,
-            data: parseDate(l.data),
+            data: parseLocalDate(l.data),
             placa: l.placa,
             comprador_destino: "", // saidas don't have comprador in lancamento; filled from context if needed
             categoria: "",
