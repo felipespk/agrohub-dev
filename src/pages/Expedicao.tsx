@@ -32,7 +32,7 @@ export default function ExpedicaoPage() {
               <TableHead>Comprador</TableHead>
               <TableHead>Produtor</TableHead>
               <TableHead>Categoria</TableHead>
-              <TableHead className="text-right">Kgs</TableHead>
+              <TableHead className="text-right">Peso (Kg)</TableHead>
               <TableHead className="text-right">Sacos</TableHead>
               <TableHead className="text-right">Toneladas</TableHead>
             </TableRow></TableHeader>

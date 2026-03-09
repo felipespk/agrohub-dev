@@ -59,7 +59,7 @@ export default function SaidaVendaPage() {
     if (!produtorId) newErrors.produtorId = "Selecione o produtor";
     if (!tipoGraoId) newErrors.tipoGraoId = "Selecione o tipo de grão";
     if (!compradorId) newErrors.compradorId = "Selecione o comprador";
-    if (!kgsExpedidos || parseFloat(kgsExpedidos) <= 0) newErrors.kgsExpedidos = "Kgs expedidos deve ser maior que zero";
+    if (!kgsExpedidos || parseFloat(kgsExpedidos) <= 0) newErrors.kgsExpedidos = "Peso deve ser maior que zero";
     if (!umidadeSaida || parseFloat(umidadeSaida) <= 0) newErrors.umidadeSaida = "Umidade de saída é obrigatória";
 
     if (Object.keys(newErrors).length > 0) {
@@ -153,7 +153,7 @@ export default function SaidaVendaPage() {
             <Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(maskClassificacao(e.target.value))} />
           </div>
           <div className="space-y-1">
-            <Label>Kgs Expedidos *</Label>
+            <Label>Peso (Kg) *</Label>
             <Input
               type="number"
               placeholder="15000"
@@ -195,7 +195,7 @@ export default function SaidaVendaPage() {
             <TableHeader><TableRow>
               <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
               <TableHead>Comprador</TableHead><TableHead>Categoria</TableHead>
-              <TableHead>Classificação</TableHead><TableHead className="text-right">Umidade (%)</TableHead><TableHead className="text-right">Kgs</TableHead><TableHead className="w-24">Ações</TableHead>
+              <TableHead>Classificação</TableHead><TableHead className="text-right">Umidade (%)</TableHead><TableHead className="text-right">Peso (Kg)</TableHead><TableHead className="w-24">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {saidas.map(s => (
