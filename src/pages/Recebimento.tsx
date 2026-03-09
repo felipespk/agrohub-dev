@@ -263,15 +263,17 @@ export default function RecebimentoPage() {
           <div className="flex items-center gap-2"><Calculator className="h-5 w-5 text-primary" /><h2 className="font-display font-semibold text-lg text-foreground">Resultados</h2></div>
           <p className="text-xs text-muted-foreground">Cálculos em tempo real</p>
           <div className="space-y-3">
-            <ResultCard label="Kg Descontados (Impureza)" value={`${fmt(calculos.desconto_impureza_kg)} Kg`} />
-            <ResultCard label="Desconto de Secagem" value={`${fmt(calculos.desconto_secagem_kg)} Kg`} />
+            <ResultCard
+              label={`Desc. Umidade (${fmt(calculos.desconto_umidade_percent)}%)`}
+              value={`${fmt(calculos.desconto_umidade_kg)} Kg`}
+              variant={calculos.desconto_umidade_kg > 0 ? "discount" : undefined}
+            />
+            <ResultCard label="Desc. Impureza" value={`${fmt(calculos.desconto_impureza_kg)} Kg`} />
+            <ResultCard label="Desc. Secagem" value={`${fmt(calculos.desconto_secagem_kg)} Kg`} />
             <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
               <p className="text-xs text-muted-foreground">Peso Líquido Final</p>
               <p className="text-2xl font-display font-bold text-primary">{fmt(calculos.peso_liquido)} Kg</p>
             </div>
-            <p className="text-xs text-muted-foreground italic">
-              * O ajuste de umidade será aplicado na expedição/venda
-            </p>
           </div>
         </div>
       </div>
