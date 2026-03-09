@@ -25,6 +25,7 @@ export default function SaidaVendaPage() {
   const [classificacao, setClassificacao] = useState("");
   const [kgsExpedidos, setKgsExpedidos] = useState("");
   const [umidadeSaida, setUmidadeSaida] = useState("");
+  const [taxaPorTonelada, setTaxaPorTonelada] = useState("15");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
