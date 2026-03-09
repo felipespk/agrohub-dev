@@ -404,7 +404,7 @@ export default function RelatorioPage() {
                       <TableBody>
                         {filterLancamentos(g.lancamentos).map(l => (
                           <TableRow key={l.id}>
-                            <TableCell className="tabular-nums">{new Date(l.data).toLocaleDateString("pt-BR")}</TableCell>
+                            <TableCell className="tabular-nums">{formatDateBR(l.data)}</TableCell>
                             <TableCell>
                               {l.tipo === "entrada" ? (
                                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 hover:bg-emerald-100 gap-1">

@@ -228,7 +228,7 @@ export default function SaidaVendaPage() {
             <TableBody>
               {saidas.map(s => (
                 <TableRow key={s.id} className={editingId === s.id ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
-                  <TableCell>{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>{formatDateBR(s.data)}</TableCell>
                   <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
                   <TableCell>{s.produtor_nome || "—"}</TableCell>
                   <TableCell>{s.tipo_grao_nome || "—"}</TableCell>

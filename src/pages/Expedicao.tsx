@@ -323,7 +323,7 @@ export default function ExpedicaoPage() {
                             </div>
                             {s.produtor_id && s.dataEntrada && (
                               <p className="text-xs text-muted-foreground mt-1">
-                                Entrada: {new Date(s.dataEntrada).toLocaleDateString("pt-BR")} · Taxa: {fmtBRL(s.taxaQuinzenal)}/saca/quinz.
+                                Entrada: {formatDateBR(s.dataEntrada)} · Taxa: {fmtBRL(s.taxaQuinzenal)}/saca/quinz.
                               </p>
                             )}
                           </TooltipContent>

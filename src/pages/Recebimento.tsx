@@ -290,7 +290,7 @@ export default function RecebimentoPage() {
             <TableBody>
               {recebimentos.map(r => (
                 <TableRow key={r.id} className={editingId === r.id ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
-                  <TableCell>{new Date(r.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>{formatDateBR(r.data)}</TableCell>
                   <TableCell className="font-mono">{r.placa_caminhao}</TableCell>
                   <TableCell>{r.produtor_nome}</TableCell>
                   <TableCell>{r.tipo_grao_nome}</TableCell>

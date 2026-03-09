@@ -158,7 +158,7 @@ export default function Dashboard() {
                 <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma movimentação registrada.</TableCell></TableRow>
               ) : ultimasMovimentacoes.map(m => (
                 <TableRow key={m.id}>
-                  <TableCell>{new Date(m.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>{formatDateBR(m.data)}</TableCell>
                   <TableCell><Badge variant={m.tipo === "Entrada" ? "default" : "secondary"}>{m.tipo}</Badge></TableCell>
                   <TableCell className="font-mono">{m.placa}</TableCell>
                   <TableCell>{m.descricao}</TableCell>
