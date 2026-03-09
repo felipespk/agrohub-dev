@@ -204,10 +204,10 @@ export default function SaidaVendaPage() {
               value={taxaPorTonelada}
               onChange={e => setTaxaPorTonelada(e.target.value)}
             />
-            {kgsExpedidos && parseFloat(kgsExpedidos) > 0 && (
+            {unmaskKg(kgsExpedidos) && parseFloat(unmaskKg(kgsExpedidos)) > 0 && (
               <p className="text-xs text-muted-foreground">
                 Valor: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-                  (parseFloat(kgsExpedidos) / 1000) * (parseFloat(taxaPorTonelada.replace(",", ".")) || 15)
+                  (parseFloat(unmaskKg(kgsExpedidos)) / 1000) * (parseFloat(taxaPorTonelada.replace(",", ".")) || 15)
                 )}
               </p>
             )}
