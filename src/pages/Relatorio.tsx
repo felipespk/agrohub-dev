@@ -161,10 +161,9 @@ export default function RelatorioPage() {
           classificacao: !isEntrada ? (l.classificacao || "") : null,
           impureza: isEntrada ? l.impureza : null,
           txSecagem: isEntrada ? l.taxaSecagem : null,
-          descUmid: isEntrada ? l.descontoUmidadeKg : null,
+          ajusteUmid: isEntrada ? l.descontoUmidadeKg : null,
           descImp: isEntrada ? l.descontoImpurezaKg : null,
           descSec: isEntrada ? l.descontoSecagemKg : null,
-          totalDesc: isEntrada ? l.totalDescontos : null,
           pesoLiq: l.kg,
         });
 
