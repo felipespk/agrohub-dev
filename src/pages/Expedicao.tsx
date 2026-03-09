@@ -184,7 +184,23 @@ export default function ExpedicaoPage() {
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
         <div className="flex items-center gap-2"><Truck className="h-6 w-6 text-primary" /><h1 className="page-title">Expedição</h1></div>
-        <p className="page-subtitle">Resumo consolidado de expedições com ajuste de umidade (base: {UMIDADE_IDEAL}%) e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
+        <p className="page-subtitle">Resumo consolidado de expedições com ajuste de umidade e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
+      </div>
+
+      {/* Umidade Combinada input */}
+      <div className="form-section">
+        <div className="flex items-center gap-4">
+          <Label htmlFor="umidadeCombinada" className="text-sm font-medium whitespace-nowrap">Umidade Combinada (%):</Label>
+          <Input
+            id="umidadeCombinada"
+            type="number"
+            step="0.1"
+            className="w-28"
+            value={umidadeCombinada}
+            onChange={e => setUmidadeCombinada(e.target.value)}
+          />
+          <span className="text-xs text-muted-foreground">Base contratual para cálculo de ágio/deságio</span>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
