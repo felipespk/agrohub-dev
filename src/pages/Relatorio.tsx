@@ -199,26 +199,33 @@ export default function RelatorioPage() {
         });
       }
 
-      // Summary row per group
-      const summaryRow = ws.addRow({
-        produtor: `TOTAL — ${g.produtorNome} / ${g.tipoGraoNome}`,
-        pesoBruto: null,
-        pesoLiq: g.saldo,
-        ajusteUmid: null,
-        descImp: null,
-        descSec: null,
-        operacao: `E: ${g.kgsEntrada} | S: ${g.kgsSaida}`,
-      });
-      summaryRow.eachCell({ includeEmpty: true }, (cell) => {
-        cell.border = thinBorder;
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF7ED" } };
-        cell.font = { bold: true, size: 10, color: { argb: "FF1E3A8A" } };
-      });
+      // Summary row per group (recalcula com base nos filtrados)
+      const kgsEntradaFiltrado = lancamentosFiltrados.filter(l => l.tipo === "entrada").reduce((s, l) => s + l.kg, 0);
+      const kgsSaidaFiltrado = lancamentosFiltrados.filter(l => l.tipo === "saida").reduce((s, l) => s + l.kg, 0);
+      const saldoFiltrado = kgsEntradaFiltrado - kgsSaidaFiltrado;
+
+      if (lancamentosFiltrados.length > 0) {
+        const summaryRow = ws.addRow({
+          produtor: `TOTAL — ${g.produtorNome} / ${g.tipoGraoNome}`,
+          pesoBruto: null,
+          pesoLiq: saldoFiltrado,
+          ajusteUmid: null,
+          descImp: null,
+          descSec: null,
+          operacao: `E: ${kgsEntradaFiltrado} | S: ${kgsSaidaFiltrado}`,
+        });
+        summaryRow.eachCell({ includeEmpty: true }, (cell) => {
+          cell.border = thinBorder;
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF7ED" } };
+          cell.font = { bold: true, size: 10, color: { argb: "FF1E3A8A" } };
+        });
+      }
     }
 
-    // Download
+    // Download com nome baseado no filtro
     const hoje = new Date();
-    const nomeArquivo = `Relatorio_Estoque_${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${hoje.getFullYear()}.xlsx`;
+    const filterSuffix = filterMode === "in" ? "_Entradas" : filterMode === "out" ? "_Saidas" : "";
+    const nomeArquivo = `Relatorio_Estoque${filterSuffix}_${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${hoje.getFullYear()}.xlsx`;
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const url = URL.createObjectURL(blob);
