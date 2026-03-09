@@ -65,6 +65,7 @@ export default function SaidaVendaPage() {
     if (!compradorId) newErrors.compradorId = "Selecione o comprador";
     if (!kgsExpedidos || parseFloat(kgsExpedidos) <= 0) newErrors.kgsExpedidos = "Peso deve ser maior que zero";
     if (!umidadeSaida || parseFloat(umidadeSaida) <= 0) newErrors.umidadeSaida = "Umidade de saída é obrigatória";
+    if (!classificacao.trim()) newErrors.classificacao = "Classificação é obrigatória";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -160,8 +161,14 @@ export default function SaidaVendaPage() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label>Classificação</Label>
-            <Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(maskClassificacao(e.target.value))} />
+            <Label>Classificação *</Label>
+            <Input
+              placeholder="Ex: 71/61"
+              value={classificacao}
+              onChange={e => { setClassificacao(maskClassificacao(e.target.value)); clearError("classificacao"); }}
+              className={cn(errors.classificacao && "border-destructive focus-visible:ring-destructive")}
+            />
+            {errors.classificacao && <p className="text-xs text-destructive">{errors.classificacao}</p>}
           </div>
           <div className="space-y-1">
             <Label>Peso (Kg) *</Label>
