@@ -115,7 +115,7 @@ export default function ExpedicaoPage() {
         peso_ajustado: Math.max(0, peso_ajustado),
         ajuste_kg,
         tipo_ajuste,
-        valor_expedicao: s.valor_expedicao || (s.kgs_expedidos / 1000) * taxaExpedicao,
+        valor_expedicao: s.valor_expedicao || 0,
         diasArmazenados,
         diasCobrados,
         quinzenas,
