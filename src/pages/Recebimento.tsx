@@ -9,6 +9,7 @@ import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X } from "lucide-reac
 import { toast } from "sonner";
 import { maskPlaca } from "@/lib/masks";
 import { getBrazilDateInputValue } from "@/lib/date";
+import { cn } from "@/lib/utils";
 
 export default function RecebimentoPage() {
   const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento } = useAppData();
@@ -24,9 +25,14 @@ export default function RecebimentoPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState("");
   const [valorArmazenamento, setValorArmazenamento] = useState("0.15");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const clearError = (field: string) =>
+    setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
 
   const handleTipoGraoChange = (id: string) => {
     setTipoGraoId(id);
+    clearError("tipoGraoId");
     const grao = tiposGrao.find(t => t.id === id);
     if (grao) setUmidadeFinalAlvo(String(grao.umidade_padrao));
   };
@@ -47,8 +53,10 @@ export default function RecebimentoPage() {
 
   const clearForm = () => {
     setData(getBrazilDateInputValue());
-    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial(""); setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setValorArmazenamento("0.15");
+    setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial("");
+    setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setValorArmazenamento("0.15");
     setEditingId(null);
+    setErrors({});
   };
 
   const handleEdit = (r: Recebimento) => {
@@ -59,6 +67,7 @@ export default function RecebimentoPage() {
     setUmidadeFinalAlvo(String(r.umidade_final_alvo));
     setValorArmazenamento(String(r.valor_armazenamento ?? 0.15));
     setEditingId(r.id);
+    setErrors({});
   };
 
   const handleDelete = async (id: string) => {
@@ -67,9 +76,24 @@ export default function RecebimentoPage() {
   };
 
   const handleSalvar = async () => {
-    if (!placa || !produtorId || !tipoGraoId || !pesoBruto || !umidadeInicial) {
-      toast.error("Preencha todos os campos obrigatórios."); return;
+    const newErrors: Record<string, string> = {};
+    if (!placa.trim()) newErrors.placa = "Placa é obrigatória";
+    if (!produtorId) newErrors.produtorId = "Selecione o produtor";
+    if (!tipoGraoId) newErrors.tipoGraoId = "Selecione o tipo de grão";
+    if (!pesoBruto || parseFloat(pesoBruto) <= 0) newErrors.pesoBruto = "Peso bruto deve ser maior que zero";
+    if (!umidadeInicial || parseFloat(umidadeInicial) <= 0) newErrors.umidadeInicial = "Umidade inicial é obrigatória";
+    if (!umidadeFinalAlvo || parseFloat(umidadeFinalAlvo) <= 0) newErrors.umidadeFinalAlvo = "Umidade alvo é obrigatória";
+    if (impureza === "") newErrors.impureza = "Informe a impureza (0 se não houver)";
+    if (taxaSecagem === "") newErrors.taxaSecagem = "Informe a taxa de secagem (0 se não houver)";
+    if (!valorArmazenamento || parseFloat(valorArmazenamento) < 0) newErrors.valorArmazenamento = "Valor de armazenamento é obrigatório";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Preencha todos os campos obrigatórios!");
+      return;
     }
+    setErrors({});
+
     const entry = {
       data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(),
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
@@ -109,28 +133,107 @@ export default function RecebimentoPage() {
             {editingId && <Button variant="outline" size="sm" onClick={clearForm} className="gap-1"><X className="h-4 w-4" /> Cancelar Edição</Button>}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2"><Label>Data</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Placa do Caminhão *</Label><Input placeholder="ABC-1234" value={placa} onChange={e => setPlaca(maskPlaca(e.target.value))} /></div>
-            <div className="space-y-2">
+            <div className="space-y-1">
+              <Label>Data</Label>
+              <Input type="date" value={data} onChange={e => setData(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Placa do Caminhão *</Label>
+              <Input
+                placeholder="ABC-1234"
+                value={placa}
+                onChange={e => { setPlaca(maskPlaca(e.target.value)); clearError("placa"); }}
+                className={cn(errors.placa && "border-destructive focus-visible:ring-destructive")}
+              />
+              {errors.placa && <p className="text-xs text-destructive">{errors.placa}</p>}
+            </div>
+            <div className="space-y-1">
               <Label>Produtor *</Label>
-              <Select value={produtorId} onValueChange={setProdutorId}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <Select value={produtorId} onValueChange={v => { setProdutorId(v); clearError("produtorId"); }}>
+                <SelectTrigger className={cn(errors.produtorId && "border-destructive")}><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>{produtores.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
               </Select>
+              {errors.produtorId && <p className="text-xs text-destructive">{errors.produtorId}</p>}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Tipo de Grão *</Label>
               <Select value={tipoGraoId} onValueChange={handleTipoGraoChange}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectTrigger className={cn(errors.tipoGraoId && "border-destructive")}><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>{tiposGrao.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}</SelectContent>
               </Select>
+              {errors.tipoGraoId && <p className="text-xs text-destructive">{errors.tipoGraoId}</p>}
             </div>
-            <div className="space-y-2"><Label>Peso Bruto (Kg) *</Label><Input type="number" placeholder="30000" value={pesoBruto} onChange={e => setPesoBruto(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Umidade Inicial (%) *</Label><Input type="number" step="0.1" placeholder="18" value={umidadeInicial} onChange={e => setUmidadeInicial(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Impureza (%)</Label><Input type="number" step="0.1" placeholder="2" value={impureza} onChange={e => setImpureza(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Taxa de Secagem (%)</Label><Input type="number" step="0.1" placeholder="8.5" value={taxaSecagem} onChange={e => setTaxaSecagem(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Umidade Final Alvo (%)</Label><Input type="number" step="0.1" placeholder="12" value={umidadeFinalAlvo} onChange={e => setUmidadeFinalAlvo(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Valor Armazenamento (R$/Saca) *</Label><Input type="number" step="0.01" placeholder="0.15" value={valorArmazenamento} onChange={e => setValorArmazenamento(e.target.value)} /></div>
+            <div className="space-y-1">
+              <Label>Peso Bruto (Kg) *</Label>
+              <Input
+                type="number"
+                placeholder="30000"
+                value={pesoBruto}
+                onChange={e => { setPesoBruto(e.target.value); clearError("pesoBruto"); }}
+                className={cn(errors.pesoBruto && "border-destructive focus-visible:ring-destructive")}
+              />
+              {errors.pesoBruto && <p className="text-xs text-destructive">{errors.pesoBruto}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Umidade Inicial (%) *</Label>
+              <Input
+                type="number"
+                step="0.1"
+                placeholder="18"
+                value={umidadeInicial}
+                onChange={e => { setUmidadeInicial(e.target.value); clearError("umidadeInicial"); }}
+                className={cn(errors.umidadeInicial && "border-destructive focus-visible:ring-destructive")}
+              />
+              {errors.umidadeInicial && <p className="text-xs text-destructive">{errors.umidadeInicial}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Impureza (%) *</Label>
+              <Input
+                type="number"
+                step="0.1"
+                placeholder="2"
+                value={impureza}
+                onChange={e => { setImpureza(e.target.value); clearError("impureza"); }}
+                className={cn(errors.impureza && "border-destructive focus-visible:ring-destructive")}
+              />
+              {errors.impureza && <p className="text-xs text-destructive">{errors.impureza}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Taxa de Secagem (%) *</Label>
+              <Input
+                type="number"
+                step="0.1"
+                placeholder="8.5"
+                value={taxaSecagem}
+                onChange={e => { setTaxaSecagem(e.target.value); clearError("taxaSecagem"); }}
+                className={cn(errors.taxaSecagem && "border-destructive focus-visible:ring-destructive")}
+              />
+              {errors.taxaSecagem && <p className="text-xs text-destructive">{errors.taxaSecagem}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Umidade Final Alvo (%) *</Label>
+              <Input
+                type="number"
+                step="0.1"
+                placeholder="12"
+                value={umidadeFinalAlvo}
+                onChange={e => { setUmidadeFinalAlvo(e.target.value); clearError("umidadeFinalAlvo"); }}
+                className={cn(errors.umidadeFinalAlvo && "border-destructive focus-visible:ring-destructive")}
+              />
+              {errors.umidadeFinalAlvo && <p className="text-xs text-destructive">{errors.umidadeFinalAlvo}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Valor Armazenamento (R$/Saca) *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.15"
+                value={valorArmazenamento}
+                onChange={e => { setValorArmazenamento(e.target.value); clearError("valorArmazenamento"); }}
+                className={cn(errors.valorArmazenamento && "border-destructive focus-visible:ring-destructive")}
+              />
+              {errors.valorArmazenamento && <p className="text-xs text-destructive">{errors.valorArmazenamento}</p>}
+            </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
