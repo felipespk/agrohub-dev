@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAppData, Recebimento } from "@/contexts/AppContext";
 import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { maskPlaca } from "@/lib/masks";
+import { maskPlaca, maskKg, unmaskKg } from "@/lib/masks";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +38,7 @@ export default function RecebimentoPage() {
   };
 
   const calculos = useMemo(() => {
-    const peso = parseFloat(pesoBruto) || 0;
+    const peso = parseFloat(unmaskKg(pesoBruto)) || 0;
     const umIni = parseFloat(umidadeInicial) || 0;
     const umAlvo = parseFloat(umidadeFinalAlvo) || 12;
     const imp = parseFloat(impureza) || 0;
@@ -73,7 +73,7 @@ export default function RecebimentoPage() {
 
   const handleEdit = (r: Recebimento) => {
     setData(r.data); setPlaca(maskPlaca(r.placa_caminhao)); setProdutorId(r.produtor_id);
-    setTipoGraoId(r.tipo_grao_id); setPesoBruto(String(r.peso_bruto));
+    setTipoGraoId(r.tipo_grao_id); setPesoBruto(maskKg(String(r.peso_bruto)));
     setUmidadeInicial(String(r.umidade_inicial)); setImpureza(String(r.impureza));
     setTaxaSecagem(String(r.taxa_secagem_percentual || 0));
     setUmidadeFinalAlvo(String(r.umidade_final_alvo));
@@ -92,7 +92,7 @@ export default function RecebimentoPage() {
     if (!placa.trim()) newErrors.placa = "Placa é obrigatória";
     if (!produtorId) newErrors.produtorId = "Selecione o produtor";
     if (!tipoGraoId) newErrors.tipoGraoId = "Selecione o tipo de grão";
-    if (!pesoBruto || parseFloat(pesoBruto) <= 0) newErrors.pesoBruto = "Peso bruto deve ser maior que zero";
+    if (!unmaskKg(pesoBruto) || parseFloat(unmaskKg(pesoBruto)) <= 0) newErrors.pesoBruto = "Peso bruto deve ser maior que zero";
     if (!umidadeInicial || parseFloat(umidadeInicial) <= 0) newErrors.umidadeInicial = "Umidade inicial é obrigatória";
     if (!umidadeFinalAlvo || parseFloat(umidadeFinalAlvo) <= 0) newErrors.umidadeFinalAlvo = "Umidade alvo é obrigatória";
     if (impureza === "") newErrors.impureza = "Informe a impureza (0 se não houver)";
@@ -109,7 +109,7 @@ export default function RecebimentoPage() {
     const entry = {
       data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(),
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
-      peso_bruto: parseFloat(pesoBruto), umidade_inicial: parseFloat(umidadeInicial),
+      peso_bruto: parseFloat(unmaskKg(pesoBruto)), umidade_inicial: parseFloat(umidadeInicial),
       umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,
       valor_armazenamento: parseFloat(valorArmazenamento) || 0.15,
       ...calculos,
@@ -178,10 +178,11 @@ export default function RecebimentoPage() {
             <div className="space-y-1">
               <Label>Peso Bruto (Kg) *</Label>
               <Input
-                type="number"
-                placeholder="30000"
+                type="text"
+                inputMode="numeric"
+                placeholder="30.000"
                 value={pesoBruto}
-                onChange={e => { setPesoBruto(e.target.value); clearError("pesoBruto"); }}
+                onChange={e => { setPesoBruto(maskKg(e.target.value)); clearError("pesoBruto"); }}
                 className={cn(errors.pesoBruto && "border-destructive focus-visible:ring-destructive")}
               />
               {errors.pesoBruto && <p className="text-xs text-destructive">{errors.pesoBruto}</p>}

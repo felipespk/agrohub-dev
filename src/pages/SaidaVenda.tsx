@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAppData, Saida } from "@/contexts/AppContext";
 import { ArrowUpFromLine, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { maskPlaca, maskClassificacao } from "@/lib/masks";
+import { maskPlaca, maskClassificacao, maskKg, unmaskKg } from "@/lib/masks";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +44,7 @@ export default function SaidaVendaPage() {
     setData(s.data); setPlaca(maskPlaca(s.placa_caminhao)); setCompradorId(s.comprador_id);
     setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || "");
     setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || ""));
-    setKgsExpedidos(String(s.kgs_expedidos)); setUmidadeSaida(String(s.umidade_saida || ""));
+    setKgsExpedidos(maskKg(String(s.kgs_expedidos))); setUmidadeSaida(String(s.umidade_saida || ""));
     // Recalculate taxa from saved valor_expedicao
     const tons = s.kgs_expedidos / 1000;
     setTaxaPorTonelada(tons > 0 ? String(Math.round((s.valor_expedicao / tons) * 100) / 100) : "15");
@@ -63,7 +63,8 @@ export default function SaidaVendaPage() {
     if (!produtorId) newErrors.produtorId = "Selecione o produtor";
     if (!tipoGraoId) newErrors.tipoGraoId = "Selecione o tipo de grão";
     if (!compradorId) newErrors.compradorId = "Selecione o comprador";
-    if (!kgsExpedidos || parseFloat(kgsExpedidos) <= 0) newErrors.kgsExpedidos = "Peso deve ser maior que zero";
+    const rawKgs = unmaskKg(kgsExpedidos);
+    if (!rawKgs || parseFloat(rawKgs) <= 0) newErrors.kgsExpedidos = "Peso deve ser maior que zero";
     if (!umidadeSaida || parseFloat(umidadeSaida) <= 0) newErrors.umidadeSaida = "Umidade de saída é obrigatória";
     if (!classificacao.trim()) newErrors.classificacao = "Classificação é obrigatória";
 
@@ -74,7 +75,7 @@ export default function SaidaVendaPage() {
     }
     setErrors({});
 
-    const kgs = parseFloat(kgsExpedidos);
+    const kgs = parseFloat(unmaskKg(kgsExpedidos));
     const taxa = parseFloat(taxaPorTonelada.replace(",", ".")) || 15;
     const toneladas = kgs / 1000;
     const valorExpedicao = toneladas * taxa;
@@ -91,7 +92,7 @@ export default function SaidaVendaPage() {
     } else {
       const row = await addSaida(entry);
       if (row) {
-        toast.success(`Saída registrada! ${parseFloat(kgsExpedidos).toLocaleString("pt-BR")} Kg expedidos.`);
+        toast.success(`Saída registrada! ${parseFloat(unmaskKg(kgsExpedidos)).toLocaleString("pt-BR")} Kg expedidos.`);
         // Partial reset: limpa apenas campos transacionais, mantém cabeçalho para lançamentos em lote
         setPlaca("");
         setClassificacao("");
@@ -173,10 +174,11 @@ export default function SaidaVendaPage() {
           <div className="space-y-1">
             <Label>Peso (Kg) *</Label>
             <Input
-              type="number"
-              placeholder="15000"
+              type="text"
+              inputMode="numeric"
+              placeholder="15.000"
               value={kgsExpedidos}
-              onChange={e => { setKgsExpedidos(e.target.value); clearError("kgsExpedidos"); }}
+              onChange={e => { setKgsExpedidos(maskKg(e.target.value)); clearError("kgsExpedidos"); }}
               className={cn(errors.kgsExpedidos && "border-destructive focus-visible:ring-destructive")}
             />
             {errors.kgsExpedidos && <p className="text-xs text-destructive">{errors.kgsExpedidos}</p>}
@@ -202,10 +204,10 @@ export default function SaidaVendaPage() {
               value={taxaPorTonelada}
               onChange={e => setTaxaPorTonelada(e.target.value)}
             />
-            {kgsExpedidos && parseFloat(kgsExpedidos) > 0 && (
+            {unmaskKg(kgsExpedidos) && parseFloat(unmaskKg(kgsExpedidos)) > 0 && (
               <p className="text-xs text-muted-foreground">
                 Valor: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-                  (parseFloat(kgsExpedidos) / 1000) * (parseFloat(taxaPorTonelada.replace(",", ".")) || 15)
+                  (parseFloat(unmaskKg(kgsExpedidos)) / 1000) * (parseFloat(taxaPorTonelada.replace(",", ".")) || 15)
                 )}
               </p>
             )}

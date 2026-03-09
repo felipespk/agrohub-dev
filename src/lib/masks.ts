@@ -47,3 +47,15 @@ export function maskClassificacao(value: string): string {
   if (digits.length <= 2) return digits;
   return digits.slice(0, 2) + "/" + digits.slice(2);
 }
+
+/** Formata número com separador de milhares pt-BR (ex: 15.000) */
+export function maskKg(value: string): string {
+  const clean = value.replace(/[^\d]/g, "");
+  if (!clean) return "";
+  return Number(clean).toLocaleString("pt-BR");
+}
+
+/** Remove formatação de milhares e retorna string numérica pura */
+export function unmaskKg(value: string): string {
+  return value.replace(/\./g, "");
+}
