@@ -8,7 +8,7 @@ import { useAppData } from "@/contexts/AppContext";
 import { AlertTriangle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { getBrazilDateInputValue } from "@/lib/date";
+import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 export default function QuebraTecnicaPage() {

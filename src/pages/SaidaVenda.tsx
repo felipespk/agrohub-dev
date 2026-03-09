@@ -9,7 +9,7 @@ import { useAppData, Saida } from "@/contexts/AppContext";
 import { ArrowUpFromLine, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { maskPlaca, maskClassificacao } from "@/lib/masks";
-import { getBrazilDateInputValue } from "@/lib/date";
+import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 const categorias = ["Venda", "Transferência", "Devolução", "Outros"];
