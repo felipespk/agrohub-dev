@@ -82,6 +82,7 @@ export default function RelatorioPage() {
         existing.lancamentos.push({
           id: s.id, data: s.data, tipo: "saida", placa: s.placa_caminhao, kg: s.kgs_expedidos,
           umidadeSaida: s.umidade_saida,
+          classificacao: s.classificacao || "",
         });
       }
     }
