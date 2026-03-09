@@ -69,10 +69,15 @@ export default function SaidaVendaPage() {
     }
     setErrors({});
 
+    const kgs = parseFloat(kgsExpedidos);
+    const toneladas = kgs / 1000;
+    const valorExpedicao = toneladas * 15; // R$ 15 por tonelada
+
     const entry = {
       data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(), comprador_id: compradorId,
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
-      classificacao, kgs_expedidos: parseFloat(kgsExpedidos), umidade_saida: parseFloat(umidadeSaida), categoria,
+      classificacao, kgs_expedidos: kgs, umidade_saida: parseFloat(umidadeSaida), categoria,
+      valor_expedicao: valorExpedicao,
     };
     if (editingId) {
       const ok = await updateSaida(editingId, entry);
