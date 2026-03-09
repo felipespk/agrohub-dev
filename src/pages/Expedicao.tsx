@@ -285,7 +285,7 @@ export default function ExpedicaoPage() {
                 ) : (
                   saidasFiltradas.map(s => (
                     <TableRow key={s.id}>
-                      <TableCell className="tabular-nums">{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell className="tabular-nums">{formatDateBR(s.data)}</TableCell>
                       <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
                       <TableCell>{s.comprador_nome}</TableCell>
                       <TableCell>{s.produtor_nome || "—"}</TableCell>
