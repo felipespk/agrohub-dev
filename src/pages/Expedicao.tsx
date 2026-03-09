@@ -2,16 +2,12 @@ import { useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useAppData } from "@/contexts/AppContext";
 import { formatDateBR } from "@/lib/date";
 import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X } from "lucide-react";
-import { differenceInDays, parseISO } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const CARENCIA_DIAS = 30;
-const TAXA_QUINZENAL_SACA = 0.15;
 
 interface SaidaComAjuste {
   id: string;
@@ -23,132 +19,88 @@ interface SaidaComAjuste {
   categoria: string;
   kgs_expedidos: number;
   umidade_saida: number;
+  umidade_combinada: number;
   peso_ajustado: number;
   ajuste_kg: number;
   tipo_ajuste: "desconto" | "acrescimo" | "neutro";
   valor_expedicao: number;
-  // Armazenamento
   diasArmazenados: number;
   diasCobrados: number;
   quinzenas: number;
-  taxaQuinzenal: number;
   valorArmazenamento: number;
   dataEntrada: string | null;
+  tipo_grao_nome: string;
 }
 
 export default function ExpedicaoPage() {
-  const { saidas, recebimentos } = useAppData();
-  
-  // Filter states
+  const { saidas, recebimentos, tiposGrao } = useAppData();
+
   const [filterProdutor, setFilterProdutor] = useState<string>("");
   const [filterComprador, setFilterComprador] = useState<string>("");
-  const [umidadeCombinada, setUmidadeCombinada] = useState("12");
 
-  const umidadeCombNum = parseFloat(umidadeCombinada.replace(",", ".")) || 12;
-
-  // Calcula peso ajustado + armazenamento para cada saída
+  // Use per-record saved data (calculated at SaidaVenda time)
   const saidasComAjuste = useMemo<SaidaComAjuste[]>(() => {
     return saidas.map(s => {
-      const umidadeReal = s.umidade_saida || umidadeCombNum;
-      const diferenca = umidadeReal - umidadeCombNum;
+      const grao = tiposGrao.find(t => t.id === s.tipo_grao_id);
+      const umidadeComb = s.umidade_combinada || grao?.umidade_padrao || 12;
+      const taxaAgio = grao?.taxa_agio ?? 1.3;
+      const taxaDesagio = grao?.taxa_desagio ?? 1.5;
+      const umidadeReal = s.umidade_saida || umidadeComb;
+      const diferenca = umidadeReal - umidadeComb;
+
       let ajuste_kg = 0;
       let tipo_ajuste: "desconto" | "acrescimo" | "neutro" = "neutro";
 
       if (diferenca > 0) {
-        // Umidade Real ACIMA do combinado → SOMA peso (1.3% por ponto)
-        ajuste_kg = s.kgs_expedidos * (diferenca * 0.013);
+        ajuste_kg = s.kgs_expedidos * (diferenca * (taxaAgio / 100));
         tipo_ajuste = "acrescimo";
       } else if (diferenca < 0) {
-        // Umidade Real ABAIXO do combinado → SUBTRAI peso (1.5% por ponto)
-        ajuste_kg = s.kgs_expedidos * (Math.abs(diferenca) * 0.015);
+        ajuste_kg = s.kgs_expedidos * (Math.abs(diferenca) * (taxaDesagio / 100));
         tipo_ajuste = "desconto";
       }
 
-      const peso_ajustado = tipo_ajuste === "acrescimo"
-        ? s.kgs_expedidos + ajuste_kg
-        : s.kgs_expedidos - ajuste_kg;
+      const peso_ajustado = s.peso_ajustado > 0 ? s.peso_ajustado :
+        tipo_ajuste === "acrescimo" ? s.kgs_expedidos + ajuste_kg : s.kgs_expedidos - ajuste_kg;
 
-      // Cálculo de armazenamento - buscar data de entrada mais antiga do produtor
-      let diasArmazenados = 0;
-      let diasCobrados = 0;
-      let quinzenas = 0;
-      let taxaQuinzenal = TAXA_QUINZENAL_SACA;
-      let valorArmazenamento = 0;
+      // Use saved storage data or recalculate
+      let diasArmazenados = s.dias_armazenados || 0;
+      let diasCobrados = Math.max(0, diasArmazenados - CARENCIA_DIAS);
+      let quinzenas = s.quinzenas_cobradas || (diasCobrados > 0 ? Math.ceil(diasCobrados / 15) : 0);
+      let valorArmazenamento = s.valor_armazenamento_exp || 0;
       let dataEntrada: string | null = null;
 
-      if (s.produtor_id) {
-        // Encontrar recebimentos do produtor ordenados por data
-        const recebimentosProdutor = recebimentos
-          .filter(r => r.produtor_id === s.produtor_id)
-          .sort((a, b) => a.data.localeCompare(b.data));
-
-        if (recebimentosProdutor.length > 0) {
-          // Usar a data do primeiro recebimento como data de entrada
-          const primeiroRecebimento = recebimentosProdutor[0];
-          dataEntrada = primeiroRecebimento.data;
-          taxaQuinzenal = primeiroRecebimento.valor_armazenamento || TAXA_QUINZENAL_SACA;
-
-          // Calcular dias armazenados
-          const dataSaida = parseISO(s.data);
-          const dataEntradaParsed = parseISO(dataEntrada);
-          diasArmazenados = differenceInDays(dataSaida, dataEntradaParsed);
-
-          // Aplicar carência de 30 dias
-          diasCobrados = Math.max(0, diasArmazenados - CARENCIA_DIAS);
-
-          // Calcular quinzenas (arredondando para cima)
-          if (diasCobrados > 0) {
-            quinzenas = Math.ceil(diasCobrados / 15);
-          }
-
-          // Calcular valor: quinzenas * taxa * sacos
-          const sacos = Math.ceil(peso_ajustado / 60);
-          valorArmazenamento = quinzenas * taxaQuinzenal * sacos;
-        }
+      // Find linked recebimento for display
+      if (s.recebimento_id) {
+        const rec = recebimentos.find(r => r.id === s.recebimento_id);
+        if (rec) dataEntrada = rec.data;
       }
 
       return {
-        id: s.id,
-        data: s.data,
-        placa_caminhao: s.placa_caminhao,
-        comprador_nome: s.comprador_nome || "",
-        produtor_nome: s.produtor_nome,
-        produtor_id: s.produtor_id,
-        categoria: s.categoria,
-        kgs_expedidos: s.kgs_expedidos,
-        umidade_saida: umidadeReal,
-        peso_ajustado: Math.max(0, peso_ajustado),
-        ajuste_kg,
-        tipo_ajuste,
+        id: s.id, data: s.data, placa_caminhao: s.placa_caminhao,
+        comprador_nome: s.comprador_nome || "", produtor_nome: s.produtor_nome,
+        produtor_id: s.produtor_id, categoria: s.categoria,
+        kgs_expedidos: s.kgs_expedidos, umidade_saida: umidadeReal,
+        umidade_combinada: umidadeComb,
+        peso_ajustado: Math.max(0, peso_ajustado), ajuste_kg, tipo_ajuste,
         valor_expedicao: s.valor_expedicao || 0,
-        diasArmazenados,
-        diasCobrados,
-        quinzenas,
-        taxaQuinzenal,
-        valorArmazenamento,
-        dataEntrada,
+        diasArmazenados, diasCobrados, quinzenas, valorArmazenamento, dataEntrada,
+        tipo_grao_nome: s.tipo_grao_nome || grao?.nome || "",
       };
     });
-  }, [saidas, recebimentos, umidadeCombNum]);
+  }, [saidas, recebimentos, tiposGrao]);
 
-  // Extract unique produtores and compradores for filter options
   const produtoresUnicos = useMemo(() => {
     const set = new Set<string>();
-    saidasComAjuste.forEach(s => {
-      if (s.produtor_nome) set.add(s.produtor_nome);
-    });
+    saidasComAjuste.forEach(s => { if (s.produtor_nome) set.add(s.produtor_nome); });
     return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [saidasComAjuste]);
 
   const compradoresUnicos = useMemo(() => {
     const set = new Set<string>();
-    saidasComAjuste.forEach(s => {
-      if (s.comprador_nome) set.add(s.comprador_nome);
-    });
+    saidasComAjuste.forEach(s => { if (s.comprador_nome) set.add(s.comprador_nome); });
     return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [saidasComAjuste]);
 
-  // Apply filters
   const saidasFiltradas = useMemo(() => {
     return saidasComAjuste
       .filter(s => !filterProdutor || s.produtor_nome === filterProdutor)
@@ -156,13 +108,8 @@ export default function ExpedicaoPage() {
   }, [saidasComAjuste, filterProdutor, filterComprador]);
 
   const hasActiveFilters = filterProdutor || filterComprador;
+  const clearFilters = () => { setFilterProdutor(""); setFilterComprador(""); };
 
-  const clearFilters = () => {
-    setFilterProdutor("");
-    setFilterComprador("");
-  };
-
-  // Totals calculated from FILTERED data
   const totalPesoBruto = saidasFiltradas.reduce((sum, s) => sum + s.kgs_expedidos, 0);
   const totalPesoAjustado = saidasFiltradas.reduce((sum, s) => sum + s.peso_ajustado, 0);
   const totalValorExpedicao = saidasFiltradas.reduce((sum, s) => sum + s.valor_expedicao, 0);
@@ -175,7 +122,7 @@ export default function ExpedicaoPage() {
   const fmtBRL = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
   const getArmazenamentoLabel = (s: SaidaComAjuste) => {
-    if (!s.produtor_id || !s.dataEntrada) return "Sem produtor vinculado";
+    if (!s.dataEntrada) return "Sem lote vinculado";
     if (s.diasCobrados <= 0) return `${s.diasArmazenados} dias (carência)`;
     return `${s.diasArmazenados} dias - ${s.quinzenas} quinz.`;
   };
@@ -184,23 +131,7 @@ export default function ExpedicaoPage() {
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
         <div className="flex items-center gap-2"><Truck className="h-6 w-6 text-primary" /><h1 className="page-title">Expedição</h1></div>
-        <p className="page-subtitle">Resumo consolidado de expedições com ajuste de umidade e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
-      </div>
-
-      {/* Umidade Combinada input */}
-      <div className="form-section">
-        <div className="flex items-center gap-4">
-          <Label htmlFor="umidadeCombinada" className="text-sm font-medium whitespace-nowrap">Umidade Combinada (%):</Label>
-          <Input
-            id="umidadeCombinada"
-            type="number"
-            step="0.1"
-            className="w-28"
-            value={umidadeCombinada}
-            onChange={e => setUmidadeCombinada(e.target.value)}
-          />
-          <span className="text-xs text-muted-foreground">Base contratual para cálculo de ágio/deságio</span>
-        </div>
+        <p className="page-subtitle">Resumo consolidado com ajuste de umidade por grão e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -233,130 +164,85 @@ export default function ExpedicaoPage() {
       <div className="form-section">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <h2 className="font-display font-semibold text-lg text-foreground">Detalhamento das Expedições</h2>
-          
-          {/* Filter Bar */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Filter className="h-3.5 w-3.5" />
-              <span>Filtros:</span>
-            </div>
-            
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Filter className="h-3.5 w-3.5" /><span>Filtros:</span></div>
             <Select value={filterProdutor} onValueChange={setFilterProdutor}>
-              <SelectTrigger className="w-44 h-9 text-sm">
-                <SelectValue placeholder="Produtor" />
-              </SelectTrigger>
-              <SelectContent>
-                {produtoresUnicos.map(p => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
-                ))}
-              </SelectContent>
+              <SelectTrigger className="w-44 h-9 text-sm"><SelectValue placeholder="Produtor" /></SelectTrigger>
+              <SelectContent>{produtoresUnicos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
             </Select>
-            
             <Select value={filterComprador} onValueChange={setFilterComprador}>
-              <SelectTrigger className="w-44 h-9 text-sm">
-                <SelectValue placeholder="Comprador" />
-              </SelectTrigger>
-              <SelectContent>
-                {compradoresUnicos.map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
+              <SelectTrigger className="w-44 h-9 text-sm"><SelectValue placeholder="Comprador" /></SelectTrigger>
+              <SelectContent>{compradoresUnicos.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
-            
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 gap-1.5 text-muted-foreground hover:text-destructive">
-                <X className="h-3.5 w-3.5" />
-                Limpar
+                <X className="h-3.5 w-3.5" />Limpar
               </Button>
             )}
           </div>
         </div>
 
-        {hasActiveFilters && (
-          <p className="text-xs text-muted-foreground mb-3">
-            Exibindo {saidasFiltradas.length} de {saidasComAjuste.length} registros
-          </p>
-        )}
+        {hasActiveFilters && <p className="text-xs text-muted-foreground mb-3">Exibindo {saidasFiltradas.length} de {saidasComAjuste.length} registros</p>}
 
         <div className="overflow-x-auto">
           <TooltipProvider>
             <Table>
               <TableHeader><TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Placa</TableHead>
-                <TableHead>Comprador</TableHead>
-                <TableHead>Produtor</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead className="text-right">Umid. (%)</TableHead>
-                <TableHead className="text-right">Peso (Kg)</TableHead>
-                <TableHead className="text-right">Ajuste</TableHead>
-                <TableHead className="text-right">Peso Ajustado</TableHead>
-                <TableHead className="text-right">Sacos</TableHead>
-                <TableHead className="text-right">Toneladas</TableHead>
-                <TableHead className="text-right">Taxa Exp. (R$)</TableHead>
-                <TableHead className="text-right">Armaz. (R$)</TableHead>
+                <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Comprador</TableHead>
+                <TableHead>Produtor</TableHead><TableHead>Grão</TableHead><TableHead>Categoria</TableHead>
+                <TableHead className="text-right">Umid. (%)</TableHead><TableHead className="text-right">Comb. (%)</TableHead>
+                <TableHead className="text-right">Peso (Kg)</TableHead><TableHead className="text-right">Ajuste</TableHead>
+                <TableHead className="text-right">Peso Ajustado</TableHead><TableHead className="text-right">Sacos</TableHead>
+                <TableHead className="text-right">Toneladas</TableHead><TableHead className="text-right">Taxa Exp.</TableHead>
+                <TableHead className="text-right">Armaz.</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {saidasFiltradas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
-                      {hasActiveFilters ? "Nenhum registro encontrado com os filtros selecionados." : "Nenhuma expedição registrada."}
+                  <TableRow><TableCell colSpan={15} className="text-center py-8 text-muted-foreground">
+                    {hasActiveFilters ? "Nenhum registro encontrado." : "Nenhuma expedição registrada."}
+                  </TableCell></TableRow>
+                ) : saidasFiltradas.map(s => (
+                  <TableRow key={s.id}>
+                    <TableCell className="tabular-nums">{formatDateBR(s.data)}</TableCell>
+                    <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
+                    <TableCell>{s.comprador_nome}</TableCell>
+                    <TableCell>{s.produtor_nome || "—"}</TableCell>
+                    <TableCell>{s.tipo_grao_nome || "—"}</TableCell>
+                    <TableCell>{s.categoria}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtPct(s.umidade_saida)}%</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtPct(s.umidade_combinada)}%</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtKg(s.kgs_expedidos)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {s.tipo_ajuste === "neutro" ? <span className="text-muted-foreground">—</span> :
+                        s.tipo_ajuste === "desconto" ? (
+                          <span className="text-amber-600 dark:text-amber-400 flex items-center justify-end gap-1"><TrendingDown className="h-3 w-3" />−{fmtKg(s.ajuste_kg)}</span>
+                        ) : (
+                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-1"><TrendingUp className="h-3 w-3" />+{fmtKg(s.ajuste_kg)}</span>
+                        )}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold tabular-nums text-primary">{fmtKg(s.peso_ajustado)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtSacos(s.peso_ajustado)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtTon(s.peso_ajustado)}</TableCell>
+                    <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">{fmtBRL(s.valor_expedicao)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={`font-medium cursor-help ${s.valorArmazenamento > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                            {s.valorArmazenamento > 0 ? fmtBRL(s.valorArmazenamento) : "—"}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="max-w-xs">
+                          <div className="flex items-center gap-1.5 text-xs"><Calendar className="h-3 w-3" /><span>{getArmazenamentoLabel(s)}</span></div>
+                          {s.dataEntrada && <p className="text-xs text-muted-foreground mt-1">Entrada: {formatDateBR(s.dataEntrada)}</p>}
+                        </TooltipContent>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  saidasFiltradas.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell className="tabular-nums">{formatDateBR(s.data)}</TableCell>
-                      <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
-                      <TableCell>{s.comprador_nome}</TableCell>
-                      <TableCell>{s.produtor_nome || "—"}</TableCell>
-                      <TableCell>{s.categoria}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmtPct(s.umidade_saida)}%</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmtKg(s.kgs_expedidos)}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {s.tipo_ajuste === "neutro" ? (
-                          <span className="text-muted-foreground">—</span>
-                        ) : s.tipo_ajuste === "desconto" ? (
-                          <span className="text-amber-600 dark:text-amber-400 flex items-center justify-end gap-1">
-                            <TrendingDown className="h-3 w-3" />−{fmtKg(s.ajuste_kg)}
-                          </span>
-                        ) : (
-                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-1">
-                            <TrendingUp className="h-3 w-3" />+{fmtKg(s.ajuste_kg)}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold tabular-nums text-primary">{fmtKg(s.peso_ajustado)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmtSacos(s.peso_ajustado)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmtTon(s.peso_ajustado)}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">{fmtBRL(s.valor_expedicao)}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className={`font-medium cursor-help ${s.valorArmazenamento > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
-                              {s.valorArmazenamento > 0 ? fmtBRL(s.valorArmazenamento) : "—"}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="left" className="max-w-xs">
-                            <div className="flex items-center gap-1.5 text-xs">
-                              <Calendar className="h-3 w-3" />
-                              <span>{getArmazenamentoLabel(s)}</span>
-                            </div>
-                            {s.produtor_id && s.dataEntrada && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Entrada: {formatDateBR(s.dataEntrada)} · Taxa: {fmtBRL(s.taxaQuinzenal)}/saca/quinz.
-                              </p>
-                            )}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
               {saidasFiltradas.length > 0 && (
                 <TableFooter><TableRow>
-                  <TableCell colSpan={6} className="font-semibold">Total {hasActiveFilters ? "(filtrado)" : ""}</TableCell>
+                  <TableCell colSpan={8} className="font-semibold">Total {hasActiveFilters ? "(filtrado)" : ""}</TableCell>
                   <TableCell className="text-right font-bold tabular-nums">{fmtKg(totalPesoBruto)}</TableCell>
                   <TableCell className="text-right font-bold tabular-nums text-muted-foreground">
                     {totalPesoAjustado >= totalPesoBruto ? "+" : "−"}{fmtKg(Math.abs(totalPesoAjustado - totalPesoBruto))}
