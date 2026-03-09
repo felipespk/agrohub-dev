@@ -314,7 +314,7 @@ export default function RelatorioPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {g.lancamentos.map(l => (
+                        {filterLancamentos(g.lancamentos).map(l => (
                           <TableRow key={l.id}>
                             <TableCell className="tabular-nums">{new Date(l.data).toLocaleDateString("pt-BR")}</TableCell>
                             <TableCell>
