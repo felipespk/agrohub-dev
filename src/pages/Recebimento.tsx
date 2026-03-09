@@ -285,7 +285,7 @@ export default function RecebimentoPage() {
             <TableHeader><TableRow>
               <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
               <TableHead className="text-right">Peso Bruto</TableHead><TableHead className="text-right">Umidade (%)</TableHead>
-              <TableHead className="text-right">Desc. Impureza</TableHead><TableHead className="text-right">Desc. Secagem</TableHead><TableHead className="text-right">Peso Líquido</TableHead><TableHead className="w-24">Ações</TableHead>
+              <TableHead className="text-right">Desc. Umidade</TableHead><TableHead className="text-right">Desc. Impureza</TableHead><TableHead className="text-right">Desc. Secagem</TableHead><TableHead className="text-right">Peso Líquido</TableHead><TableHead className="w-24">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {recebimentos.map(r => (
