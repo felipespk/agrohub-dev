@@ -28,16 +28,24 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
+  const { farmName } = useFarm();
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="flex flex-col h-full">
-        <div className={`flex items-center gap-2 px-4 py-5 ${collapsed ? "justify-center" : ""}`}>
-          <Wheat className="h-7 w-7 text-sidebar-primary shrink-0" />
+        <div className={`flex flex-col gap-0.5 px-4 py-5 ${collapsed ? "items-center" : ""}`}>
+          <div className={`flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
+            <Wheat className="h-7 w-7 text-sidebar-primary shrink-0" />
+            {!collapsed && (
+              <span className="text-lg font-display font-bold text-sidebar-primary-foreground tracking-tight">
+                GrãoControl
+              </span>
+            )}
+          </div>
           {!collapsed && (
-            <span className="text-lg font-display font-bold text-sidebar-primary-foreground tracking-tight">
-              GrãoControl
-            </span>
+            <p className="text-xs text-sidebar-foreground/60 pl-9 truncate">
+              {farmName || "Configurar Fazenda"}
+            </p>
           )}
         </div>
 
