@@ -258,7 +258,7 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
       </div>
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Padrão</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Base</TableHead><TableHead>Ágio (%)</TableHead><TableHead>Deságio (%)</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
             {tiposGrao.map(t => (
               <TableRow key={t.id}>
