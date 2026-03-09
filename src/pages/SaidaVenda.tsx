@@ -24,6 +24,7 @@ export default function SaidaVendaPage() {
   const [categoria, setCategoria] = useState("Venda");
   const [classificacao, setClassificacao] = useState("");
   const [kgsExpedidos, setKgsExpedidos] = useState("");
+  const [umidadeSaida, setUmidadeSaida] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -33,7 +34,7 @@ export default function SaidaVendaPage() {
   const clearForm = () => {
     setData(getBrazilDateInputValue());
     setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId("");
-    setCategoria("Venda"); setClassificacao(""); setKgsExpedidos("");
+    setCategoria("Venda"); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
     setEditingId(null);
     setErrors({});
   };
@@ -41,7 +42,8 @@ export default function SaidaVendaPage() {
   const handleEdit = (s: Saida) => {
     setData(s.data); setPlaca(maskPlaca(s.placa_caminhao)); setCompradorId(s.comprador_id);
     setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || "");
-    setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || "")); setKgsExpedidos(String(s.kgs_expedidos));
+    setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || ""));
+    setKgsExpedidos(String(s.kgs_expedidos)); setUmidadeSaida(String(s.umidade_saida || ""));
     setEditingId(s.id);
     setErrors({});
   };
@@ -58,6 +60,7 @@ export default function SaidaVendaPage() {
     if (!tipoGraoId) newErrors.tipoGraoId = "Selecione o tipo de grão";
     if (!compradorId) newErrors.compradorId = "Selecione o comprador";
     if (!kgsExpedidos || parseFloat(kgsExpedidos) <= 0) newErrors.kgsExpedidos = "Kgs expedidos deve ser maior que zero";
+    if (!umidadeSaida || parseFloat(umidadeSaida) <= 0) newErrors.umidadeSaida = "Umidade de saída é obrigatória";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -69,7 +72,7 @@ export default function SaidaVendaPage() {
     const entry = {
       data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(), comprador_id: compradorId,
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
-      classificacao, kgs_expedidos: parseFloat(kgsExpedidos), categoria,
+      classificacao, kgs_expedidos: parseFloat(kgsExpedidos), umidade_saida: parseFloat(umidadeSaida), categoria,
     };
     if (editingId) {
       const ok = await updateSaida(editingId, entry);
@@ -82,6 +85,7 @@ export default function SaidaVendaPage() {
         setPlaca("");
         setClassificacao("");
         setKgsExpedidos("");
+        setUmidadeSaida("");
       }
     }
   };
@@ -159,6 +163,18 @@ export default function SaidaVendaPage() {
             />
             {errors.kgsExpedidos && <p className="text-xs text-destructive">{errors.kgsExpedidos}</p>}
           </div>
+          <div className="space-y-1">
+            <Label>Umidade de Saída (%) *</Label>
+            <Input
+              type="number"
+              step="0.1"
+              placeholder="12.5"
+              value={umidadeSaida}
+              onChange={e => { setUmidadeSaida(e.target.value); clearError("umidadeSaida"); }}
+              className={cn(errors.umidadeSaida && "border-destructive focus-visible:ring-destructive")}
+            />
+            {errors.umidadeSaida && <p className="text-xs text-destructive">{errors.umidadeSaida}</p>}
+          </div>
         </div>
         <div className="flex gap-2">
           <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
@@ -179,7 +195,7 @@ export default function SaidaVendaPage() {
             <TableHeader><TableRow>
               <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
               <TableHead>Comprador</TableHead><TableHead>Categoria</TableHead>
-              <TableHead>Classificação</TableHead><TableHead className="text-right">Kgs</TableHead><TableHead className="w-24">Ações</TableHead>
+              <TableHead>Classificação</TableHead><TableHead className="text-right">Umidade (%)</TableHead><TableHead className="text-right">Kgs</TableHead><TableHead className="w-24">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {saidas.map(s => (
@@ -190,7 +206,8 @@ export default function SaidaVendaPage() {
                   <TableCell>{s.tipo_grao_nome || "—"}</TableCell>
                   <TableCell>{s.comprador_nome}</TableCell>
                   <TableCell><Badge variant="outline">{s.categoria}</Badge></TableCell>
-                  <TableCell>{s.classificacao}</TableCell>
+                  <TableCell>{s.classificacao || "—"}</TableCell>
+                  <TableCell className="text-right tabular-nums">{s.umidade_saida ? `${s.umidade_saida}%` : "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{s.kgs_expedidos.toLocaleString("pt-BR")}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
