@@ -212,7 +212,7 @@ export default function RelatorioPage() {
           rowData = {
             produtor: g.produtorNome,
             tipoGrao: g.tipoGraoNome,
-            data: parseDate(l.data),
+            data: parseLocalDate(l.data),
             placa: l.placa,
             pesoBruto: l.pesoBruto,
             umidIni: l.umidadeInicial,
