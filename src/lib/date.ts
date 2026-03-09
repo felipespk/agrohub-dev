@@ -19,3 +19,19 @@ export function getBrazilDateInputValue(date: Date = new Date()): string {
 
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Parse a YYYY-MM-DD date string into a local Date (noon) to avoid timezone shift.
+ * Using T12:00:00 ensures the date won't roll back to the previous day in any timezone.
+ */
+export function parseLocalDate(dateStr: string): Date {
+  return new Date(dateStr + "T12:00:00");
+}
+
+/**
+ * Format a YYYY-MM-DD string to dd/mm/yyyy in pt-BR without timezone issues.
+ */
+export function formatDateBR(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-");
+  return `${d}/${m}/${y}`;
+}
