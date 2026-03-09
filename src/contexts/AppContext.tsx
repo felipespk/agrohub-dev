@@ -23,6 +23,8 @@ export interface TipoGrao {
   user_id: string;
   nome: string;
   umidade_padrao: number;
+  taxa_agio: number;
+  taxa_desagio: number;
 }
 
 export interface Comprador {
