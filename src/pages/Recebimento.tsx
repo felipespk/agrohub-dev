@@ -39,22 +39,29 @@ export default function RecebimentoPage() {
 
   const calculos = useMemo(() => {
     const peso = parseFloat(pesoBruto) || 0;
+    const umIni = parseFloat(umidadeInicial) || 0;
+    const umAlvo = parseFloat(umidadeFinalAlvo) || 12;
     const imp = parseFloat(impureza) || 0;
     const secagem = parseFloat(taxaSecagem) || 0;
 
+    // Desconto de umidade: (umidade_inicial - alvo) * 1.3% por ponto (se acima do alvo)
+    const diffUmidade = umIni - umAlvo;
+    const desconto_umidade_percent = diffUmidade > 0 ? diffUmidade * 1.3 : 0;
+    const desconto_umidade_kg = peso * (desconto_umidade_percent / 100);
+
     const desconto_impureza_kg = peso * (imp / 100);
     const desconto_secagem_kg = peso * (secagem / 100);
-    const peso_liquido = Math.max(0, peso - desconto_impureza_kg - desconto_secagem_kg);
+    const peso_liquido = Math.max(0, peso - desconto_umidade_kg - desconto_impureza_kg - desconto_secagem_kg);
 
     return {
-      desconto_umidade_percent: 0,
-      desconto_umidade_kg: 0,
+      desconto_umidade_percent,
+      desconto_umidade_kg,
       desconto_impureza_kg,
       taxa_secagem_percentual: secagem,
       desconto_secagem_kg,
       peso_liquido,
     };
-  }, [pesoBruto, impureza, taxaSecagem]);
+  }, [pesoBruto, umidadeInicial, umidadeFinalAlvo, impureza, taxaSecagem]);
 
   const clearForm = () => {
     setData(getBrazilDateInputValue());
