@@ -92,7 +92,7 @@ export default function RecebimentoPage() {
     if (!placa.trim()) newErrors.placa = "Placa é obrigatória";
     if (!produtorId) newErrors.produtorId = "Selecione o produtor";
     if (!tipoGraoId) newErrors.tipoGraoId = "Selecione o tipo de grão";
-    if (!pesoBruto || parseFloat(pesoBruto) <= 0) newErrors.pesoBruto = "Peso bruto deve ser maior que zero";
+    if (!unmaskKg(pesoBruto) || parseFloat(unmaskKg(pesoBruto)) <= 0) newErrors.pesoBruto = "Peso bruto deve ser maior que zero";
     if (!umidadeInicial || parseFloat(umidadeInicial) <= 0) newErrors.umidadeInicial = "Umidade inicial é obrigatória";
     if (!umidadeFinalAlvo || parseFloat(umidadeFinalAlvo) <= 0) newErrors.umidadeFinalAlvo = "Umidade alvo é obrigatória";
     if (impureza === "") newErrors.impureza = "Informe a impureza (0 se não houver)";
