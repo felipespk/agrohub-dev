@@ -283,8 +283,17 @@ export default function RecebimentoPage() {
           <div className="flex items-center gap-2"><Calculator className="h-5 w-5 text-primary" /><h2 className="font-display font-semibold text-lg text-foreground">Resultados</h2></div>
           <p className="text-xs text-muted-foreground">Cálculos em tempo real</p>
           <div className="space-y-3">
-            <ResultCard label="Desconto de Umidade" value={`${fmt(calculos.desconto_umidade_percent)}%`} />
-            <ResultCard label="Kg Descontados (Umidade)" value={`${fmt(calculos.desconto_umidade_kg)} Kg`} />
+            <ResultCard
+              label={`Ajuste de Umidade (${calculos.desconto_umidade_percent.toFixed(2)}%)`}
+              value={
+                calculos.tipo_ajuste === "neutro"
+                  ? "0,00 Kg (sem ajuste)"
+                  : calculos.tipo_ajuste === "desconto"
+                    ? `−${fmt(calculos.ajuste_umidade_kg)} Kg (Desconto)`
+                    : `+${fmt(calculos.ajuste_umidade_kg)} Kg (Acréscimo)`
+              }
+              variant={calculos.tipo_ajuste === "acrescimo" ? "bonus" : calculos.tipo_ajuste === "desconto" ? "discount" : "neutral"}
+            />
             <ResultCard label="Kg Descontados (Impureza)" value={`${fmt(calculos.desconto_impureza_kg)} Kg`} />
             <ResultCard label="Desconto de Secagem" value={`${fmt(calculos.desconto_secagem_kg)} Kg`} />
             <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
