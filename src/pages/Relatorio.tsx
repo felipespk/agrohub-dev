@@ -36,6 +36,14 @@ export default function RelatorioPage() {
   const { produtores, tiposGrao, recebimentos, saidas } = useAppData();
   const [filtroProdutorId, setFiltroProdutorId] = useState("todos");
   const [filtroGraoId, setFiltroGraoId] = useState("todos");
+  const [filterMode, setFilterMode] = useState<FilterMode>("all");
+
+  // Função para filtrar lançamentos pelo modo
+  const filterLancamentos = (lancamentos: LancamentoUnificado[]) => {
+    if (filterMode === "in") return lancamentos.filter(l => l.tipo === "entrada");
+    if (filterMode === "out") return lancamentos.filter(l => l.tipo === "saida");
+    return lancamentos;
+  };
 
   const grupos = useMemo(() => {
     const map = new Map<string, {
