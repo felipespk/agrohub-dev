@@ -264,6 +264,8 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.nome}</TableCell>
                 <TableCell>{t.umidade_padrao}%</TableCell>
+                <TableCell>{t.taxa_agio}%</TableCell>
+                <TableCell>{t.taxa_desagio}%</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
