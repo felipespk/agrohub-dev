@@ -273,6 +273,7 @@ export default function RelatorioPage() {
                           <TableHead>Placa</TableHead>
                           <TableHead className="text-right">Peso Bruto</TableHead>
                           <TableHead className="text-right">Umidade (%)</TableHead>
+                          <TableHead className="text-center">Classificação</TableHead>
                           <TableHead className="text-right">Impureza</TableHead>
                           <TableHead className="text-right">Tx Secagem</TableHead>
                           <TableHead className="text-right">Descontos (Kg)</TableHead>
