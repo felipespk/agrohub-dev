@@ -74,10 +74,24 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* User & Logout */}
-        <div className={`px-3 py-4 border-t border-sidebar-border ${collapsed ? "flex justify-center" : ""}`}>
+        {/* Conta & Logout */}
+        <div className={`px-3 py-4 border-t border-sidebar-border space-y-1 ${collapsed ? "flex flex-col items-center" : ""}`}>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to="/conta"
+                  className="hover:bg-sidebar-accent/70"
+                  activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                >
+                  <Settings className="mr-2 h-4 w-4 shrink-0" />
+                  {!collapsed && <span>Conta</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
           {!collapsed && user && (
-            <p className="text-xs text-sidebar-foreground/60 truncate mb-2 px-1">
+            <p className="text-xs text-sidebar-foreground/60 truncate px-2 pt-2">
               {user.email}
             </p>
           )}
