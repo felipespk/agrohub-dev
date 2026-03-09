@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { useAppData } from "@/contexts/AppContext";
-import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse } from "lucide-react";
+import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -34,6 +36,10 @@ interface SaidaComAjuste {
 
 export default function ExpedicaoPage() {
   const { saidas, recebimentos } = useAppData();
+  
+  // Filter states
+  const [filterProdutor, setFilterProdutor] = useState<string>("");
+  const [filterComprador, setFilterComprador] = useState<string>("");
 
   // Calcula peso ajustado + armazenamento para cada saída
   const saidasComAjuste = useMemo<SaidaComAjuste[]>(() => {
@@ -120,10 +126,42 @@ export default function ExpedicaoPage() {
     });
   }, [saidas, recebimentos]);
 
-  const totalPesoBruto = saidasComAjuste.reduce((sum, s) => sum + s.kgs_expedidos, 0);
-  const totalPesoAjustado = saidasComAjuste.reduce((sum, s) => sum + s.peso_ajustado, 0);
-  const totalValorExpedicao = saidasComAjuste.reduce((sum, s) => sum + s.valor_expedicao, 0);
-  const totalValorArmazenamento = saidasComAjuste.reduce((sum, s) => sum + s.valorArmazenamento, 0);
+  // Extract unique produtores and compradores for filter options
+  const produtoresUnicos = useMemo(() => {
+    const set = new Set<string>();
+    saidasComAjuste.forEach(s => {
+      if (s.produtor_nome) set.add(s.produtor_nome);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [saidasComAjuste]);
+
+  const compradoresUnicos = useMemo(() => {
+    const set = new Set<string>();
+    saidasComAjuste.forEach(s => {
+      if (s.comprador_nome) set.add(s.comprador_nome);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [saidasComAjuste]);
+
+  // Apply filters
+  const saidasFiltradas = useMemo(() => {
+    return saidasComAjuste
+      .filter(s => !filterProdutor || s.produtor_nome === filterProdutor)
+      .filter(s => !filterComprador || s.comprador_nome === filterComprador);
+  }, [saidasComAjuste, filterProdutor, filterComprador]);
+
+  const hasActiveFilters = filterProdutor || filterComprador;
+
+  const clearFilters = () => {
+    setFilterProdutor("");
+    setFilterComprador("");
+  };
+
+  // Totals calculated from FILTERED data
+  const totalPesoBruto = saidasFiltradas.reduce((sum, s) => sum + s.kgs_expedidos, 0);
+  const totalPesoAjustado = saidasFiltradas.reduce((sum, s) => sum + s.peso_ajustado, 0);
+  const totalValorExpedicao = saidasFiltradas.reduce((sum, s) => sum + s.valor_expedicao, 0);
+  const totalValorArmazenamento = saidasFiltradas.reduce((sum, s) => sum + s.valorArmazenamento, 0);
 
   const fmtKg = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const fmtSacos = (kgs: number) => (kgs / 60).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -172,7 +210,53 @@ export default function ExpedicaoPage() {
       </div>
 
       <div className="form-section">
-        <h2 className="font-display font-semibold text-lg text-foreground mb-4">Detalhamento das Expedições</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h2 className="font-display font-semibold text-lg text-foreground">Detalhamento das Expedições</h2>
+          
+          {/* Filter Bar */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Filter className="h-3.5 w-3.5" />
+              <span>Filtros:</span>
+            </div>
+            
+            <Select value={filterProdutor} onValueChange={setFilterProdutor}>
+              <SelectTrigger className="w-44 h-9 text-sm">
+                <SelectValue placeholder="Produtor" />
+              </SelectTrigger>
+              <SelectContent>
+                {produtoresUnicos.map(p => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={filterComprador} onValueChange={setFilterComprador}>
+              <SelectTrigger className="w-44 h-9 text-sm">
+                <SelectValue placeholder="Comprador" />
+              </SelectTrigger>
+              <SelectContent>
+                {compradoresUnicos.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 gap-1.5 text-muted-foreground hover:text-destructive">
+                <X className="h-3.5 w-3.5" />
+                Limpar
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {hasActiveFilters && (
+          <p className="text-xs text-muted-foreground mb-3">
+            Exibindo {saidasFiltradas.length} de {saidasComAjuste.length} registros
+          </p>
+        )}
+
         <div className="overflow-x-auto">
           <TooltipProvider>
             <Table>
@@ -192,67 +276,77 @@ export default function ExpedicaoPage() {
                 <TableHead className="text-right">Armaz. (R$)</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {saidasComAjuste.map(s => (
-                  <TableRow key={s.id}>
-                    <TableCell className="tabular-nums">{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
-                    <TableCell>{s.comprador_nome}</TableCell>
-                    <TableCell>{s.produtor_nome || "—"}</TableCell>
-                    <TableCell>{s.categoria}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtPct(s.umidade_saida)}%</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtKg(s.kgs_expedidos)}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {s.tipo_ajuste === "neutro" ? (
-                        <span className="text-muted-foreground">—</span>
-                      ) : s.tipo_ajuste === "desconto" ? (
-                        <span className="text-amber-600 dark:text-amber-400 flex items-center justify-end gap-1">
-                          <TrendingDown className="h-3 w-3" />−{fmtKg(s.ajuste_kg)}
-                        </span>
-                      ) : (
-                        <span className="text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-1">
-                          <TrendingUp className="h-3 w-3" />+{fmtKg(s.ajuste_kg)}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold tabular-nums text-primary">{fmtKg(s.peso_ajustado)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtSacos(s.peso_ajustado)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtTon(s.peso_ajustado)}</TableCell>
-                    <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">{fmtBRL(s.valor_expedicao)}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className={`font-medium cursor-help ${s.valorArmazenamento > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
-                            {s.valorArmazenamento > 0 ? fmtBRL(s.valorArmazenamento) : "—"}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="left" className="max-w-xs">
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <Calendar className="h-3 w-3" />
-                            <span>{getArmazenamentoLabel(s)}</span>
-                          </div>
-                          {s.produtor_id && s.dataEntrada && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Entrada: {new Date(s.dataEntrada).toLocaleDateString("pt-BR")} · Taxa: {fmtBRL(s.taxaQuinzenal)}/saca/quinz.
-                            </p>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
+                {saidasFiltradas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
+                      {hasActiveFilters ? "Nenhum registro encontrado com os filtros selecionados." : "Nenhuma expedição registrada."}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  saidasFiltradas.map(s => (
+                    <TableRow key={s.id}>
+                      <TableCell className="tabular-nums">{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
+                      <TableCell>{s.comprador_nome}</TableCell>
+                      <TableCell>{s.produtor_nome || "—"}</TableCell>
+                      <TableCell>{s.categoria}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtPct(s.umidade_saida)}%</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtKg(s.kgs_expedidos)}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {s.tipo_ajuste === "neutro" ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : s.tipo_ajuste === "desconto" ? (
+                          <span className="text-amber-600 dark:text-amber-400 flex items-center justify-end gap-1">
+                            <TrendingDown className="h-3 w-3" />−{fmtKg(s.ajuste_kg)}
+                          </span>
+                        ) : (
+                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-1">
+                            <TrendingUp className="h-3 w-3" />+{fmtKg(s.ajuste_kg)}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-primary">{fmtKg(s.peso_ajustado)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtSacos(s.peso_ajustado)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtTon(s.peso_ajustado)}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">{fmtBRL(s.valor_expedicao)}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className={`font-medium cursor-help ${s.valorArmazenamento > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                              {s.valorArmazenamento > 0 ? fmtBRL(s.valorArmazenamento) : "—"}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-xs">
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <Calendar className="h-3 w-3" />
+                              <span>{getArmazenamentoLabel(s)}</span>
+                            </div>
+                            {s.produtor_id && s.dataEntrada && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Entrada: {new Date(s.dataEntrada).toLocaleDateString("pt-BR")} · Taxa: {fmtBRL(s.taxaQuinzenal)}/saca/quinz.
+                              </p>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
-              <TableFooter><TableRow>
-                <TableCell colSpan={6} className="font-semibold">Total</TableCell>
-                <TableCell className="text-right font-bold tabular-nums">{fmtKg(totalPesoBruto)}</TableCell>
-                <TableCell className="text-right font-bold tabular-nums text-muted-foreground">
-                  {totalPesoAjustado >= totalPesoBruto ? "+" : "−"}{fmtKg(Math.abs(totalPesoAjustado - totalPesoBruto))}
-                </TableCell>
-                <TableCell className="text-right font-bold tabular-nums text-primary">{fmtKg(totalPesoAjustado)}</TableCell>
-                <TableCell className="text-right font-bold tabular-nums">{fmtSacos(totalPesoAjustado)}</TableCell>
-                <TableCell className="text-right font-bold tabular-nums">{fmtTon(totalPesoAjustado)}</TableCell>
-                <TableCell className="text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{fmtBRL(totalValorExpedicao)}</TableCell>
-                <TableCell className="text-right font-bold tabular-nums text-amber-600 dark:text-amber-400">{fmtBRL(totalValorArmazenamento)}</TableCell>
-              </TableRow></TableFooter>
+              {saidasFiltradas.length > 0 && (
+                <TableFooter><TableRow>
+                  <TableCell colSpan={6} className="font-semibold">Total {hasActiveFilters ? "(filtrado)" : ""}</TableCell>
+                  <TableCell className="text-right font-bold tabular-nums">{fmtKg(totalPesoBruto)}</TableCell>
+                  <TableCell className="text-right font-bold tabular-nums text-muted-foreground">
+                    {totalPesoAjustado >= totalPesoBruto ? "+" : "−"}{fmtKg(Math.abs(totalPesoAjustado - totalPesoBruto))}
+                  </TableCell>
+                  <TableCell className="text-right font-bold tabular-nums text-primary">{fmtKg(totalPesoAjustado)}</TableCell>
+                  <TableCell className="text-right font-bold tabular-nums">{fmtSacos(totalPesoAjustado)}</TableCell>
+                  <TableCell className="text-right font-bold tabular-nums">{fmtTon(totalPesoAjustado)}</TableCell>
+                  <TableCell className="text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{fmtBRL(totalValorExpedicao)}</TableCell>
+                  <TableCell className="text-right font-bold tabular-nums text-amber-600 dark:text-amber-400">{fmtBRL(totalValorArmazenamento)}</TableCell>
+                </TableRow></TableFooter>
+              )}
             </Table>
           </TooltipProvider>
         </div>
