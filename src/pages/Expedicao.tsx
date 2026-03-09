@@ -5,9 +5,11 @@ import { Truck } from "lucide-react";
 export default function ExpedicaoPage() {
   const { saidas } = useAppData();
   const totalKgs = saidas.reduce((sum, s) => sum + s.kgs_expedidos, 0);
-  const totalSacos = Math.round(totalKgs / 60);
+  const totalSacos = totalKgs / 60;
   const totalToneladas = totalKgs / 1000;
-  const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const fmtSacos = (kgs: number) => (kgs / 60).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtTon = (kgs: number) => (kgs / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -16,37 +18,43 @@ export default function ExpedicaoPage() {
         <p className="page-subtitle">Resumo consolidado de expedições</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="kpi-card"><p className="text-xs text-muted-foreground">Total de Sacos</p><p className="text-2xl font-display font-bold text-foreground">{totalSacos.toLocaleString("pt-BR")}</p></div>
+        <div className="kpi-card"><p className="text-xs text-muted-foreground">Total de Sacos</p><p className="text-2xl font-display font-bold text-foreground">{fmtSacos(totalKgs)}</p></div>
         <div className="kpi-card"><p className="text-xs text-muted-foreground">Total de Kgs</p><p className="text-2xl font-display font-bold text-foreground">{totalKgs.toLocaleString("pt-BR")}</p></div>
-        <div className="kpi-card"><p className="text-xs text-muted-foreground">Total de Toneladas</p><p className="text-2xl font-display font-bold text-primary">{fmt(totalToneladas)}</p></div>
+        <div className="kpi-card"><p className="text-xs text-muted-foreground">Total de Toneladas</p><p className="text-2xl font-display font-bold text-primary">{fmtTon(totalKgs)}</p></div>
       </div>
       <div className="form-section">
         <h2 className="font-display font-semibold text-lg text-foreground mb-4">Detalhamento das Expedições</h2>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Destino</TableHead><TableHead>Categoria</TableHead><TableHead>Classificação</TableHead>
-              <TableHead className="text-right">Kgs</TableHead><TableHead className="text-right">Sacos</TableHead><TableHead className="text-right">Toneladas</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Placa</TableHead>
+              <TableHead>Comprador</TableHead>
+              <TableHead>Produtor</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead className="text-right">Kgs</TableHead>
+              <TableHead className="text-right">Sacos</TableHead>
+              <TableHead className="text-right">Toneladas</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {saidas.map(s => (
                 <TableRow key={s.id}>
-                  <TableCell>{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell className="tabular-nums">{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
                   <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
                   <TableCell>{s.comprador_nome}</TableCell>
+                  <TableCell>{s.produtor_nome || "—"}</TableCell>
                   <TableCell>{s.categoria}</TableCell>
-                  <TableCell>{s.classificacao}</TableCell>
-                  <TableCell className="text-right">{s.kgs_expedidos.toLocaleString("pt-BR")}</TableCell>
-                  <TableCell className="text-right">{Math.round(s.kgs_expedidos / 60)}</TableCell>
-                  <TableCell className="text-right">{fmt(s.kgs_expedidos / 1000)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{s.kgs_expedidos.toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtSacos(s.kgs_expedidos)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtTon(s.kgs_expedidos)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
             <TableFooter><TableRow>
               <TableCell colSpan={5} className="font-semibold">Total</TableCell>
-              <TableCell className="text-right font-bold">{totalKgs.toLocaleString("pt-BR")}</TableCell>
-              <TableCell className="text-right font-bold">{totalSacos}</TableCell>
-              <TableCell className="text-right font-bold">{fmt(totalToneladas)}</TableCell>
+              <TableCell className="text-right font-bold tabular-nums">{totalKgs.toLocaleString("pt-BR")}</TableCell>
+              <TableCell className="text-right font-bold tabular-nums">{fmtSacos(totalKgs)}</TableCell>
+              <TableCell className="text-right font-bold tabular-nums">{fmtTon(totalKgs)}</TableCell>
             </TableRow></TableFooter>
           </Table>
         </div>
