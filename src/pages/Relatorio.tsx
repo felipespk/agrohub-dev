@@ -122,9 +122,11 @@ export default function RelatorioPage() {
       { header: "Desc. Impureza (Kg)", key: "descImp", width: 18 },
       { header: "Desc. Secagem (Kg)", key: "descSec", width: 18 },
       { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
-      { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
     ];
     ws.columns = columns;
+
+    // Formatar coluna de Data como dd/mm/yy
+    ws.getColumn("data").numFmt = "dd/mm/yy";
 
     // Style header row
     const headerRow = ws.getRow(1);
@@ -155,7 +157,11 @@ export default function RelatorioPage() {
         const row = ws.addRow({
           produtor: g.produtorNome,
           tipoGrao: g.tipoGraoNome,
-          data: l.data,
+          data: (() => {
+            // Converte string YYYY-MM-DD para Date no fuso local (evita shift de UTC)
+            const [y, m, d] = l.data.split("-").map(Number);
+            return new Date(y, m - 1, d);
+          })(),
           operacao: isEntrada ? "Entrada" : "Saída",
           placa: l.placa,
           pesoBruto: isEntrada ? l.pesoBruto : null,
