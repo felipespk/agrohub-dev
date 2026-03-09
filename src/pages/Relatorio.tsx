@@ -111,6 +111,7 @@ export default function RelatorioPage() {
       { header: "Umidade Ini (%)", key: "umidIni", width: 16 },
       { header: "Umidade Alvo (%)", key: "umidAlvo", width: 16 },
       { header: "Umidade Saída (%)", key: "umidSaida", width: 18 },
+      { header: "Classificação", key: "classificacao", width: 14 },
       { header: "Impureza (%)", key: "impureza", width: 14 },
       { header: "Tx Secagem (%)", key: "txSecagem", width: 14 },
       { header: "Desc. Umidade (Kg)", key: "descUmid", width: 18 },
