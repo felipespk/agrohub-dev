@@ -114,10 +114,10 @@ export default function RelatorioPage() {
       { header: "Classificação", key: "classificacao", width: 14 },
       { header: "Impureza (%)", key: "impureza", width: 14 },
       { header: "Tx Secagem (%)", key: "txSecagem", width: 14 },
-      { header: "Desc. Umidade (Kg)", key: "descUmid", width: 18 },
+      { header: "Ajuste Umidade (Kg)", key: "ajusteUmid", width: 20 },
       { header: "Desc. Impureza (Kg)", key: "descImp", width: 18 },
       { header: "Desc. Secagem (Kg)", key: "descSec", width: 18 },
-      { header: "Total Descontos (Kg)", key: "totalDesc", width: 20 },
+      { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
       { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
     ];
     ws.columns = columns;
