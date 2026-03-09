@@ -1,0 +1,1 @@
+ALTER TABLE public.saidas ADD COLUMN valor_expedicao NUMERIC NOT NULL DEFAULT 0;
