@@ -161,8 +161,14 @@ export default function SaidaVendaPage() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label>Classificação</Label>
-            <Input placeholder="Ex: 71/61" value={classificacao} onChange={e => setClassificacao(maskClassificacao(e.target.value))} />
+            <Label>Classificação *</Label>
+            <Input
+              placeholder="Ex: 71/61"
+              value={classificacao}
+              onChange={e => { setClassificacao(maskClassificacao(e.target.value)); clearError("classificacao"); }}
+              className={cn(errors.classificacao && "border-destructive focus-visible:ring-destructive")}
+            />
+            {errors.classificacao && <p className="text-xs text-destructive">{errors.classificacao}</p>}
           </div>
           <div className="space-y-1">
             <Label>Peso (Kg) *</Label>
