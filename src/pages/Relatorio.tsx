@@ -25,8 +25,9 @@ interface LancamentoUnificado {
   descontoImpurezaKg?: number;
   descontoSecagemKg?: number;
   totalDescontos?: number;
-  // Saída field
+  // Saída fields
   umidadeSaida?: number;
+  classificacao?: string;
 }
 
 export default function RelatorioPage() {
@@ -81,6 +82,7 @@ export default function RelatorioPage() {
         existing.lancamentos.push({
           id: s.id, data: s.data, tipo: "saida", placa: s.placa_caminhao, kg: s.kgs_expedidos,
           umidadeSaida: s.umidade_saida,
+          classificacao: s.classificacao || "",
         });
       }
     }
@@ -109,6 +111,7 @@ export default function RelatorioPage() {
       { header: "Umidade Ini (%)", key: "umidIni", width: 16 },
       { header: "Umidade Alvo (%)", key: "umidAlvo", width: 16 },
       { header: "Umidade Saída (%)", key: "umidSaida", width: 18 },
+      { header: "Classificação", key: "classificacao", width: 14 },
       { header: "Impureza (%)", key: "impureza", width: 14 },
       { header: "Tx Secagem (%)", key: "txSecagem", width: 14 },
       { header: "Desc. Umidade (Kg)", key: "descUmid", width: 18 },
@@ -155,6 +158,7 @@ export default function RelatorioPage() {
           umidIni: isEntrada ? l.umidadeInicial : null,
           umidAlvo: isEntrada ? l.umidadeFinalAlvo : null,
           umidSaida: !isEntrada ? l.umidadeSaida : null,
+          classificacao: !isEntrada ? (l.classificacao || "") : null,
           impureza: isEntrada ? l.impureza : null,
           txSecagem: isEntrada ? l.taxaSecagem : null,
           descUmid: isEntrada ? l.descontoUmidadeKg : null,
@@ -269,6 +273,7 @@ export default function RelatorioPage() {
                           <TableHead>Placa</TableHead>
                           <TableHead className="text-right">Peso Bruto</TableHead>
                           <TableHead className="text-right">Umidade (%)</TableHead>
+                          <TableHead className="text-center">Classificação</TableHead>
                           <TableHead className="text-right">Impureza</TableHead>
                           <TableHead className="text-right">Tx Secagem</TableHead>
                           <TableHead className="text-right">Descontos (Kg)</TableHead>
@@ -298,6 +303,9 @@ export default function RelatorioPage() {
                               {l.tipo === "entrada"
                                 ? `${fmt2(l.umidadeInicial!)}% → ${fmt2(l.umidadeFinalAlvo!)}%`
                                 : l.umidadeSaida ? `${fmt2(l.umidadeSaida)}%` : "—"}
+                            </TableCell>
+                            <TableCell className="text-center tabular-nums">
+                              {l.tipo === "saida" ? (l.classificacao || "—") : "—"}
                             </TableCell>
                             <TableCell className="text-right tabular-nums">
                               {l.tipo === "entrada" ? `${fmt2(l.impureza!)}%` : "—"}
