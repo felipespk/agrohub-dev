@@ -2,15 +2,16 @@ import { useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAppData } from "@/contexts/AppContext";
 import { formatDateBR } from "@/lib/date";
 import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const UMIDADE_IDEAL = 13; // Umidade ideal padrão
-const CARENCIA_DIAS = 30; // Carência de 30 dias grátis
-const TAXA_QUINZENAL_SACA = 0.15; // R$ 0,15 por saca por quinzena (valor default do recebimento)
+const CARENCIA_DIAS = 30;
+const TAXA_QUINZENAL_SACA = 0.15;
 
 interface SaidaComAjuste {
   id: string;
