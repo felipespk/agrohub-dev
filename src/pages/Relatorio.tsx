@@ -313,8 +313,15 @@ export default function RelatorioPage() {
                             <TableCell className="text-right tabular-nums">
                               {l.tipo === "entrada" ? `${fmt2(l.taxaSecagem!)}%` : "—"}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-amber-600 dark:text-amber-400">
-                              {l.tipo === "entrada" ? `−${fmt(l.totalDescontos!)}` : "—"}
+                            <TableCell className="text-right tabular-nums">
+                              {l.tipo === "entrada"
+                                ? (() => {
+                                    const kg = l.descontoUmidadeKg || 0;
+                                    if (kg > 0) return <span className="text-amber-600 dark:text-amber-400">−{fmt(kg)}</span>;
+                                    if (kg < 0) return <span className="text-emerald-600 dark:text-emerald-400">+{fmt(Math.abs(kg))}</span>;
+                                    return "0";
+                                  })()
+                                : "—"}
                             </TableCell>
                             <TableCell className={`text-right font-semibold tabular-nums ${l.tipo === "entrada" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                               {l.tipo === "entrada" ? "+" : "−"}{fmt(l.kg)}
