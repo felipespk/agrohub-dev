@@ -195,7 +195,7 @@ export default function SaidaVendaPage() {
             <TableHeader><TableRow>
               <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
               <TableHead>Comprador</TableHead><TableHead>Categoria</TableHead>
-              <TableHead>Classificação</TableHead><TableHead className="text-right">Umidade (%)</TableHead><TableHead className="text-right">Kgs</TableHead><TableHead className="w-24">Ações</TableHead>
+              <TableHead>Classificação</TableHead><TableHead className="text-right">Umidade (%)</TableHead><TableHead className="text-right">Peso (Kg)</TableHead><TableHead className="w-24">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {saidas.map(s => (
