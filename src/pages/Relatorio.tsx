@@ -158,6 +158,7 @@ export default function RelatorioPage() {
           umidIni: isEntrada ? l.umidadeInicial : null,
           umidAlvo: isEntrada ? l.umidadeFinalAlvo : null,
           umidSaida: !isEntrada ? l.umidadeSaida : null,
+          classificacao: !isEntrada ? (l.classificacao || "") : null,
           impureza: isEntrada ? l.impureza : null,
           txSecagem: isEntrada ? l.taxaSecagem : null,
           descUmid: isEntrada ? l.descontoUmidadeKg : null,
