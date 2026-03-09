@@ -59,7 +59,7 @@ export default function SaidaVendaPage() {
     if (!produtorId) newErrors.produtorId = "Selecione o produtor";
     if (!tipoGraoId) newErrors.tipoGraoId = "Selecione o tipo de grão";
     if (!compradorId) newErrors.compradorId = "Selecione o comprador";
-    if (!kgsExpedidos || parseFloat(kgsExpedidos) <= 0) newErrors.kgsExpedidos = "Kgs expedidos deve ser maior que zero";
+    if (!kgsExpedidos || parseFloat(kgsExpedidos) <= 0) newErrors.kgsExpedidos = "Peso deve ser maior que zero";
     if (!umidadeSaida || parseFloat(umidadeSaida) <= 0) newErrors.umidadeSaida = "Umidade de saída é obrigatória";
 
     if (Object.keys(newErrors).length > 0) {
