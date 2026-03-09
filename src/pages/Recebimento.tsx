@@ -38,7 +38,7 @@ export default function RecebimentoPage() {
   };
 
   const calculos = useMemo(() => {
-    const peso = parseFloat(pesoBruto) || 0;
+    const peso = parseFloat(unmaskKg(pesoBruto)) || 0;
     const umIni = parseFloat(umidadeInicial) || 0;
     const umAlvo = parseFloat(umidadeFinalAlvo) || 12;
     const imp = parseFloat(impureza) || 0;
