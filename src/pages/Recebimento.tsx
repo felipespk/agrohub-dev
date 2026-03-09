@@ -43,12 +43,44 @@ export default function RecebimentoPage() {
     const imp = parseFloat(impureza) || 0;
     const secagem = parseFloat(taxaSecagem) || 0;
     const alvo = parseFloat(umidadeFinalAlvo) || 12;
-    const desconto_umidade_percent = umidade > alvo ? (umidade - alvo) * 1.3 : 0;
-    const desconto_umidade_kg = peso * (desconto_umidade_percent / 100);
+
+    const delta = umidade - alvo;
+    let desconto_umidade_percent = 0;
+    let ajuste_umidade_kg = 0;
+    let tipo_ajuste: "desconto" | "acrescimo" | "neutro" = "neutro";
+
+    if (delta > 0) {
+      // Acima do ideal → desconto de 1.3% por ponto
+      desconto_umidade_percent = delta * 1.3;
+      ajuste_umidade_kg = peso * (desconto_umidade_percent / 100);
+      tipo_ajuste = "desconto";
+    } else if (delta < 0) {
+      // Abaixo do ideal → acréscimo de 1.5% por ponto
+      desconto_umidade_percent = Math.abs(delta) * 1.5;
+      ajuste_umidade_kg = peso * (desconto_umidade_percent / 100);
+      tipo_ajuste = "acrescimo";
+    }
+
     const desconto_impureza_kg = peso * (imp / 100);
     const desconto_secagem_kg = peso * (secagem / 100);
-    const peso_liquido = Math.max(0, peso - desconto_umidade_kg - desconto_impureza_kg - desconto_secagem_kg);
-    return { desconto_umidade_percent, desconto_umidade_kg, desconto_impureza_kg, taxa_secagem_percentual: secagem, desconto_secagem_kg, peso_liquido };
+
+    // Desconto subtrai, acréscimo soma
+    const peso_liquido = Math.max(0,
+      tipo_ajuste === "acrescimo"
+        ? peso + ajuste_umidade_kg - desconto_impureza_kg - desconto_secagem_kg
+        : peso - ajuste_umidade_kg - desconto_impureza_kg - desconto_secagem_kg
+    );
+
+    return {
+      desconto_umidade_percent,
+      desconto_umidade_kg: tipo_ajuste === "acrescimo" ? -ajuste_umidade_kg : ajuste_umidade_kg,
+      ajuste_umidade_kg,
+      tipo_ajuste,
+      desconto_impureza_kg,
+      taxa_secagem_percentual: secagem,
+      desconto_secagem_kg,
+      peso_liquido,
+    };
   }, [pesoBruto, umidadeInicial, impureza, taxaSecagem, umidadeFinalAlvo]);
 
   const clearForm = () => {
