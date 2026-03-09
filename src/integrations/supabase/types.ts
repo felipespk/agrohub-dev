@@ -234,14 +234,20 @@ export type Database = {
           comprador_id: string
           created_at: string
           data: string
+          dias_armazenados: number
           id: string
           kgs_expedidos: number
+          peso_ajustado: number
           placa_caminhao: string
           produtor_id: string | null
+          quinzenas_cobradas: number
+          recebimento_id: string | null
           tipo_grao_id: string | null
+          umidade_combinada: number
           umidade_saida: number
           updated_at: string
           user_id: string
+          valor_armazenamento_exp: number
           valor_expedicao: number
         }
         Insert: {
@@ -250,14 +256,20 @@ export type Database = {
           comprador_id: string
           created_at?: string
           data?: string
+          dias_armazenados?: number
           id?: string
           kgs_expedidos: number
+          peso_ajustado?: number
           placa_caminhao: string
           produtor_id?: string | null
+          quinzenas_cobradas?: number
+          recebimento_id?: string | null
           tipo_grao_id?: string | null
+          umidade_combinada?: number
           umidade_saida?: number
           updated_at?: string
           user_id: string
+          valor_armazenamento_exp?: number
           valor_expedicao?: number
         }
         Update: {
@@ -266,14 +278,20 @@ export type Database = {
           comprador_id?: string
           created_at?: string
           data?: string
+          dias_armazenados?: number
           id?: string
           kgs_expedidos?: number
+          peso_ajustado?: number
           placa_caminhao?: string
           produtor_id?: string | null
+          quinzenas_cobradas?: number
+          recebimento_id?: string | null
           tipo_grao_id?: string | null
+          umidade_combinada?: number
           umidade_saida?: number
           updated_at?: string
           user_id?: string
+          valor_armazenamento_exp?: number
           valor_expedicao?: number
         }
         Relationships: [
@@ -292,6 +310,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "saidas_recebimento_id_fkey"
+            columns: ["recebimento_id"]
+            isOneToOne: false
+            referencedRelation: "recebimentos"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "saidas_tipo_grao_id_fkey"
             columns: ["tipo_grao_id"]
             isOneToOne: false
@@ -305,6 +330,8 @@ export type Database = {
           created_at: string
           id: string
           nome: string
+          taxa_agio: number
+          taxa_desagio: number
           umidade_padrao: number
           updated_at: string
           user_id: string
@@ -313,6 +340,8 @@ export type Database = {
           created_at?: string
           id?: string
           nome: string
+          taxa_agio?: number
+          taxa_desagio?: number
           umidade_padrao?: number
           updated_at?: string
           user_id: string
@@ -321,6 +350,8 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+          taxa_agio?: number
+          taxa_desagio?: number
           umidade_padrao?: number
           updated_at?: string
           user_id?: string
