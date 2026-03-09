@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/contexts/AppContext";
+import { formatDateBR } from "@/lib/date";
 import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";

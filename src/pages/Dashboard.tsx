@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/contexts/AppContext";
+import { formatDateBR } from "@/lib/date";
 
 const PIE_COLORS = [
   "hsl(152, 45%, 28%)", "hsl(42, 80%, 55%)", "hsl(210, 50%, 45%)",
