@@ -17,6 +17,7 @@ interface SaidaComAjuste {
   peso_ajustado: number;
   ajuste_kg: number;
   tipo_ajuste: "desconto" | "acrescimo" | "neutro";
+  valor_expedicao: number;
 }
 
 export default function ExpedicaoPage() {
