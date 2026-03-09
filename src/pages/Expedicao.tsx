@@ -42,23 +42,26 @@ export default function ExpedicaoPage() {
   // Filter states
   const [filterProdutor, setFilterProdutor] = useState<string>("");
   const [filterComprador, setFilterComprador] = useState<string>("");
+  const [umidadeCombinada, setUmidadeCombinada] = useState("12");
+
+  const umidadeCombNum = parseFloat(umidadeCombinada.replace(",", ".")) || 12;
 
   // Calcula peso ajustado + armazenamento para cada saída
   const saidasComAjuste = useMemo<SaidaComAjuste[]>(() => {
     return saidas.map(s => {
-      const umidade = s.umidade_saida || UMIDADE_IDEAL;
-      const delta = umidade - UMIDADE_IDEAL;
+      const umidadeReal = s.umidade_saida || umidadeCombNum;
+      const diferenca = umidadeReal - umidadeCombNum;
       let ajuste_kg = 0;
       let tipo_ajuste: "desconto" | "acrescimo" | "neutro" = "neutro";
 
-      if (delta > 0) {
-        // Acima do ideal → desconto 1.3% por ponto
-        ajuste_kg = s.kgs_expedidos * (delta * 0.013);
-        tipo_ajuste = "desconto";
-      } else if (delta < 0) {
-        // Abaixo do ideal → acréscimo 1.5% por ponto
-        ajuste_kg = s.kgs_expedidos * (Math.abs(delta) * 0.015);
+      if (diferenca > 0) {
+        // Umidade Real ACIMA do combinado → SOMA peso (1.3% por ponto)
+        ajuste_kg = s.kgs_expedidos * (diferenca * 0.013);
         tipo_ajuste = "acrescimo";
+      } else if (diferenca < 0) {
+        // Umidade Real ABAIXO do combinado → SUBTRAI peso (1.5% por ponto)
+        ajuste_kg = s.kgs_expedidos * (Math.abs(diferenca) * 0.015);
+        tipo_ajuste = "desconto";
       }
 
       const peso_ajustado = tipo_ajuste === "acrescimo"
