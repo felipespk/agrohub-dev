@@ -182,6 +182,10 @@ export default function ExpedicaoPage() {
       <div className="page-header">
         <div className="flex items-center gap-2"><Truck className="h-6 w-6 text-primary" /><h1 className="page-title">Expedição</h1></div>
         <p className="page-subtitle">Resumo consolidado de expedições com ajuste de umidade (base: {UMIDADE_IDEAL}%) e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
+        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+          <Info className="h-3 w-3" />
+          Calculado com base em {fmtBRL(taxaExpedicao)}/ton
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
