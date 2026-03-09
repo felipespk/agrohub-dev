@@ -243,7 +243,9 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
                 />
                 {errors.nome && <p className="text-xs text-destructive">{errors.nome}</p>}
               </div>
-              <div className="space-y-1"><Label>Umidade Padrão (%)</Label><Input type="number" value={umidade} onChange={e => setUmidade(e.target.value)} /></div>
+              <div className="space-y-1"><Label>Umidade Base (%)</Label><Input type="number" step="0.1" value={umidade} onChange={e => setUmidade(e.target.value)} /></div>
+              <div className="space-y-1"><Label>Taxa Ágio (%/ponto)</Label><Input type="number" step="0.1" value={taxaAgio} onChange={e => setTaxaAgio(e.target.value)} /><p className="text-xs text-muted-foreground">Acréscimo quando úmido acima da base</p></div>
+              <div className="space-y-1"><Label>Taxa Deságio (%/ponto)</Label><Input type="number" step="0.1" value={taxaDesagio} onChange={e => setTaxaDesagio(e.target.value)} /><p className="text-xs text-muted-foreground">Desconto quando seco abaixo da base</p></div>
               <div className="flex gap-2">
                 <Button onClick={handleSave} className={`flex-1 gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                   <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar"}
