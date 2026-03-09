@@ -2,15 +2,16 @@ import { useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAppData } from "@/contexts/AppContext";
 import { formatDateBR } from "@/lib/date";
 import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const UMIDADE_IDEAL = 13; // Umidade ideal padrão
-const CARENCIA_DIAS = 30; // Carência de 30 dias grátis
-const TAXA_QUINZENAL_SACA = 0.15; // R$ 0,15 por saca por quinzena (valor default do recebimento)
+const CARENCIA_DIAS = 30;
+const TAXA_QUINZENAL_SACA = 0.15;
 
 interface SaidaComAjuste {
   id: string;
@@ -41,23 +42,26 @@ export default function ExpedicaoPage() {
   // Filter states
   const [filterProdutor, setFilterProdutor] = useState<string>("");
   const [filterComprador, setFilterComprador] = useState<string>("");
+  const [umidadeCombinada, setUmidadeCombinada] = useState("12");
+
+  const umidadeCombNum = parseFloat(umidadeCombinada.replace(",", ".")) || 12;
 
   // Calcula peso ajustado + armazenamento para cada saída
   const saidasComAjuste = useMemo<SaidaComAjuste[]>(() => {
     return saidas.map(s => {
-      const umidade = s.umidade_saida || UMIDADE_IDEAL;
-      const delta = umidade - UMIDADE_IDEAL;
+      const umidadeReal = s.umidade_saida || umidadeCombNum;
+      const diferenca = umidadeReal - umidadeCombNum;
       let ajuste_kg = 0;
       let tipo_ajuste: "desconto" | "acrescimo" | "neutro" = "neutro";
 
-      if (delta > 0) {
-        // Acima do ideal → desconto 1.3% por ponto
-        ajuste_kg = s.kgs_expedidos * (delta * 0.013);
-        tipo_ajuste = "desconto";
-      } else if (delta < 0) {
-        // Abaixo do ideal → acréscimo 1.5% por ponto
-        ajuste_kg = s.kgs_expedidos * (Math.abs(delta) * 0.015);
+      if (diferenca > 0) {
+        // Umidade Real ACIMA do combinado → SOMA peso (1.3% por ponto)
+        ajuste_kg = s.kgs_expedidos * (diferenca * 0.013);
         tipo_ajuste = "acrescimo";
+      } else if (diferenca < 0) {
+        // Umidade Real ABAIXO do combinado → SUBTRAI peso (1.5% por ponto)
+        ajuste_kg = s.kgs_expedidos * (Math.abs(diferenca) * 0.015);
+        tipo_ajuste = "desconto";
       }
 
       const peso_ajustado = tipo_ajuste === "acrescimo"
@@ -112,7 +116,7 @@ export default function ExpedicaoPage() {
         produtor_id: s.produtor_id,
         categoria: s.categoria,
         kgs_expedidos: s.kgs_expedidos,
-        umidade_saida: umidade,
+        umidade_saida: umidadeReal,
         peso_ajustado: Math.max(0, peso_ajustado),
         ajuste_kg,
         tipo_ajuste,
@@ -125,7 +129,7 @@ export default function ExpedicaoPage() {
         dataEntrada,
       };
     });
-  }, [saidas, recebimentos]);
+  }, [saidas, recebimentos, umidadeCombNum]);
 
   // Extract unique produtores and compradores for filter options
   const produtoresUnicos = useMemo(() => {
@@ -180,7 +184,23 @@ export default function ExpedicaoPage() {
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
         <div className="flex items-center gap-2"><Truck className="h-6 w-6 text-primary" /><h1 className="page-title">Expedição</h1></div>
-        <p className="page-subtitle">Resumo consolidado de expedições com ajuste de umidade (base: {UMIDADE_IDEAL}%) e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
+        <p className="page-subtitle">Resumo consolidado de expedições com ajuste de umidade e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
+      </div>
+
+      {/* Umidade Combinada input */}
+      <div className="form-section">
+        <div className="flex items-center gap-4">
+          <Label htmlFor="umidadeCombinada" className="text-sm font-medium whitespace-nowrap">Umidade Combinada (%):</Label>
+          <Input
+            id="umidadeCombinada"
+            type="number"
+            step="0.1"
+            className="w-28"
+            value={umidadeCombinada}
+            onChange={e => setUmidadeCombinada(e.target.value)}
+          />
+          <span className="text-xs text-muted-foreground">Base contratual para cálculo de ágio/deságio</span>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
