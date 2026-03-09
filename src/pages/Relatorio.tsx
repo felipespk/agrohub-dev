@@ -65,7 +65,6 @@ export default function RelatorioPage() {
         descontoUmidadeKg: descontoU,
         descontoImpurezaKg: descontoI,
         descontoSecagemKg: descontoS,
-        totalDescontos: descontoU + descontoI + descontoS,
       });
       map.set(key, existing);
     }
