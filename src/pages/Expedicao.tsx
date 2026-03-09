@@ -64,11 +64,13 @@ export default function ExpedicaoPage() {
 
   const totalPesoBruto = saidasComAjuste.reduce((sum, s) => sum + s.kgs_expedidos, 0);
   const totalPesoAjustado = saidasComAjuste.reduce((sum, s) => sum + s.peso_ajustado, 0);
+  const totalValorExpedicao = saidasComAjuste.reduce((sum, s) => sum + s.valor_expedicao, 0);
 
   const fmtKg = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const fmtSacos = (kgs: number) => (kgs / 60).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtTon = (kgs: number) => (kgs / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
   const fmtPct = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const fmtBRL = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
   return (
     <div className="animate-fade-in space-y-6">
