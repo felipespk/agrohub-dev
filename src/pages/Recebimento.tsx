@@ -8,7 +8,7 @@ import { useAppData, Recebimento } from "@/contexts/AppContext";
 import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { maskPlaca } from "@/lib/masks";
-import { getBrazilDateInputValue } from "@/lib/date";
+import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 export default function RecebimentoPage() {
@@ -290,7 +290,7 @@ export default function RecebimentoPage() {
             <TableBody>
               {recebimentos.map(r => (
                 <TableRow key={r.id} className={editingId === r.id ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
-                  <TableCell>{new Date(r.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>{formatDateBR(r.data)}</TableCell>
                   <TableCell className="font-mono">{r.placa_caminhao}</TableCell>
                   <TableCell>{r.produtor_nome}</TableCell>
                   <TableCell>{r.tipo_grao_nome}</TableCell>

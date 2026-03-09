@@ -9,7 +9,7 @@ import { useAppData, Saida } from "@/contexts/AppContext";
 import { ArrowUpFromLine, Save, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { maskPlaca, maskClassificacao } from "@/lib/masks";
-import { getBrazilDateInputValue } from "@/lib/date";
+import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 const categorias = ["Venda", "Transferência", "Devolução", "Outros"];
@@ -228,7 +228,7 @@ export default function SaidaVendaPage() {
             <TableBody>
               {saidas.map(s => (
                 <TableRow key={s.id} className={editingId === s.id ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
-                  <TableCell>{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>{formatDateBR(s.data)}</TableCell>
                   <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
                   <TableCell>{s.produtor_nome || "—"}</TableCell>
                   <TableCell>{s.tipo_grao_nome || "—"}</TableCell>

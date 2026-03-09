@@ -8,7 +8,7 @@ import { useAppData } from "@/contexts/AppContext";
 import { AlertTriangle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { getBrazilDateInputValue } from "@/lib/date";
+import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 export default function QuebraTecnicaPage() {
@@ -102,7 +102,7 @@ export default function QuebraTecnicaPage() {
             <TableBody>
               {quebras.map(q => (
                 <TableRow key={q.id}>
-                  <TableCell>{new Date(q.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>{formatDateBR(q.data)}</TableCell>
                   <TableCell className={`text-right font-semibold ${q.kg_ajuste < 0 ? "text-destructive" : "text-primary"}`}>{q.kg_ajuste > 0 ? "+" : ""}{q.kg_ajuste.toLocaleString("pt-BR")}</TableCell>
                   <TableCell>{q.justificativa}</TableCell>
                   <TableCell><Button variant="ghost" size="icon" onClick={() => handleDelete(q.id)} className="text-destructive hover:text-destructive"><AlertTriangle className="h-4 w-4" /></Button></TableCell>

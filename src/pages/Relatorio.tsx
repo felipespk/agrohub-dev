@@ -9,6 +9,7 @@ import { useAppData } from "@/contexts/AppContext";
 import { FileBarChart, Download, ArrowDownToLine, ArrowUpFromLine, List } from "lucide-react";
 import { toast } from "sonner";
 import ExcelJS from "exceljs";
+import { formatDateBR, parseLocalDate } from "@/lib/date";
 
 type FilterMode = "all" | "in" | "out";
 
@@ -198,10 +199,6 @@ export default function RelatorioPage() {
       right: { style: "thin", color: { argb: "FFD1D5DB" } },
     };
 
-    const parseDate = (d: string) => {
-      const [y, m, day] = d.split("-").map(Number);
-      return new Date(y, m - 1, day);
-    };
 
     // Add data rows
     for (const g of grupos) {
@@ -215,7 +212,7 @@ export default function RelatorioPage() {
           rowData = {
             produtor: g.produtorNome,
             tipoGrao: g.tipoGraoNome,
-            data: parseDate(l.data),
+            data: parseLocalDate(l.data),
             placa: l.placa,
             pesoBruto: l.pesoBruto,
             umidIni: l.umidadeInicial,
@@ -231,7 +228,7 @@ export default function RelatorioPage() {
           rowData = {
             produtor: g.produtorNome,
             tipoGrao: g.tipoGraoNome,
-            data: parseDate(l.data),
+            data: parseLocalDate(l.data),
             placa: l.placa,
             comprador_destino: "", // saidas don't have comprador in lancamento; filled from context if needed
             categoria: "",
@@ -246,7 +243,7 @@ export default function RelatorioPage() {
           rowData = {
             produtor: g.produtorNome,
             tipoGrao: g.tipoGraoNome,
-            data: parseDate(l.data),
+            data: parseLocalDate(l.data),
             operacao: isEntrada ? "Entrada" : "Saída",
             placa: l.placa,
             pesoBruto: isEntrada ? l.pesoBruto : "—",
@@ -404,7 +401,7 @@ export default function RelatorioPage() {
                       <TableBody>
                         {filterLancamentos(g.lancamentos).map(l => (
                           <TableRow key={l.id}>
-                            <TableCell className="tabular-nums">{new Date(l.data).toLocaleDateString("pt-BR")}</TableCell>
+                            <TableCell className="tabular-nums">{formatDateBR(l.data)}</TableCell>
                             <TableCell>
                               {l.tipo === "entrada" ? (
                                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 hover:bg-emerald-100 gap-1">

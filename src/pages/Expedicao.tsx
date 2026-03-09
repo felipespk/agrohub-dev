@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/contexts/AppContext";
+import { formatDateBR } from "@/lib/date";
 import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -285,7 +286,7 @@ export default function ExpedicaoPage() {
                 ) : (
                   saidasFiltradas.map(s => (
                     <TableRow key={s.id}>
-                      <TableCell className="tabular-nums">{new Date(s.data).toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell className="tabular-nums">{formatDateBR(s.data)}</TableCell>
                       <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
                       <TableCell>{s.comprador_nome}</TableCell>
                       <TableCell>{s.produtor_nome || "—"}</TableCell>
@@ -323,7 +324,7 @@ export default function ExpedicaoPage() {
                             </div>
                             {s.produtor_id && s.dataEntrada && (
                               <p className="text-xs text-muted-foreground mt-1">
-                                Entrada: {new Date(s.dataEntrada).toLocaleDateString("pt-BR")} · Taxa: {fmtBRL(s.taxaQuinzenal)}/saca/quinz.
+                                Entrada: {formatDateBR(s.dataEntrada)} · Taxa: {fmtBRL(s.taxaQuinzenal)}/saca/quinz.
                               </p>
                             )}
                           </TooltipContent>
