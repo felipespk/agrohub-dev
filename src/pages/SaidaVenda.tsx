@@ -186,7 +186,23 @@ export default function SaidaVendaPage() {
             />
             {errors.umidadeSaida && <p className="text-xs text-destructive">{errors.umidadeSaida}</p>}
           </div>
-        </div>
+          <div className="space-y-1">
+            <Label>Taxa por Tonelada (R$)</Label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              placeholder="15"
+              value={taxaPorTonelada}
+              onChange={e => setTaxaPorTonelada(e.target.value)}
+            />
+            {kgsExpedidos && parseFloat(kgsExpedidos) > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Valor: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                  (parseFloat(kgsExpedidos) / 1000) * (parseFloat(taxaPorTonelada.replace(",", ".")) || 15)
+                )}
+              </p>
+            )}
+          </div>
         <div className="flex gap-2">
           <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
             <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Saída"}
