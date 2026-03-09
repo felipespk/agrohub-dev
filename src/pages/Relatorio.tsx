@@ -276,7 +276,7 @@ export default function RelatorioPage() {
                           <TableHead className="text-center">Classificação</TableHead>
                           <TableHead className="text-right">Impureza</TableHead>
                           <TableHead className="text-right">Tx Secagem</TableHead>
-                          <TableHead className="text-right">Descontos (Kg)</TableHead>
+                          <TableHead className="text-right">Ajuste Umidade (Kg)</TableHead>
                           <TableHead className="text-right">Peso Líquido</TableHead>
                         </TableRow>
                       </TableHeader>
