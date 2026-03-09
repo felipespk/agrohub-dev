@@ -4,10 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAppData } from "@/contexts/AppContext";
-import { FileBarChart, Download, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { FileBarChart, Download, ArrowDownToLine, ArrowUpFromLine, List } from "lucide-react";
 import { toast } from "sonner";
 import ExcelJS from "exceljs";
+
+type FilterMode = "all" | "in" | "out";
 
 interface LancamentoUnificado {
   id: string;
