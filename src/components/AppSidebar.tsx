@@ -1,9 +1,10 @@
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft,
-  Warehouse, Truck, FileBarChart, AlertTriangle, UserPlus, Wheat, LogOut
+  Warehouse, Truck, FileBarChart, AlertTriangle, UserPlus, Wheat, LogOut, Settings
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFarm } from "@/contexts/FarmContext";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -27,16 +28,24 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
+  const { farmName } = useFarm();
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="flex flex-col h-full">
-        <div className={`flex items-center gap-2 px-4 py-5 ${collapsed ? "justify-center" : ""}`}>
-          <Wheat className="h-7 w-7 text-sidebar-primary shrink-0" />
+        <div className={`flex flex-col gap-0.5 px-4 py-5 ${collapsed ? "items-center" : ""}`}>
+          <div className={`flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
+            <Wheat className="h-7 w-7 text-sidebar-primary shrink-0" />
+            {!collapsed && (
+              <span className="text-lg font-display font-bold text-sidebar-primary-foreground tracking-tight">
+                GrãoControl
+              </span>
+            )}
+          </div>
           {!collapsed && (
-            <span className="text-lg font-display font-bold text-sidebar-primary-foreground tracking-tight">
-              GrãoControl
-            </span>
+            <p className="text-xs text-sidebar-foreground/60 pl-9 truncate">
+              {farmName || "Configurar Fazenda"}
+            </p>
           )}
         </div>
 
@@ -65,10 +74,24 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* User & Logout */}
-        <div className={`px-3 py-4 border-t border-sidebar-border ${collapsed ? "flex justify-center" : ""}`}>
+        {/* Conta & Logout */}
+        <div className={`px-3 py-4 border-t border-sidebar-border space-y-1 ${collapsed ? "flex flex-col items-center" : ""}`}>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to="/conta"
+                  className="hover:bg-sidebar-accent/70"
+                  activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                >
+                  <Settings className="mr-2 h-4 w-4 shrink-0" />
+                  {!collapsed && <span>Conta</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
           {!collapsed && user && (
-            <p className="text-xs text-sidebar-foreground/60 truncate mb-2 px-1">
+            <p className="text-xs text-sidebar-foreground/60 truncate px-2 pt-2">
               {user.email}
             </p>
           )}
