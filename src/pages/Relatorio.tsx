@@ -304,6 +304,9 @@ export default function RelatorioPage() {
                                 ? `${fmt2(l.umidadeInicial!)}% → ${fmt2(l.umidadeFinalAlvo!)}%`
                                 : l.umidadeSaida ? `${fmt2(l.umidadeSaida)}%` : "—"}
                             </TableCell>
+                            <TableCell className="text-center tabular-nums">
+                              {l.tipo === "saida" ? (l.classificacao || "—") : "—"}
+                            </TableCell>
                             <TableCell className="text-right tabular-nums">
                               {l.tipo === "entrada" ? `${fmt2(l.impureza!)}%` : "—"}
                             </TableCell>
