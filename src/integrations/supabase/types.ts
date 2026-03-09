@@ -239,6 +239,7 @@ export type Database = {
           placa_caminhao: string
           produtor_id: string | null
           tipo_grao_id: string | null
+          umidade_saida: number
           updated_at: string
           user_id: string
         }
@@ -253,6 +254,7 @@ export type Database = {
           placa_caminhao: string
           produtor_id?: string | null
           tipo_grao_id?: string | null
+          umidade_saida?: number
           updated_at?: string
           user_id: string
         }
@@ -267,6 +269,7 @@ export type Database = {
           placa_caminhao?: string
           produtor_id?: string | null
           tipo_grao_id?: string | null
+          umidade_saida?: number
           updated_at?: string
           user_id?: string
         }

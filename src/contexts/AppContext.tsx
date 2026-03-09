@@ -66,6 +66,7 @@ export interface Saida {
   tipo_grao_id?: string | null;
   classificacao: string;
   kgs_expedidos: number;
+  umidade_saida: number;
   categoria: string;
   created_at: string;
   // Joined
