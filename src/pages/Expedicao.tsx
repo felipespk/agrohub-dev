@@ -229,7 +229,12 @@ export default function ExpedicaoPage() {
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
         <div className="flex items-center gap-2"><Truck className="h-6 w-6 text-primary" /><h1 className="page-title">Expedição</h1></div>
-        <p className="page-subtitle">Resumo consolidado com ajuste de umidade por grão e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
+        <div className="flex items-center gap-4">
+          <p className="page-subtitle">Resumo consolidado com ajuste de umidade por grão e armazenamento (carência: {CARENCIA_DIAS} dias)</p>
+          <Button onClick={exportarExcel} size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0">
+            <Download className="h-4 w-4" />Exportar Excel
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
