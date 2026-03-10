@@ -129,6 +129,102 @@ export default function ExpedicaoPage() {
     return `${s.diasArmazenados} dias - ${s.quinzenas} quinz.`;
   };
 
+  const exportarExcel = async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Expedições");
+
+    const cols = [
+      { header: "Data", key: "data", width: 14 },
+      { header: "Placa", key: "placa", width: 12 },
+      { header: "Comprador", key: "comprador", width: 22 },
+      { header: "Produtor", key: "produtor", width: 22 },
+      { header: "Grão", key: "grao", width: 14 },
+      { header: "Umid. Real (%)", key: "umidade_real", width: 15 },
+      { header: "Umid. Comb. (%)", key: "umidade_comb", width: 15 },
+      { header: "Peso Balança (Kg)", key: "peso_bruto", width: 18 },
+      { header: "Peso Ajustado (Kg)", key: "peso_ajustado", width: 18 },
+      { header: "Sacos", key: "sacos", width: 12 },
+      { header: "Toneladas", key: "toneladas", width: 14 },
+      { header: "Taxa Exp. (R$)", key: "taxa_exp", width: 16 },
+      { header: "Armaz. (R$)", key: "armaz", width: 16 },
+    ];
+    ws.columns = cols;
+
+    // Header style
+    ws.getRow(1).eachCell(cell => {
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF217346" } };
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = { bottom: { style: "thin", color: { argb: "FF000000" } } };
+    });
+
+    saidasFiltradas.forEach((s, i) => {
+      const row = ws.addRow({
+        data: formatDateBR(s.data),
+        placa: s.placa_caminhao,
+        comprador: s.comprador_nome,
+        produtor: s.produtor_nome || "—",
+        grao: s.tipo_grao_nome || "—",
+        umidade_real: s.umidade_saida,
+        umidade_comb: s.umidade_combinada,
+        peso_bruto: s.kgs_expedidos,
+        peso_ajustado: s.peso_ajustado,
+        sacos: Math.round((s.peso_ajustado / 60) * 100) / 100,
+        toneladas: Math.round((s.peso_ajustado / 1000) * 1000) / 1000,
+        taxa_exp: s.valor_expedicao,
+        armaz: s.valorArmazenamento,
+      });
+      if (i % 2 === 1) {
+        row.eachCell(cell => {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
+        });
+      }
+    });
+
+    // Totals row
+    const totalRow = ws.addRow({
+      data: "TOTAL",
+      peso_bruto: totalPesoBruto,
+      peso_ajustado: totalPesoAjustado,
+      sacos: Math.round((totalPesoAjustado / 60) * 100) / 100,
+      toneladas: Math.round((totalPesoAjustado / 1000) * 1000) / 1000,
+      taxa_exp: totalValorExpedicao,
+      armaz: totalValorArmazenamento,
+    });
+    totalRow.eachCell(cell => {
+      cell.font = { bold: true, size: 11 };
+      cell.border = { top: { style: "thin", color: { argb: "FF000000" } } };
+    });
+
+    // Number formats
+    for (let r = 2; r <= ws.rowCount; r++) {
+      ws.getCell(r, 6).numFmt = "0.0";
+      ws.getCell(r, 7).numFmt = "0.0";
+      ws.getCell(r, 8).numFmt = "#,##0";
+      ws.getCell(r, 9).numFmt = "#,##0";
+      ws.getCell(r, 10).numFmt = "#,##0.00";
+      ws.getCell(r, 11).numFmt = "#,##0.000";
+      ws.getCell(r, 12).numFmt = "R$ #,##0.00";
+      ws.getCell(r, 13).numFmt = "R$ #,##0.00";
+    }
+
+    // Print setup
+    ws.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+
+    const now = getBrazilDateInputValue();
+    const [y, m, d] = now.split("-");
+    const fileName = `Expedicoes_Geradas_${d}_${m}_${y}.xlsx`;
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
