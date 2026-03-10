@@ -4,8 +4,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/contexts/AppContext";
 import { formatDateBR } from "@/lib/date";
-import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X } from "lucide-react";
+import { Truck, TrendingDown, TrendingUp, Calendar, Warehouse, Filter, X, Download } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import ExcelJS from "exceljs";
+import { getBrazilDateInputValue } from "@/lib/date";
 
 const CARENCIA_DIAS = 30;
 
