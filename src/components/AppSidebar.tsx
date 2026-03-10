@@ -96,10 +96,10 @@ export function AppSidebar() {
             </p>
           )}
           <Button
-            variant="ghost"
+            variant="destructive"
             size={collapsed ? "icon" : "sm"}
             onClick={signOut}
-            className="w-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/70 gap-2"
+            className="w-full gap-2"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             {!collapsed && <span>Sair</span>}
