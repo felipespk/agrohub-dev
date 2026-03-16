@@ -26,7 +26,6 @@ export default function RecebimentoPage() {
   const [taxaSecagem, setTaxaSecagem] = useState(() => localStorage.getItem("receb_taxaSecagem") || "");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState(() => localStorage.getItem("receb_umidadeFinalAlvo") || "");
-  const [valorArmazenamento, setValorArmazenamento] = useState("0.15");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Persist sticky fields to localStorage
@@ -80,7 +79,7 @@ export default function RecebimentoPage() {
   const clearForm = () => {
     setData(getBrazilDateInputValue());
     setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial("");
-    setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setValorArmazenamento("0.15");
+    setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo("");
     setEditingId(null);
     setErrors({});
     localStorage.removeItem("receb_produtorId");
@@ -95,7 +94,6 @@ export default function RecebimentoPage() {
     setUmidadeInicial(String(r.umidade_inicial)); setImpureza(String(r.impureza));
     setTaxaSecagem(String(r.taxa_secagem_percentual || 0));
     setUmidadeFinalAlvo(String(r.umidade_final_alvo));
-    setValorArmazenamento(String(r.valor_armazenamento ?? 0.15));
     setEditingId(r.id);
     setErrors({});
   };
@@ -115,7 +113,7 @@ export default function RecebimentoPage() {
     if (!umidadeFinalAlvo || parseFloat(umidadeFinalAlvo) <= 0) newErrors.umidadeFinalAlvo = "Umidade alvo é obrigatória";
     if (impureza === "") newErrors.impureza = "Informe a impureza (0 se não houver)";
     if (taxaSecagem === "") newErrors.taxaSecagem = "Informe a taxa de secagem (0 se não houver)";
-    if (!valorArmazenamento || parseFloat(valorArmazenamento) < 0) newErrors.valorArmazenamento = "Valor de armazenamento é obrigatório";
+    
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -129,7 +127,7 @@ export default function RecebimentoPage() {
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
       peso_bruto: parseFloat(unmaskKg(pesoBruto)), umidade_inicial: parseFloat(umidadeInicial),
       umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,
-      valor_armazenamento: parseFloat(valorArmazenamento) || 0.15,
+      valor_armazenamento: 0,
       ...calculos,
     };
     if (editingId) {
@@ -255,18 +253,6 @@ export default function RecebimentoPage() {
                 className={cn(errors.umidadeFinalAlvo && "border-destructive focus-visible:ring-destructive")}
               />
               {errors.umidadeFinalAlvo && <p className="text-xs text-destructive">{errors.umidadeFinalAlvo}</p>}
-            </div>
-            <div className="space-y-1">
-              <Label>Valor Armazenamento (R$/Saca) *</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.15"
-                value={valorArmazenamento}
-                onChange={e => { setValorArmazenamento(e.target.value); clearError("valorArmazenamento"); }}
-                className={cn(errors.valorArmazenamento && "border-destructive focus-visible:ring-destructive")}
-              />
-              {errors.valorArmazenamento && <p className="text-xs text-destructive">{errors.valorArmazenamento}</p>}
             </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
