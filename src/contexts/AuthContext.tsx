@@ -52,6 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    localStorage.removeItem("receb_produtorId");
+    localStorage.removeItem("receb_tipoGraoId");
+    localStorage.removeItem("receb_taxaSecagem");
+    localStorage.removeItem("receb_umidadeFinalAlvo");
     await supabase.auth.signOut();
   };
 
