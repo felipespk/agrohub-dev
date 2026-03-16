@@ -254,18 +254,6 @@ export default function RecebimentoPage() {
               />
               {errors.umidadeFinalAlvo && <p className="text-xs text-destructive">{errors.umidadeFinalAlvo}</p>}
             </div>
-            <div className="space-y-1">
-              <Label>Valor Armazenamento (R$/Saca) *</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.15"
-                value={valorArmazenamento}
-                onChange={e => { setValorArmazenamento(e.target.value); clearError("valorArmazenamento"); }}
-                className={cn(errors.valorArmazenamento && "border-destructive focus-visible:ring-destructive")}
-              />
-              {errors.valorArmazenamento && <p className="text-xs text-destructive">{errors.valorArmazenamento}</p>}
-            </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
