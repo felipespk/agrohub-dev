@@ -270,13 +270,24 @@ export default function RecebimentoPage() {
           <div className="flex items-center gap-2"><Calculator className="h-5 w-5 text-primary" /><h2 className="font-display font-semibold text-lg text-foreground">Resultados</h2></div>
           <p className="text-xs text-muted-foreground">Cálculos em tempo real</p>
           <div className="space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fase 1 — Descontos sobre o Bruto</p>
             <ResultCard
               label={`Desc. Umidade (${fmt(calculos.desconto_umidade_percent)}%)`}
               value={`${fmt(calculos.desconto_umidade_kg)} Kg`}
               variant={calculos.desconto_umidade_kg > 0 ? "discount" : undefined}
             />
             <ResultCard label="Desc. Impureza" value={`${fmt(calculos.desconto_impureza_kg)} Kg`} />
-            <ResultCard label="Desc. Secagem" value={`${fmt(calculos.desconto_secagem_kg)} Kg`} />
+
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Fase 2 — Subtotal Grão Seco</p>
+            <div className="rounded-lg bg-accent/50 border border-accent p-4">
+              <p className="text-xs text-muted-foreground">Subtotal Grão Seco</p>
+              <p className="text-xl font-display font-bold text-foreground">{fmt(calculos.peso_grao_seco)} Kg</p>
+            </div>
+
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Fase 3 — Taxa Secador (sobre Grão Seco)</p>
+            <ResultCard label="Desc. Secagem" value={`${fmt(calculos.desconto_secagem_kg)} Kg`} variant={calculos.desconto_secagem_kg > 0 ? "discount" : undefined} />
+
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Fase 4 — Peso Líquido Final</p>
             <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
               <p className="text-xs text-muted-foreground">Peso Líquido Final</p>
               <p className="text-2xl font-display font-bold text-primary">{fmt(calculos.peso_liquido)} Kg</p>
