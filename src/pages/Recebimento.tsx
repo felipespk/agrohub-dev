@@ -143,6 +143,8 @@ export default function RecebimentoPage() {
         setPesoBruto("");
         setUmidadeInicial("");
         setImpureza("");
+        setErrors({});
+        setTimeout(() => placaRef.current?.focus(), 100);
       }
     }
   };
