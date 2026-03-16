@@ -30,6 +30,7 @@ export default function SaidaVendaPage() {
   const [umidadeSaida, setUmidadeSaida] = useState("");
   const [umidadeCombinada, setUmidadeCombinada] = useState("12");
   const [taxaPorTonelada, setTaxaPorTonelada] = useState("15");
+  const [taxaArmazenamento, setTaxaArmazenamento] = useState("0.15");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
