@@ -113,7 +113,7 @@ export default function RecebimentoPage() {
     if (!umidadeFinalAlvo || parseFloat(umidadeFinalAlvo) <= 0) newErrors.umidadeFinalAlvo = "Umidade alvo é obrigatória";
     if (impureza === "") newErrors.impureza = "Informe a impureza (0 se não houver)";
     if (taxaSecagem === "") newErrors.taxaSecagem = "Informe a taxa de secagem (0 se não houver)";
-    if (!valorArmazenamento || parseFloat(valorArmazenamento) < 0) newErrors.valorArmazenamento = "Valor de armazenamento é obrigatório";
+    
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
