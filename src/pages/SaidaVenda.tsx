@@ -83,7 +83,7 @@ export default function SaidaVendaPage() {
     diasArmazenados = differenceInDays(parseISO(data), parseISO(selectedLote.data));
     diasCobrados = Math.max(0, diasArmazenados - CARENCIA_DIAS);
     if (diasCobrados > 0) quinzenasCobradas = Math.ceil(diasCobrados / 15);
-    const taxaQuinzenal = selectedLote.valor_armazenamento || 0.15;
+    const taxaQuinzenal = parseFloat(taxaArmazenamento.replace(",", ".")) || 0.15;
     const sacos = Math.ceil(pesoAjustado / 60);
     valorArmazenamento = quinzenasCobradas * taxaQuinzenal * sacos;
   }
