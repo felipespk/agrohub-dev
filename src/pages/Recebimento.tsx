@@ -79,7 +79,7 @@ export default function RecebimentoPage() {
   const clearForm = () => {
     setData(getBrazilDateInputValue());
     setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial("");
-    setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setValorArmazenamento("0.15");
+    setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo("");
     setEditingId(null);
     setErrors({});
     localStorage.removeItem("receb_produtorId");
