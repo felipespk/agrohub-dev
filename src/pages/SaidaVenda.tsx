@@ -124,6 +124,14 @@ export default function SaidaVendaPage() {
     setUmidadeCombinada(String(s.umidade_combinada || 12));
     const tons = s.kgs_expedidos / 1000;
     setTaxaPorTonelada(tons > 0 ? String(Math.round((s.valor_expedicao / tons) * 100) / 100) : "15");
+    // Reverse-engineer storage rate from saved data
+    if (s.quinzenas_cobradas > 0 && s.peso_ajustado > 0) {
+      const sacos = Math.ceil(s.peso_ajustado / 60);
+      const rate = s.valor_armazenamento_exp / (s.quinzenas_cobradas * sacos);
+      setTaxaArmazenamento(String(Math.round(rate * 100) / 100));
+    } else {
+      setTaxaArmazenamento("0.15");
+    }
     setEditingId(s.id);
     setErrors({});
   };
