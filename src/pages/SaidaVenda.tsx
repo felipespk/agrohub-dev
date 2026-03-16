@@ -295,11 +295,17 @@ export default function SaidaVendaPage() {
             <Input type="text" inputMode="decimal" placeholder="15" value={taxaPorTonelada}
               onChange={e => setTaxaPorTonelada(e.target.value)} />
           </div>
+          <div className="space-y-1">
+            <Label>Taxa Armazenamento (R$/Saca/Quinz.)</Label>
+            <Input type="text" inputMode="decimal" placeholder="0.15" value={taxaArmazenamento}
+              onChange={e => setTaxaArmazenamento(e.target.value)} />
+            <p className="text-xs text-muted-foreground">Carência: {CARENCIA_DIAS} dias grátis</p>
+          </div>
         </div>
 
         {/* Preview dos cálculos */}
         {kgsNum > 0 && umidadeReal > 0 && (
-          <div className="rounded-lg border bg-muted/50 p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+          <div className="rounded-lg border bg-muted/50 p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 text-sm">
             <div>
               <p className="text-muted-foreground">Peso Ajustado</p>
               <p className="font-semibold text-primary">{Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg</p>
@@ -317,10 +323,22 @@ export default function SaidaVendaPage() {
             </div>
             <div>
               <p className="text-muted-foreground">Armazenamento</p>
-              <p className="font-semibold text-amber-600">
-                {valorArmazenamento > 0 ? fmtBRL(valorArmazenamento) : diasArmazenados > 0 ? `${diasArmazenados} dias (carência)` : "—"}
-              </p>
-              {quinzenasCobradas > 0 && <p className="text-xs text-muted-foreground">{diasArmazenados} dias · {quinzenasCobradas} quinz.</p>}
+              {selectedLote ? (
+                <>
+                  <p className="font-semibold text-amber-600">
+                    {valorArmazenamento > 0 ? fmtBRL(valorArmazenamento) : diasArmazenados <= CARENCIA_DIAS ? "Isento (carência)" : "R$ 0,00"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Entrada: {formatDateBR(selectedLote.data)} · {diasArmazenados} dias
+                  </p>
+                  {quinzenasCobradas > 0 && <p className="text-xs text-muted-foreground">{diasCobrados} dias cobrados · {quinzenasCobradas} quinz.</p>}
+                </>
+              ) : <p className="text-muted-foreground">Selecione o lote</p>}
+            </div>
+            <div>
+              <p className="text-muted-foreground">Data Entrada do Lote</p>
+              <p className="font-semibold">{selectedLote ? formatDateBR(selectedLote.data) : "—"}</p>
+              <p className="text-xs text-muted-foreground">Dias armazenados: {diasArmazenados}</p>
             </div>
           </div>
         )}
