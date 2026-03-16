@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,18 +14,26 @@ import { cn } from "@/lib/utils";
 export default function RecebimentoPage() {
   const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento } = useAppData();
 
+  const placaRef = useRef<HTMLInputElement>(null);
+
   const [data, setData] = useState(getBrazilDateInputValue());
   const [placa, setPlaca] = useState("");
-  const [produtorId, setProdutorId] = useState("");
-  const [tipoGraoId, setTipoGraoId] = useState("");
+  const [produtorId, setProdutorId] = useState(() => localStorage.getItem("receb_produtorId") || "");
+  const [tipoGraoId, setTipoGraoId] = useState(() => localStorage.getItem("receb_tipoGraoId") || "");
   const [pesoBruto, setPesoBruto] = useState("");
   const [umidadeInicial, setUmidadeInicial] = useState("");
   const [impureza, setImpureza] = useState("");
-  const [taxaSecagem, setTaxaSecagem] = useState("");
+  const [taxaSecagem, setTaxaSecagem] = useState(() => localStorage.getItem("receb_taxaSecagem") || "");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState("");
+  const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState(() => localStorage.getItem("receb_umidadeFinalAlvo") || "");
   const [valorArmazenamento, setValorArmazenamento] = useState("0.15");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Persist sticky fields to localStorage
+  useEffect(() => { localStorage.setItem("receb_produtorId", produtorId); }, [produtorId]);
+  useEffect(() => { localStorage.setItem("receb_tipoGraoId", tipoGraoId); }, [tipoGraoId]);
+  useEffect(() => { localStorage.setItem("receb_taxaSecagem", taxaSecagem); }, [taxaSecagem]);
+  useEffect(() => { localStorage.setItem("receb_umidadeFinalAlvo", umidadeFinalAlvo); }, [umidadeFinalAlvo]);
 
   const clearError = (field: string) =>
     setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
@@ -75,6 +83,10 @@ export default function RecebimentoPage() {
     setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setValorArmazenamento("0.15");
     setEditingId(null);
     setErrors({});
+    localStorage.removeItem("receb_produtorId");
+    localStorage.removeItem("receb_tipoGraoId");
+    localStorage.removeItem("receb_taxaSecagem");
+    localStorage.removeItem("receb_umidadeFinalAlvo");
   };
 
   const handleEdit = (r: Recebimento) => {
@@ -131,6 +143,8 @@ export default function RecebimentoPage() {
         setPesoBruto("");
         setUmidadeInicial("");
         setImpureza("");
+        setErrors({});
+        setTimeout(() => placaRef.current?.focus(), 100);
       }
     }
   };
@@ -158,6 +172,7 @@ export default function RecebimentoPage() {
             <div className="space-y-1">
               <Label>Placa do Caminhão *</Label>
               <Input
+                ref={placaRef}
                 placeholder="ABC-1234"
                 value={placa}
                 onChange={e => { setPlaca(maskPlaca(e.target.value)); clearError("placa"); }}
