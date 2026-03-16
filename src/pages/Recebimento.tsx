@@ -172,6 +172,7 @@ export default function RecebimentoPage() {
             <div className="space-y-1">
               <Label>Placa do Caminhão *</Label>
               <Input
+                ref={placaRef}
                 placeholder="ABC-1234"
                 value={placa}
                 onChange={e => { setPlaca(maskPlaca(e.target.value)); clearError("placa"); }}
