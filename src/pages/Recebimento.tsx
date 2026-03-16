@@ -127,7 +127,7 @@ export default function RecebimentoPage() {
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
       peso_bruto: parseFloat(unmaskKg(pesoBruto)), umidade_inicial: parseFloat(umidadeInicial),
       umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,
-      valor_armazenamento: parseFloat(valorArmazenamento) || 0.15,
+      valor_armazenamento: 0,
       ...calculos,
     };
     if (editingId) {
