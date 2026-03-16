@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN farm_name text DEFAULT '';
