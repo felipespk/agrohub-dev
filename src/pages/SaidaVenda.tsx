@@ -144,9 +144,9 @@ export default function SaidaVendaPage() {
     if (!umidadeSaida || parseFloat(umidadeSaida) <= 0) newErrors.umidadeSaida = "Umidade de saída é obrigatória";
     if (!classificacao.trim()) newErrors.classificacao = "Classificação é obrigatória";
 
-    // Stock validation
-    if (selectedLote && kgsNum > selectedLote.saldoDisponivel) {
-      newErrors.kgsExpedidos = `Peso excede o saldo do lote (${selectedLote.saldoDisponivel.toLocaleString("pt-BR")} Kg disponíveis)`;
+    // Stock validation: compare COMMERCIAL weight (peso_ajustado) against available balance
+    if (selectedLote && pesoAjustado > selectedLote.saldoDisponivel) {
+      newErrors.kgsExpedidos = `Saldo insuficiente. O peso ajustado comercialmente (${Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg) excede o estoque do produtor (${selectedLote.saldoDisponivel.toLocaleString("pt-BR")} Kg disponíveis).`;
     }
 
     if (Object.keys(newErrors).length > 0) {
