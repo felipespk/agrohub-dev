@@ -44,19 +44,25 @@ export default function RecebimentoPage() {
     const imp = parseFloat(impureza) || 0;
     const secagem = parseFloat(taxaSecagem) || 0;
 
-    // Desconto de umidade: (umidade_inicial - alvo) * 1.3% por ponto (se acima do alvo)
-    const diffUmidade = umIni - umAlvo;
-    const desconto_umidade_percent = diffUmidade > 0 ? diffUmidade * 1.3 : 0;
+    // Fase 1: Descontos sobre o Bruto
+    const desconto_umidade_percent = umIni > umAlvo ? (umIni - umAlvo) * 1.3 : 0;
     const desconto_umidade_kg = peso * (desconto_umidade_percent / 100);
-
     const desconto_impureza_kg = peso * (imp / 100);
-    const desconto_secagem_kg = peso * (secagem / 100);
-    const peso_liquido = Math.max(0, peso - desconto_umidade_kg - desconto_impureza_kg - desconto_secagem_kg);
+
+    // Fase 2: Subtotal Grão Seco (base para secagem)
+    const peso_grao_seco = Math.max(0, peso - desconto_impureza_kg - desconto_umidade_kg);
+
+    // Fase 3: Taxa do Secador sobre o Grão Seco (CASCATA)
+    const desconto_secagem_kg = peso_grao_seco * (secagem / 100);
+
+    // Fase 4: Peso Líquido Final
+    const peso_liquido = Math.max(0, peso_grao_seco - desconto_secagem_kg);
 
     return {
       desconto_umidade_percent,
       desconto_umidade_kg,
       desconto_impureza_kg,
+      peso_grao_seco,
       taxa_secagem_percentual: secagem,
       desconto_secagem_kg,
       peso_liquido,
@@ -264,13 +270,24 @@ export default function RecebimentoPage() {
           <div className="flex items-center gap-2"><Calculator className="h-5 w-5 text-primary" /><h2 className="font-display font-semibold text-lg text-foreground">Resultados</h2></div>
           <p className="text-xs text-muted-foreground">Cálculos em tempo real</p>
           <div className="space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fase 1 — Descontos sobre o Bruto</p>
             <ResultCard
               label={`Desc. Umidade (${fmt(calculos.desconto_umidade_percent)}%)`}
               value={`${fmt(calculos.desconto_umidade_kg)} Kg`}
               variant={calculos.desconto_umidade_kg > 0 ? "discount" : undefined}
             />
             <ResultCard label="Desc. Impureza" value={`${fmt(calculos.desconto_impureza_kg)} Kg`} />
-            <ResultCard label="Desc. Secagem" value={`${fmt(calculos.desconto_secagem_kg)} Kg`} />
+
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Fase 2 — Subtotal Grão Seco</p>
+            <div className="rounded-lg bg-accent/50 border border-accent p-4">
+              <p className="text-xs text-muted-foreground">Subtotal Grão Seco</p>
+              <p className="text-xl font-display font-bold text-foreground">{fmt(calculos.peso_grao_seco)} Kg</p>
+            </div>
+
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Fase 3 — Taxa Secador (sobre Grão Seco)</p>
+            <ResultCard label="Desc. Secagem" value={`${fmt(calculos.desconto_secagem_kg)} Kg`} variant={calculos.desconto_secagem_kg > 0 ? "discount" : undefined} />
+
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Fase 4 — Peso Líquido Final</p>
             <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
               <p className="text-xs text-muted-foreground">Peso Líquido Final</p>
               <p className="text-2xl font-display font-bold text-primary">{fmt(calculos.peso_liquido)} Kg</p>

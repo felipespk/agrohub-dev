@@ -157,6 +157,7 @@ export type Database = {
           id: string
           impureza: number
           peso_bruto: number
+          peso_grao_seco: number
           peso_liquido: number
           placa_caminhao: string
           produtor_id: string
@@ -178,6 +179,7 @@ export type Database = {
           id?: string
           impureza?: number
           peso_bruto: number
+          peso_grao_seco?: number
           peso_liquido?: number
           placa_caminhao: string
           produtor_id: string
@@ -199,6 +201,7 @@ export type Database = {
           id?: string
           impureza?: number
           peso_bruto?: number
+          peso_grao_seco?: number
           peso_liquido?: number
           placa_caminhao?: string
           produtor_id?: string
