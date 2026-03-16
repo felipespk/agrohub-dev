@@ -26,7 +26,6 @@ export default function RecebimentoPage() {
   const [taxaSecagem, setTaxaSecagem] = useState(() => localStorage.getItem("receb_taxaSecagem") || "");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState(() => localStorage.getItem("receb_umidadeFinalAlvo") || "");
-  const [valorArmazenamento, setValorArmazenamento] = useState("0.15");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Persist sticky fields to localStorage
