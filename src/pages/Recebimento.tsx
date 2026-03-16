@@ -94,7 +94,7 @@ export default function RecebimentoPage() {
     setUmidadeInicial(String(r.umidade_inicial)); setImpureza(String(r.impureza));
     setTaxaSecagem(String(r.taxa_secagem_percentual || 0));
     setUmidadeFinalAlvo(String(r.umidade_final_alvo));
-    setValorArmazenamento(String(r.valor_armazenamento ?? 0.15));
+    setValorArmazenamento is removed - no longer needed
     setEditingId(r.id);
     setErrors({});
   };
