@@ -46,10 +46,10 @@ export default function SaidaVendaPage() {
       r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId
     );
     return recFiltered.map(r => {
-      // Sum all saidas linked to this recebimento
+      // Sum peso_ajustado (commercial weight) of all saidas linked to this recebimento
       const totalSaido = saidas
         .filter(s => s.recebimento_id === r.id && s.id !== editingId)
-        .reduce((sum, s) => sum + s.kgs_expedidos, 0);
+        .reduce((sum, s) => sum + (s.peso_ajustado || s.kgs_expedidos), 0);
       const saldoDisponivel = r.peso_liquido - totalSaido;
       return { ...r, saldoDisponivel };
     }).filter(r => r.saldoDisponivel > 0);
