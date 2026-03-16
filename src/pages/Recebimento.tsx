@@ -83,6 +83,10 @@ export default function RecebimentoPage() {
     setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setValorArmazenamento("0.15");
     setEditingId(null);
     setErrors({});
+    localStorage.removeItem("receb_produtorId");
+    localStorage.removeItem("receb_tipoGraoId");
+    localStorage.removeItem("receb_taxaSecagem");
+    localStorage.removeItem("receb_umidadeFinalAlvo");
   };
 
   const handleEdit = (r: Recebimento) => {
