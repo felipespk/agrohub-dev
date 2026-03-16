@@ -50,6 +50,7 @@ export interface Recebimento {
   desconto_impureza_kg: number;
   taxa_secagem_percentual: number;
   desconto_secagem_kg: number;
+  peso_grao_seco: number;
   peso_liquido: number;
   valor_armazenamento: number;
   created_at: string;

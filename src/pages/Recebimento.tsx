@@ -44,19 +44,25 @@ export default function RecebimentoPage() {
     const imp = parseFloat(impureza) || 0;
     const secagem = parseFloat(taxaSecagem) || 0;
 
-    // Desconto de umidade: (umidade_inicial - alvo) * 1.3% por ponto (se acima do alvo)
-    const diffUmidade = umIni - umAlvo;
-    const desconto_umidade_percent = diffUmidade > 0 ? diffUmidade * 1.3 : 0;
+    // Fase 1: Descontos sobre o Bruto
+    const desconto_umidade_percent = umIni > umAlvo ? (umIni - umAlvo) * 1.3 : 0;
     const desconto_umidade_kg = peso * (desconto_umidade_percent / 100);
-
     const desconto_impureza_kg = peso * (imp / 100);
-    const desconto_secagem_kg = peso * (secagem / 100);
-    const peso_liquido = Math.max(0, peso - desconto_umidade_kg - desconto_impureza_kg - desconto_secagem_kg);
+
+    // Fase 2: Subtotal Grão Seco (base para secagem)
+    const peso_grao_seco = Math.max(0, peso - desconto_impureza_kg - desconto_umidade_kg);
+
+    // Fase 3: Taxa do Secador sobre o Grão Seco (CASCATA)
+    const desconto_secagem_kg = peso_grao_seco * (secagem / 100);
+
+    // Fase 4: Peso Líquido Final
+    const peso_liquido = Math.max(0, peso_grao_seco - desconto_secagem_kg);
 
     return {
       desconto_umidade_percent,
       desconto_umidade_kg,
       desconto_impureza_kg,
+      peso_grao_seco,
       taxa_secagem_percentual: secagem,
       desconto_secagem_kg,
       peso_liquido,
