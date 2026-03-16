@@ -1,36 +1,50 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-
-const STORAGE_KEY = "graocontrol_farm_name";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FarmContextType {
   farmName: string;
   setFarmName: (name: string) => void;
+  loading: boolean;
 }
 
 const FarmContext = createContext<FarmContextType | undefined>(undefined);
 
 export function FarmProvider({ children }: { children: ReactNode }) {
-  const [farmName, setFarmNameState] = useState(() => {
-    return localStorage.getItem(STORAGE_KEY) || "";
-  });
+  const { user } = useAuth();
+  const [farmName, setFarmNameState] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const setFarmName = (name: string) => {
-    setFarmNameState(name);
-    localStorage.setItem(STORAGE_KEY, name);
-  };
-
+  // Fetch from DB on mount
   useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) {
-        setFarmNameState(e.newValue || "");
-      }
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+    if (!user) {
+      setFarmNameState("");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    supabase
+      .from("profiles")
+      .select("farm_name")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        setFarmNameState(data?.farm_name || "");
+        setLoading(false);
+      });
+  }, [user]);
+
+  const setFarmName = useCallback(async (name: string) => {
+    setFarmNameState(name);
+    if (!user) return;
+    await supabase
+      .from("profiles")
+      .update({ farm_name: name } as any)
+      .eq("user_id", user.id);
+  }, [user]);
 
   return (
-    <FarmContext.Provider value={{ farmName, setFarmName }}>
+    <FarmContext.Provider value={{ farmName, setFarmName, loading }}>
       {children}
     </FarmContext.Provider>
   );
