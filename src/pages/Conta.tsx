@@ -1,17 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useFarm } from "@/contexts/FarmContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Settings, Building2, Save, User } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ContaPage() {
-  const { farmName, setFarmName } = useFarm();
+  const { farmName, setFarmName, loading } = useFarm();
   const { user } = useAuth();
   const [nome, setNome] = useState(farmName);
+
+  // Sync local input when DB value arrives
+  useEffect(() => {
+    setNome(farmName);
+  }, [farmName]);
 
   const handleSave = () => {
     setFarmName(nome.trim());
@@ -42,17 +48,21 @@ export default function ContaPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="farm-name">Nome da Fazenda / Empresa</Label>
-              <Input
-                id="farm-name"
-                placeholder="Ex: Fazenda Santa Clara"
-                value={nome}
-                onChange={e => setNome(e.target.value)}
-              />
+              {loading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <Input
+                  id="farm-name"
+                  placeholder="Ex: Fazenda Santa Clara"
+                  value={nome}
+                  onChange={e => setNome(e.target.value)}
+                />
+              )}
               <p className="text-xs text-muted-foreground">
                 Este nome será exibido no menu lateral do sistema
               </p>
             </div>
-            <Button onClick={handleSave} className="gap-2">
+            <Button onClick={handleSave} className="gap-2" disabled={loading}>
               <Save className="h-4 w-4" />
               Salvar
             </Button>
