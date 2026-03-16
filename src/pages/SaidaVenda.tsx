@@ -183,7 +183,7 @@ export default function SaidaVendaPage() {
       if (row) {
         toast.success(`Saída registrada! ${kgsNum.toLocaleString("pt-BR")} Kg expedidos.`);
         setPlaca(""); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
-        setRecebimentoId(""); setTaxaPorTonelada("15");
+        setRecebimentoId(""); setTaxaPorTonelada("15"); setTaxaArmazenamento("0.15");
       }
     }
   };
