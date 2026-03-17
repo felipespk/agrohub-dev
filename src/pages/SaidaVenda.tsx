@@ -59,19 +59,33 @@ export default function SaidaVendaPage() {
       .reduce((sum, r) => sum + ((r as any).saldo_restante_kg || 0), 0);
   }, [produtorId, tipoGraoId, recebimentos]);
 
-  // Calculations
+  // Calculations — Bifurcated rates with correct sign inversion
   const kgsNum = parseFloat(unmaskKg(kgsExpedidos)) || 0;
   const umidadeReal = parseFloat(umidadeSaida) || 0;
   const umidadeCombNum = parseFloat(umidadeCombinada.replace(",", ".")) || 12;
-  const taxaAgio = selectedGrao?.taxa_agio ?? 1.3;
-  const taxaDesagio = selectedGrao?.taxa_desagio ?? 1.5;
+  const TAXA_AGIO = 1.5;   // Grão seco (Real < Base) → SOMA
+  const TAXA_DESAGIO = 1.3; // Grão úmido (Real > Base) → SUBTRAI
 
-  const diferenca = umidadeReal - umidadeCombNum;
+  const diferencaPontos = Math.abs(umidadeReal - umidadeCombNum);
   let pesoAjustado = kgsNum;
-  if (diferenca > 0) {
-    pesoAjustado = kgsNum + kgsNum * diferenca * (taxaAgio / 100);
-  } else if (diferenca < 0) {
-    pesoAjustado = kgsNum - kgsNum * Math.abs(diferenca) * (taxaDesagio / 100);
+  let kgsAjuste = 0;
+  let taxaAplicada = 0;
+  let tipoAjuste: "agio" | "desagio" | "neutro" = "neutro";
+
+  if (umidadeReal < umidadeCombNum && umidadeReal > 0) {
+    // ÁGIO: grão mais seco → produtor ganha peso
+    taxaAplicada = TAXA_AGIO;
+    const percentual = diferencaPontos * taxaAplicada;
+    kgsAjuste = kgsNum * (percentual / 100);
+    pesoAjustado = kgsNum + kgsAjuste;
+    tipoAjuste = "agio";
+  } else if (umidadeReal > umidadeCombNum) {
+    // DESÁGIO: grão mais úmido → produtor perde peso
+    taxaAplicada = TAXA_DESAGIO;
+    const percentual = diferencaPontos * taxaAplicada;
+    kgsAjuste = kgsNum * (percentual / 100);
+    pesoAjustado = kgsNum - kgsAjuste;
+    tipoAjuste = "desagio";
   }
   pesoAjustado = Math.max(0, pesoAjustado);
 
