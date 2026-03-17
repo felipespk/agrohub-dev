@@ -79,6 +79,7 @@ export interface Saida {
   dias_armazenados: number;
   quinzenas_cobradas: number;
   valor_armazenamento_exp: number;
+  composicao_peps?: any[];
   created_at: string;
   // Joined
   comprador_nome?: string;

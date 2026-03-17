@@ -128,6 +128,7 @@ export default function RecebimentoPage() {
       peso_bruto: parseFloat(unmaskKg(pesoBruto)), umidade_inicial: parseFloat(umidadeInicial),
       umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,
       valor_armazenamento: 0,
+      saldo_restante_kg: calculos.peso_liquido,
       ...calculos,
     };
     if (editingId) {
