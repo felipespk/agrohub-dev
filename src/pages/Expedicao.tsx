@@ -45,19 +45,21 @@ export default function ExpedicaoPage() {
     return saidas.map(s => {
       const grao = tiposGrao.find(t => t.id === s.tipo_grao_id);
       const umidadeComb = s.umidade_combinada || grao?.umidade_padrao || 12;
-      const taxaAgio = grao?.taxa_agio ?? 1.3;
-      const taxaDesagio = grao?.taxa_desagio ?? 1.5;
+      const TAXA_AGIO = 1.5;
+      const TAXA_DESAGIO = 1.3;
       const umidadeReal = s.umidade_saida || umidadeComb;
-      const diferenca = umidadeReal - umidadeComb;
+      const diferencaPontos = Math.abs(umidadeReal - umidadeComb);
 
       let ajuste_kg = 0;
       let tipo_ajuste: "desconto" | "acrescimo" | "neutro" = "neutro";
 
-      if (diferenca > 0) {
-        ajuste_kg = s.kgs_expedidos * (diferenca * (taxaAgio / 100));
+      if (umidadeReal < umidadeComb) {
+        // ÁGIO: grão seco → soma
+        ajuste_kg = s.kgs_expedidos * (diferencaPontos * TAXA_AGIO / 100);
         tipo_ajuste = "acrescimo";
-      } else if (diferenca < 0) {
-        ajuste_kg = s.kgs_expedidos * (Math.abs(diferenca) * (taxaDesagio / 100));
+      } else if (umidadeReal > umidadeComb) {
+        // DESÁGIO: grão úmido → subtrai
+        ajuste_kg = s.kgs_expedidos * (diferencaPontos * TAXA_DESAGIO / 100);
         tipo_ajuste = "desconto";
       }
 

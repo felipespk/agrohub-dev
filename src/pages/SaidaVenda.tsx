@@ -48,8 +48,8 @@ export default function SaidaVendaPage() {
   const clearError = (field: string) =>
     setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
 
-  // Get selected grain config
-  const selectedGrao = tiposGrao.find(t => t.id === tipoGraoId);
+  // Get selected grain config (used for umidade_padrao auto-fill)
+  const _selectedGrao = tiposGrao.find(t => t.id === tipoGraoId);
 
   // Calculate saldo geral for selected produtor + grão
   const saldoGeral = useMemo(() => {
@@ -59,19 +59,33 @@ export default function SaidaVendaPage() {
       .reduce((sum, r) => sum + ((r as any).saldo_restante_kg || 0), 0);
   }, [produtorId, tipoGraoId, recebimentos]);
 
-  // Calculations
+  // Calculations — Bifurcated rates with correct sign inversion
   const kgsNum = parseFloat(unmaskKg(kgsExpedidos)) || 0;
   const umidadeReal = parseFloat(umidadeSaida) || 0;
   const umidadeCombNum = parseFloat(umidadeCombinada.replace(",", ".")) || 12;
-  const taxaAgio = selectedGrao?.taxa_agio ?? 1.3;
-  const taxaDesagio = selectedGrao?.taxa_desagio ?? 1.5;
+  const TAXA_AGIO = 1.5;   // Grão seco (Real < Base) → SOMA
+  const TAXA_DESAGIO = 1.3; // Grão úmido (Real > Base) → SUBTRAI
 
-  const diferenca = umidadeReal - umidadeCombNum;
+  const diferencaPontos = Math.abs(umidadeReal - umidadeCombNum);
   let pesoAjustado = kgsNum;
-  if (diferenca > 0) {
-    pesoAjustado = kgsNum + kgsNum * diferenca * (taxaAgio / 100);
-  } else if (diferenca < 0) {
-    pesoAjustado = kgsNum - kgsNum * Math.abs(diferenca) * (taxaDesagio / 100);
+  let kgsAjuste = 0;
+  let taxaAplicada = 0;
+  let tipoAjuste: "agio" | "desagio" | "neutro" = "neutro";
+
+  if (umidadeReal < umidadeCombNum && umidadeReal > 0) {
+    // ÁGIO: grão mais seco → produtor ganha peso
+    taxaAplicada = TAXA_AGIO;
+    const percentual = diferencaPontos * taxaAplicada;
+    kgsAjuste = kgsNum * (percentual / 100);
+    pesoAjustado = kgsNum + kgsAjuste;
+    tipoAjuste = "agio";
+  } else if (umidadeReal > umidadeCombNum) {
+    // DESÁGIO: grão mais úmido → produtor perde peso
+    taxaAplicada = TAXA_DESAGIO;
+    const percentual = diferencaPontos * taxaAplicada;
+    kgsAjuste = kgsNum * (percentual / 100);
+    pesoAjustado = kgsNum - kgsAjuste;
+    tipoAjuste = "desagio";
   }
   pesoAjustado = Math.max(0, pesoAjustado);
 
@@ -352,11 +366,22 @@ export default function SaidaVendaPage() {
           <div className="space-y-3">
             <div className="rounded-lg border bg-muted/50 p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Peso Ajustado</p>
-                <p className="font-semibold text-primary">{Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg</p>
-                <p className="text-xs text-muted-foreground">
-                  {diferenca > 0 ? `Ágio +${diferenca.toFixed(1)}pt (${taxaAgio}%)` : diferenca < 0 ? `Deságio ${diferenca.toFixed(1)}pt (${taxaDesagio}%)` : "Sem ajuste"}
-                </p>
+                <p className="text-muted-foreground">Peso Comercial Final</p>
+                <p className="font-bold text-lg text-primary">{Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Detalhamento do Ajuste</p>
+                {tipoAjuste === "neutro" ? (
+                  <p className="text-sm text-muted-foreground">Sem ajuste (umidade = base)</p>
+                ) : (
+                  <div className="text-sm space-y-0.5">
+                    <p>Diferença: <span className="font-semibold">{diferencaPontos.toFixed(1)} pontos</span></p>
+                    <p>Taxa: <span className="font-semibold">{taxaAplicada}%</span> ({tipoAjuste === "agio" ? "Ágio — grão seco" : "Deságio — grão úmido"})</p>
+                    <p>Ajuste: <span className={cn("font-semibold", tipoAjuste === "agio" ? "text-emerald-600" : "text-amber-600")}>
+                      {tipoAjuste === "agio" ? "+" : "−"}{Math.round(kgsAjuste).toLocaleString("pt-BR")} Kg
+                    </span></p>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="text-muted-foreground">Sacos / Toneladas</p>
