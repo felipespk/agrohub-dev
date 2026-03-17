@@ -45,7 +45,7 @@ export default function SaidaVendaPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showComposicao, setShowComposicao] = useState(false);
-
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const clearError = (field: string) =>
     setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
 
