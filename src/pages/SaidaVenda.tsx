@@ -90,6 +90,9 @@ export default function SaidaVendaPage() {
   }
   pesoAjustado = Math.max(0, pesoAjustado);
 
+  // Real-time overage detection
+  const saldoExcedido = pesoAjustado > 0 && pesoAjustado > saldoGeral && produtorId && tipoGraoId;
+
   const taxa = parseFloat(taxaPorTonelada.replace(",", ".")) || 15;
   const valorExpedicao = (pesoAjustado / 1000) * taxa;
 
