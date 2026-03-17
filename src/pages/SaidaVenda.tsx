@@ -90,6 +90,9 @@ export default function SaidaVendaPage() {
   }
   pesoAjustado = Math.max(0, pesoAjustado);
 
+  // Real-time overage detection
+  const saldoExcedido = pesoAjustado > 0 && pesoAjustado > saldoGeral && produtorId && tipoGraoId;
+
   const taxa = parseFloat(taxaPorTonelada.replace(",", ".")) || 15;
   const valorExpedicao = (pesoAjustado / 1000) * taxa;
 
@@ -242,12 +245,27 @@ export default function SaidaVendaPage() {
     } else {
       const row = await addSaida(entry);
       if (row) {
-        // Update saldo_restante_kg using PESO AJUSTADO (via FIFO slices)
+        // SERVER-SIDE SAFETY NET: Re-check saldo before deducting
         const { supabase } = await import("@/integrations/supabase/client");
+        const { data: freshLotes } = await supabase
+          .from("recebimentos")
+          .select("id, saldo_restante_kg")
+          .eq("produtor_id", produtorId)
+          .eq("tipo_grao_id", tipoGraoId);
+        const freshSaldo = (freshLotes || []).reduce((sum: number, r: any) => sum + (r.saldo_restante_kg || 0), 0);
+        if (pesoAjustado > freshSaldo) {
+          // Abort: delete the just-inserted saida and warn user
+          await supabase.from("saidas").delete().eq("id", row.id);
+          await refresh();
+          toast.error(`Transação recusada: Saldo insuficiente. Saldo atual: ${Math.round(freshSaldo).toLocaleString("pt-BR")} Kg.`);
+          return;
+        }
+
+        // Update saldo_restante_kg using PESO AJUSTADO (via FIFO slices)
         for (const fatia of composicaoFIFO) {
-          const lote = recebimentos.find(r => r.id === fatia.recebimento_id);
-          if (lote) {
-            const novoSaldo = ((lote as any).saldo_restante_kg || 0) - fatia.kg_consumidos;
+          const freshLote = (freshLotes || []).find((r: any) => r.id === fatia.recebimento_id);
+          if (freshLote) {
+            const novoSaldo = (freshLote.saldo_restante_kg || 0) - fatia.kg_consumidos;
             await supabase.from("recebimentos").update({ saldo_restante_kg: Math.max(0, novoSaldo) }).eq("id", fatia.recebimento_id);
           }
         }
@@ -303,11 +321,26 @@ export default function SaidaVendaPage() {
           </div>
           {/* Saldo Geral - Read Only */}
           {produtorId && tipoGraoId && (
-            <div className="space-y-1">
-              <Label>Saldo Geral do Produtor</Label>
-              <div className={cn("flex h-10 w-full items-center rounded-md border bg-muted/50 px-3 text-sm font-semibold", saldoGeral <= 0 ? "text-destructive" : "text-primary")}>
+          <div className="space-y-1">
+              <Label className="flex items-center gap-1.5">
+                Saldo Disponível em Estoque (Kg)
+                {saldoExcedido && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+              </Label>
+              <div className={cn(
+                "flex h-10 w-full items-center rounded-md border px-3 text-sm font-bold",
+                saldoExcedido
+                  ? "border-destructive bg-destructive/10 text-destructive"
+                  : saldoGeral <= 0
+                    ? "bg-muted/50 text-destructive"
+                    : "bg-muted/50 text-primary"
+              )}>
                 {Math.round(saldoGeral).toLocaleString("pt-BR")} Kg
               </div>
+              {saldoExcedido && (
+                <p className="text-xs font-medium text-destructive">
+                  Atenção: O Peso Ajustado ({Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg) ultrapassa o saldo disponível do produtor ({Math.round(saldoGeral).toLocaleString("pt-BR")} Kg).
+                </p>
+              )}
             </div>
           )}
           <div className="space-y-1">
@@ -450,7 +483,7 @@ export default function SaidaVendaPage() {
         )}
 
         <div className="flex gap-2">
-          <Button onClick={handlePreSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+          <Button onClick={handlePreSalvar} disabled={!!saldoExcedido} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
             <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Saída"}
           </Button>
           {!editingId && (
