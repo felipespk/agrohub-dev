@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAppData, Saida } from "@/contexts/AppContext";
-import { ArrowUpFromLine, Save, Edit2, Trash2, X, ChevronDown, Info } from "lucide-react";
+import { ArrowUpFromLine, Save, Edit2, Trash2, X, ChevronDown, Info, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { maskPlaca, maskClassificacao, maskKg, unmaskKg } from "@/lib/masks";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
@@ -44,7 +45,7 @@ export default function SaidaVendaPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showComposicao, setShowComposicao] = useState(false);
-
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const clearError = (field: string) =>
     setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
 
@@ -184,7 +185,7 @@ export default function SaidaVendaPage() {
     if (ok) { toast.success("Saída removida."); if (editingId === id) clearForm(); await refresh(); }
   };
 
-  const handleSalvar = async () => {
+  const handlePreSalvar = () => {
     const newErrors: Record<string, string> = {};
     if (!placa.trim()) newErrors.placa = "Placa é obrigatória";
     if (!produtorId) newErrors.produtorId = "Selecione o produtor";
@@ -195,7 +196,6 @@ export default function SaidaVendaPage() {
     if (!umidadeSaida || parseFloat(umidadeSaida) <= 0) newErrors.umidadeSaida = "Umidade de saída é obrigatória";
     if (!classificacao.trim()) newErrors.classificacao = "Classificação é obrigatória";
 
-    // Stock validation: compare COMMERCIAL weight against general balance
     if (pesoAjustado > saldoGeral) {
       newErrors.kgsExpedidos = `Saldo insuficiente. O peso ajustado (${Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg) excede o saldo geral do produtor (${Math.round(saldoGeral).toLocaleString("pt-BR")} Kg).`;
     }
@@ -210,6 +210,11 @@ export default function SaidaVendaPage() {
       return;
     }
     setErrors({});
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmarSaida = async () => {
+    setShowConfirmDialog(false);
 
     const entry = {
       data,
@@ -232,13 +237,12 @@ export default function SaidaVendaPage() {
     };
 
     if (editingId) {
-      // For edits, we need to restore saldo first then re-deduct - simplified: just update and refresh
       const ok = await updateSaida(editingId, entry);
       if (ok) { toast.success("Saída atualizada!"); clearForm(); }
     } else {
       const row = await addSaida(entry);
       if (row) {
-        // Update saldo_restante_kg for each consumed lot
+        // Update saldo_restante_kg using PESO AJUSTADO (via FIFO slices)
         const { supabase } = await import("@/integrations/supabase/client");
         for (const fatia of composicaoFIFO) {
           const lote = recebimentos.find(r => r.id === fatia.recebimento_id);
@@ -248,7 +252,7 @@ export default function SaidaVendaPage() {
           }
         }
         await refresh();
-        toast.success(`Saída registrada! ${kgsNum.toLocaleString("pt-BR")} Kg expedidos (PEPS).`);
+        toast.success(`Saída registrada! ${Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg (peso ajustado) deduzidos do estoque via PEPS.`);
         setPlaca(""); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
         setTaxaPorTonelada("15"); setTaxaArmazenamento("0.15"); setShowComposicao(false);
       }
@@ -446,7 +450,7 @@ export default function SaidaVendaPage() {
         )}
 
         <div className="flex gap-2">
-          <Button onClick={handleSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+          <Button onClick={handlePreSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
             <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Saída"}
           </Button>
           {!editingId && (
@@ -456,6 +460,44 @@ export default function SaidaVendaPage() {
           )}
         </div>
       </div>
+
+      {/* Confirmation Dialog — Safety Check */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirmar Dedução de Estoque
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>
+                  Atenção: O valor a ser <strong>deduzido do estoque</strong> deste produtor será de{" "}
+                  <span className="font-bold text-primary">{Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg</span>{" "}
+                  (Peso Ajustado), e <strong>não</strong> o peso físico da balança ({Math.round(kgsNum).toLocaleString("pt-BR")} Kg).
+                </p>
+                {tipoAjuste !== "neutro" && (
+                  <div className="rounded-md border bg-muted/50 p-3 space-y-1">
+                    <p className="font-medium">Resumo do Ajuste Comercial:</p>
+                    <p>Peso Balança: {Math.round(kgsNum).toLocaleString("pt-BR")} Kg</p>
+                    <p>Ajuste ({tipoAjuste === "agio" ? "Ágio +1.5%" : "Deságio −1.3%"}): {" "}
+                      <span className={cn(tipoAjuste === "agio" ? "text-emerald-600" : "text-amber-600", "font-semibold")}>
+                        {tipoAjuste === "agio" ? "+" : "−"}{Math.round(kgsAjuste).toLocaleString("pt-BR")} Kg
+                      </span>
+                    </p>
+                    <p className="font-bold">Peso Comercial Final: {Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg</p>
+                  </div>
+                )}
+                <p className="text-muted-foreground">Deseja confirmar esta operação?</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmarSaida}>Confirmar Saída</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="form-section">
         <h2 className="font-display font-semibold text-lg text-foreground mb-4">Saídas Registradas</h2>
