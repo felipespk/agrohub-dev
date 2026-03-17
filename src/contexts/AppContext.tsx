@@ -53,6 +53,7 @@ export interface Recebimento {
   peso_grao_seco: number;
   peso_liquido: number;
   valor_armazenamento: number;
+  saldo_restante_kg: number;
   created_at: string;
   // Joined fields
   produtor_nome?: string;
@@ -78,6 +79,7 @@ export interface Saida {
   dias_armazenados: number;
   quinzenas_cobradas: number;
   valor_armazenamento_exp: number;
+  composicao_peps?: any[];
   created_at: string;
   // Joined
   comprador_nome?: string;
@@ -115,8 +117,8 @@ interface AppContextType {
   addRecebimento: (data: Omit<Recebimento, "id" | "user_id" | "created_at" | "produtor_nome" | "tipo_grao_nome">) => Promise<Recebimento | null>;
   updateRecebimento: (id: string, data: Partial<Omit<Recebimento, "id" | "user_id" | "created_at" | "produtor_nome" | "tipo_grao_nome">>) => Promise<boolean>;
   deleteRecebimento: (id: string) => Promise<boolean>;
-  addSaida: (data: Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome">) => Promise<Saida | null>;
-  updateSaida: (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome">>) => Promise<boolean>;
+  addSaida: (data: Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">) => Promise<Saida | null>;
+  updateSaida: (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">>) => Promise<boolean>;
   deleteSaida: (id: string) => Promise<boolean>;
   addQuebra: (data: Omit<QuebraTecnica, "id" | "user_id">) => Promise<QuebraTecnica | null>;
   deleteQuebra: (id: string) => Promise<boolean>;

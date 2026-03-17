@@ -64,15 +64,18 @@ export default function ExpedicaoPage() {
       const peso_ajustado = s.peso_ajustado > 0 ? s.peso_ajustado :
         tipo_ajuste === "acrescimo" ? s.kgs_expedidos + ajuste_kg : s.kgs_expedidos - ajuste_kg;
 
-      // Use saved storage data or recalculate
+      // Use saved storage data
       let diasArmazenados = s.dias_armazenados || 0;
       let diasCobrados = Math.max(0, diasArmazenados - CARENCIA_DIAS);
       let quinzenas = s.quinzenas_cobradas || (diasCobrados > 0 ? Math.ceil(diasCobrados / 15) : 0);
       let valorArmazenamento = s.valor_armazenamento_exp || 0;
       let dataEntrada: string | null = null;
+      const composicao = (s as any).composicao_peps || [];
 
-      // Find linked recebimento for display
-      if (s.recebimento_id) {
+      // Use first lot from PEPS composition for display, or fallback to linked recebimento
+      if (composicao.length > 0) {
+        dataEntrada = composicao[0].data_entrada;
+      } else if (s.recebimento_id) {
         const rec = recebimentos.find(r => r.id === s.recebimento_id);
         if (rec) dataEntrada = rec.data;
       }
@@ -124,9 +127,9 @@ export default function ExpedicaoPage() {
   const fmtBRL = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
   const getArmazenamentoLabel = (s: SaidaComAjuste) => {
-    if (!s.dataEntrada) return "Sem lote vinculado";
+    if (!s.dataEntrada && s.diasArmazenados <= 0) return "Sem dados";
     if (s.diasCobrados <= 0) return `${s.diasArmazenados} dias (carência)`;
-    return `${s.diasArmazenados} dias - ${s.quinzenas} quinz.`;
+    return `${s.diasArmazenados} dias (média) - ${s.quinzenas} quinz.`;
   };
 
   const exportarExcel = async () => {

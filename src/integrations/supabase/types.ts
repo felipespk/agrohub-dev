@@ -164,6 +164,7 @@ export type Database = {
           peso_liquido: number
           placa_caminhao: string
           produtor_id: string
+          saldo_restante_kg: number
           taxa_secagem_percentual: number
           tipo_grao_id: string
           umidade_final_alvo: number
@@ -186,6 +187,7 @@ export type Database = {
           peso_liquido?: number
           placa_caminhao: string
           produtor_id: string
+          saldo_restante_kg?: number
           taxa_secagem_percentual?: number
           tipo_grao_id: string
           umidade_final_alvo?: number
@@ -208,6 +210,7 @@ export type Database = {
           peso_liquido?: number
           placa_caminhao?: string
           produtor_id?: string
+          saldo_restante_kg?: number
           taxa_secagem_percentual?: number
           tipo_grao_id?: string
           umidade_final_alvo?: number
@@ -237,6 +240,7 @@ export type Database = {
         Row: {
           categoria: string
           classificacao: string | null
+          composicao_peps: Json | null
           comprador_id: string
           created_at: string
           data: string
@@ -259,6 +263,7 @@ export type Database = {
         Insert: {
           categoria?: string
           classificacao?: string | null
+          composicao_peps?: Json | null
           comprador_id: string
           created_at?: string
           data?: string
@@ -281,6 +286,7 @@ export type Database = {
         Update: {
           categoria?: string
           classificacao?: string | null
+          composicao_peps?: Json | null
           comprador_id?: string
           created_at?: string
           data?: string
