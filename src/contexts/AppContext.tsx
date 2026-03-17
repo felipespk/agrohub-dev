@@ -53,6 +53,7 @@ export interface Recebimento {
   peso_grao_seco: number;
   peso_liquido: number;
   valor_armazenamento: number;
+  saldo_restante_kg: number;
   created_at: string;
   // Joined fields
   produtor_nome?: string;
