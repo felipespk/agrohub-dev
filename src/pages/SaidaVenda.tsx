@@ -366,11 +366,22 @@ export default function SaidaVendaPage() {
           <div className="space-y-3">
             <div className="rounded-lg border bg-muted/50 p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Peso Ajustado</p>
-                <p className="font-semibold text-primary">{Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg</p>
-                <p className="text-xs text-muted-foreground">
-                  {diferenca > 0 ? `Ágio +${diferenca.toFixed(1)}pt (${taxaAgio}%)` : diferenca < 0 ? `Deságio ${diferenca.toFixed(1)}pt (${taxaDesagio}%)` : "Sem ajuste"}
-                </p>
+                <p className="text-muted-foreground">Peso Comercial Final</p>
+                <p className="font-bold text-lg text-primary">{Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Detalhamento do Ajuste</p>
+                {tipoAjuste === "neutro" ? (
+                  <p className="text-sm text-muted-foreground">Sem ajuste (umidade = base)</p>
+                ) : (
+                  <div className="text-sm space-y-0.5">
+                    <p>Diferença: <span className="font-semibold">{diferencaPontos.toFixed(1)} pontos</span></p>
+                    <p>Taxa: <span className="font-semibold">{taxaAplicada}%</span> ({tipoAjuste === "agio" ? "Ágio — grão seco" : "Deságio — grão úmido"})</p>
+                    <p>Ajuste: <span className={cn("font-semibold", tipoAjuste === "agio" ? "text-emerald-600" : "text-amber-600")}>
+                      {tipoAjuste === "agio" ? "+" : "−"}{Math.round(kgsAjuste).toLocaleString("pt-BR")} Kg
+                    </span></p>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="text-muted-foreground">Sacos / Toneladas</p>
