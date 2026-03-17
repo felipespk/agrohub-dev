@@ -127,9 +127,9 @@ export default function ExpedicaoPage() {
   const fmtBRL = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
   const getArmazenamentoLabel = (s: SaidaComAjuste) => {
-    if (!s.dataEntrada) return "Sem lote vinculado";
+    if (!s.dataEntrada && s.diasArmazenados <= 0) return "Sem dados";
     if (s.diasCobrados <= 0) return `${s.diasArmazenados} dias (carência)`;
-    return `${s.diasArmazenados} dias - ${s.quinzenas} quinz.`;
+    return `${s.diasArmazenados} dias (média) - ${s.quinzenas} quinz.`;
   };
 
   const exportarExcel = async () => {
