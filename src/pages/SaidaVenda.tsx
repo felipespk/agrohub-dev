@@ -48,8 +48,8 @@ export default function SaidaVendaPage() {
   const clearError = (field: string) =>
     setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
 
-  // Get selected grain config
-  const selectedGrao = tiposGrao.find(t => t.id === tipoGraoId);
+  // Get selected grain config (used for umidade_padrao auto-fill)
+  const _selectedGrao = tiposGrao.find(t => t.id === tipoGraoId);
 
   // Calculate saldo geral for selected produtor + grão
   const saldoGeral = useMemo(() => {
