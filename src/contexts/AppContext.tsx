@@ -118,7 +118,7 @@ interface AppContextType {
   updateRecebimento: (id: string, data: Partial<Omit<Recebimento, "id" | "user_id" | "created_at" | "produtor_nome" | "tipo_grao_nome">>) => Promise<boolean>;
   deleteRecebimento: (id: string) => Promise<boolean>;
   addSaida: (data: Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">) => Promise<Saida | null>;
-  updateSaida: (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome">>) => Promise<boolean>;
+  updateSaida: (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">>) => Promise<boolean>;
   deleteSaida: (id: string) => Promise<boolean>;
   addQuebra: (data: Omit<QuebraTecnica, "id" | "user_id">) => Promise<QuebraTecnica | null>;
   deleteQuebra: (id: string) => Promise<boolean>;
