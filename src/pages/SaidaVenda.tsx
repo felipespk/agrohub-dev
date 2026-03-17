@@ -306,11 +306,26 @@ export default function SaidaVendaPage() {
           </div>
           {/* Saldo Geral - Read Only */}
           {produtorId && tipoGraoId && (
-            <div className="space-y-1">
-              <Label>Saldo Geral do Produtor</Label>
-              <div className={cn("flex h-10 w-full items-center rounded-md border bg-muted/50 px-3 text-sm font-semibold", saldoGeral <= 0 ? "text-destructive" : "text-primary")}>
+          <div className="space-y-1">
+              <Label className="flex items-center gap-1.5">
+                Saldo Disponível em Estoque (Kg)
+                {saldoExcedido && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+              </Label>
+              <div className={cn(
+                "flex h-10 w-full items-center rounded-md border px-3 text-sm font-bold",
+                saldoExcedido
+                  ? "border-destructive bg-destructive/10 text-destructive"
+                  : saldoGeral <= 0
+                    ? "bg-muted/50 text-destructive"
+                    : "bg-muted/50 text-primary"
+              )}>
                 {Math.round(saldoGeral).toLocaleString("pt-BR")} Kg
               </div>
+              {saldoExcedido && (
+                <p className="text-xs font-medium text-destructive">
+                  Atenção: O Peso Ajustado ({Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg) ultrapassa o saldo disponível do produtor ({Math.round(saldoGeral).toLocaleString("pt-BR")} Kg).
+                </p>
+              )}
             </div>
           )}
           <div className="space-y-1">
