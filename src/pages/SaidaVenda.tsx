@@ -468,7 +468,7 @@ export default function SaidaVendaPage() {
         )}
 
         <div className="flex gap-2">
-          <Button onClick={handlePreSalvar} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
+          <Button onClick={handlePreSalvar} disabled={!!saldoExcedido} className={`gap-2 ${editingId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
             <Save className="h-4 w-4" /> {editingId ? "Atualizar Registro" : "Salvar Saída"}
           </Button>
           {!editingId && (
