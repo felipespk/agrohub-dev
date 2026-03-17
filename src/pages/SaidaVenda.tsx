@@ -185,7 +185,7 @@ export default function SaidaVendaPage() {
     if (ok) { toast.success("Saída removida."); if (editingId === id) clearForm(); await refresh(); }
   };
 
-  const handleSalvar = async () => {
+  const handlePreSalvar = () => {
     const newErrors: Record<string, string> = {};
     if (!placa.trim()) newErrors.placa = "Placa é obrigatória";
     if (!produtorId) newErrors.produtorId = "Selecione o produtor";
@@ -196,7 +196,6 @@ export default function SaidaVendaPage() {
     if (!umidadeSaida || parseFloat(umidadeSaida) <= 0) newErrors.umidadeSaida = "Umidade de saída é obrigatória";
     if (!classificacao.trim()) newErrors.classificacao = "Classificação é obrigatória";
 
-    // Stock validation: compare COMMERCIAL weight against general balance
     if (pesoAjustado > saldoGeral) {
       newErrors.kgsExpedidos = `Saldo insuficiente. O peso ajustado (${Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg) excede o saldo geral do produtor (${Math.round(saldoGeral).toLocaleString("pt-BR")} Kg).`;
     }
@@ -211,6 +210,11 @@ export default function SaidaVendaPage() {
       return;
     }
     setErrors({});
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmarSaida = async () => {
+    setShowConfirmDialog(false);
 
     const entry = {
       data,
@@ -233,13 +237,12 @@ export default function SaidaVendaPage() {
     };
 
     if (editingId) {
-      // For edits, we need to restore saldo first then re-deduct - simplified: just update and refresh
       const ok = await updateSaida(editingId, entry);
       if (ok) { toast.success("Saída atualizada!"); clearForm(); }
     } else {
       const row = await addSaida(entry);
       if (row) {
-        // Update saldo_restante_kg for each consumed lot
+        // Update saldo_restante_kg using PESO AJUSTADO (via FIFO slices)
         const { supabase } = await import("@/integrations/supabase/client");
         for (const fatia of composicaoFIFO) {
           const lote = recebimentos.find(r => r.id === fatia.recebimento_id);
@@ -249,7 +252,7 @@ export default function SaidaVendaPage() {
           }
         }
         await refresh();
-        toast.success(`Saída registrada! ${kgsNum.toLocaleString("pt-BR")} Kg expedidos (PEPS).`);
+        toast.success(`Saída registrada! ${Math.round(pesoAjustado).toLocaleString("pt-BR")} Kg (peso ajustado) deduzidos do estoque via PEPS.`);
         setPlaca(""); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
         setTaxaPorTonelada("15"); setTaxaArmazenamento("0.15"); setShowComposicao(false);
       }
