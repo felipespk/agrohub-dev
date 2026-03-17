@@ -245,12 +245,27 @@ export default function SaidaVendaPage() {
     } else {
       const row = await addSaida(entry);
       if (row) {
-        // Update saldo_restante_kg using PESO AJUSTADO (via FIFO slices)
+        // SERVER-SIDE SAFETY NET: Re-check saldo before deducting
         const { supabase } = await import("@/integrations/supabase/client");
+        const { data: freshLotes } = await supabase
+          .from("recebimentos")
+          .select("id, saldo_restante_kg")
+          .eq("produtor_id", produtorId)
+          .eq("tipo_grao_id", tipoGraoId);
+        const freshSaldo = (freshLotes || []).reduce((sum: number, r: any) => sum + (r.saldo_restante_kg || 0), 0);
+        if (pesoAjustado > freshSaldo) {
+          // Abort: delete the just-inserted saida and warn user
+          await supabase.from("saidas").delete().eq("id", row.id);
+          await refresh();
+          toast.error(`Transação recusada: Saldo insuficiente. Saldo atual: ${Math.round(freshSaldo).toLocaleString("pt-BR")} Kg.`);
+          return;
+        }
+
+        // Update saldo_restante_kg using PESO AJUSTADO (via FIFO slices)
         for (const fatia of composicaoFIFO) {
-          const lote = recebimentos.find(r => r.id === fatia.recebimento_id);
-          if (lote) {
-            const novoSaldo = ((lote as any).saldo_restante_kg || 0) - fatia.kg_consumidos;
+          const freshLote = (freshLotes || []).find((r: any) => r.id === fatia.recebimento_id);
+          if (freshLote) {
+            const novoSaldo = (freshLote.saldo_restante_kg || 0) - fatia.kg_consumidos;
             await supabase.from("recebimentos").update({ saldo_restante_kg: Math.max(0, novoSaldo) }).eq("id", fatia.recebimento_id);
           }
         }
