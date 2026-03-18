@@ -573,10 +573,27 @@ export default function SaidaVendaPage() {
                   <TableCell className="text-right font-semibold">{s.kgs_expedidos.toLocaleString("pt-BR")}</TableCell>
                   <TableCell className="text-right tabular-nums text-primary font-semibold">{s.peso_ajustado ? s.peso_ajustado.toLocaleString("pt-BR") : "—"}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(s)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                    </div>
+                    {(() => {
+                      const locked = isRecordLocked(s.created_at) && hasPassword;
+                      return (
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon"
+                            onClick={() => tryLockedAction(s, () => handleEdit(s))}
+                            className={locked ? "text-muted-foreground" : "text-amber-600 hover:text-amber-700"}
+                            title={locked ? "Bloqueado (>48h)" : "Editar"}
+                          >
+                            {locked ? <Lock className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon"
+                            onClick={() => tryLockedAction(s, () => handleDelete(s.id))}
+                            className={locked ? "text-muted-foreground" : "text-destructive hover:text-destructive"}
+                            title={locked ? "Bloqueado (>48h)" : "Excluir"}
+                          >
+                            {locked ? <Lock className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               ))}
