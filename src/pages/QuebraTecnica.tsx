@@ -16,11 +16,14 @@ import MasterPasswordModal from "@/components/MasterPasswordModal";
 
 export default function QuebraTecnicaPage() {
   const { quebras, addQuebra, deleteQuebra } = useAppData();
+  const { hasPassword } = useMasterPassword();
   const [open, setOpen] = useState(false);
   const [data, setData] = useState(getBrazilDateInputValue());
   const [kgAjuste, setKgAjuste] = useState("");
   const [justificativa, setJustificativa] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [lockModalOpen, setLockModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   const clearError = (field: string) =>
     setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
