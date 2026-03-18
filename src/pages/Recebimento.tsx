@@ -337,10 +337,27 @@ export default function RecebimentoPage() {
                   <TableCell className="text-right tabular-nums">{fmt(r.desconto_secagem_kg || 0)} Kg</TableCell>
                   <TableCell className="text-right font-semibold tabular-nums">{r.peso_liquido.toLocaleString("pt-BR")}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(r)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                    </div>
+                    {(() => {
+                      const locked = isRecordLocked(r.created_at) && hasPassword;
+                      return (
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon"
+                            onClick={() => tryLockedAction(r, () => handleEdit(r))}
+                            className={locked ? "text-muted-foreground" : "text-amber-600 hover:text-amber-700"}
+                            title={locked ? "Bloqueado (>48h)" : "Editar"}
+                          >
+                            {locked ? <Lock className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon"
+                            onClick={() => tryLockedAction(r, () => handleDelete(r.id))}
+                            className={locked ? "text-muted-foreground" : "text-destructive hover:text-destructive"}
+                            title={locked ? "Bloqueado (>48h)" : "Excluir"}
+                          >
+                            {locked ? <Lock className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               ))}
