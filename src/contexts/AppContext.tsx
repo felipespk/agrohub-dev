@@ -93,6 +93,7 @@ export interface QuebraTecnica {
   data: string;
   kg_ajuste: number;
   justificativa: string;
+  created_at: string;
 }
 
 interface AppContextType {
@@ -120,7 +121,7 @@ interface AppContextType {
   addSaida: (data: Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">) => Promise<Saida | null>;
   updateSaida: (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">>) => Promise<boolean>;
   deleteSaida: (id: string) => Promise<boolean>;
-  addQuebra: (data: Omit<QuebraTecnica, "id" | "user_id">) => Promise<QuebraTecnica | null>;
+  addQuebra: (data: Omit<QuebraTecnica, "id" | "user_id" | "created_at">) => Promise<QuebraTecnica | null>;
   deleteQuebra: (id: string) => Promise<boolean>;
   capacidadeSilo: number;
   setCapacidadeSilo: (v: number) => void;
@@ -280,7 +281,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  const addQuebra = async (data: Omit<QuebraTecnica, "id" | "user_id">) => {
+  const addQuebra = async (data: Omit<QuebraTecnica, "id" | "user_id" | "created_at">) => {
     const { data: row, error } = await supabase.from("quebras_tecnicas").insert({ ...data, user_id: user!.id }).select().single();
     if (error) { toast.error(error.message); return null; }
     setQuebras(prev => [row as any, ...prev]);

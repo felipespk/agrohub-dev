@@ -5,19 +5,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAppData } from "@/contexts/AppContext";
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, Plus, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { isRecordLocked } from "@/lib/record-lock";
+import { useMasterPassword } from "@/hooks/useMasterPassword";
+import MasterPasswordModal from "@/components/MasterPasswordModal";
 
 export default function QuebraTecnicaPage() {
   const { quebras, addQuebra, deleteQuebra } = useAppData();
+  const { hasPassword } = useMasterPassword();
   const [open, setOpen] = useState(false);
   const [data, setData] = useState(getBrazilDateInputValue());
   const [kgAjuste, setKgAjuste] = useState("");
   const [justificativa, setJustificativa] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [lockModalOpen, setLockModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   const clearError = (field: string) =>
     setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
@@ -38,6 +44,16 @@ export default function QuebraTecnicaPage() {
     if (row) {
       toast.success("Quebra técnica registrada.");
       setKgAjuste(""); setJustificativa(""); setOpen(false);
+    }
+  };
+
+  const tryLockedDelete = (q: typeof quebras[0]) => {
+    const locked = isRecordLocked(q.created_at || "") && hasPassword;
+    if (locked) {
+      setPendingAction(() => () => handleDelete(q.id));
+      setLockModalOpen(true);
+    } else {
+      handleDelete(q.id);
     }
   };
 
@@ -105,13 +121,32 @@ export default function QuebraTecnicaPage() {
                   <TableCell>{formatDateBR(q.data)}</TableCell>
                   <TableCell className={`text-right font-semibold ${q.kg_ajuste < 0 ? "text-destructive" : "text-primary"}`}>{q.kg_ajuste > 0 ? "+" : ""}{q.kg_ajuste.toLocaleString("pt-BR")}</TableCell>
                   <TableCell>{q.justificativa}</TableCell>
-                  <TableCell><Button variant="ghost" size="icon" onClick={() => handleDelete(q.id)} className="text-destructive hover:text-destructive"><AlertTriangle className="h-4 w-4" /></Button></TableCell>
+                  <TableCell>
+                    {(() => {
+                      const locked = isRecordLocked(q.created_at || "") && hasPassword;
+                      return (
+                        <Button variant="ghost" size="icon"
+                          onClick={() => tryLockedDelete(q)}
+                          className={locked ? "text-muted-foreground" : "text-destructive hover:text-destructive"}
+                          title={locked ? "Bloqueado (>48h)" : "Excluir"}
+                        >
+                          {locked ? <Lock className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+                        </Button>
+                      );
+                    })()}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
       </div>
+
+      <MasterPasswordModal
+        open={lockModalOpen}
+        onOpenChange={v => { setLockModalOpen(v); if (!v) setPendingAction(null); }}
+        onAuthorized={() => { if (pendingAction) pendingAction(); setPendingAction(null); }}
+      />
     </div>
   );
 }

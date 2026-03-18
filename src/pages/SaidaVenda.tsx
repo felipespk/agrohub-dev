@@ -8,12 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAppData, Saida } from "@/contexts/AppContext";
-import { ArrowUpFromLine, Save, Edit2, Trash2, X, ChevronDown, Info, AlertTriangle } from "lucide-react";
+import { ArrowUpFromLine, Save, Edit2, Trash2, X, ChevronDown, Info, AlertTriangle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { maskPlaca, maskClassificacao, maskKg, unmaskKg } from "@/lib/masks";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { differenceInDays, parseISO } from "date-fns";
+import { isRecordLocked } from "@/lib/record-lock";
+import { useMasterPassword } from "@/hooks/useMasterPassword";
+import MasterPasswordModal from "@/components/MasterPasswordModal";
 
 const categorias = ["Venda", "Transferência", "Devolução", "Outros"];
 const CARENCIA_DIAS = 30;
@@ -30,6 +33,7 @@ interface FatiaFIFO {
 
 export default function SaidaVendaPage() {
   const { compradores, produtores, tiposGrao, saidas, recebimentos, addSaida, updateSaida, deleteSaida, refresh } = useAppData();
+  const { hasPassword } = useMasterPassword();
   const [data, setData] = useState(getBrazilDateInputValue());
   const [placa, setPlaca] = useState("");
   const [compradorId, setCompradorId] = useState("");
@@ -46,6 +50,8 @@ export default function SaidaVendaPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showComposicao, setShowComposicao] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [lockModalOpen, setLockModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const clearError = (field: string) =>
     setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
 
@@ -162,6 +168,16 @@ export default function SaidaVendaPage() {
     setCategoria("Venda"); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
     setUmidadeCombinada("12"); setTaxaPorTonelada("15"); setTaxaArmazenamento("0.15"); setEditingId(null);
     setErrors({}); setShowComposicao(false);
+  };
+
+  const tryLockedAction = (record: Saida, action: () => void) => {
+    const locked = isRecordLocked(record.created_at) && hasPassword;
+    if (locked) {
+      setPendingAction(() => action);
+      setLockModalOpen(true);
+    } else {
+      action();
+    }
   };
 
   const handleEdit = (s: Saida) => {
@@ -557,10 +573,27 @@ export default function SaidaVendaPage() {
                   <TableCell className="text-right font-semibold">{s.kgs_expedidos.toLocaleString("pt-BR")}</TableCell>
                   <TableCell className="text-right tabular-nums text-primary font-semibold">{s.peso_ajustado ? s.peso_ajustado.toLocaleString("pt-BR") : "—"}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(s)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                    </div>
+                    {(() => {
+                      const locked = isRecordLocked(s.created_at) && hasPassword;
+                      return (
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon"
+                            onClick={() => tryLockedAction(s, () => handleEdit(s))}
+                            className={locked ? "text-muted-foreground" : "text-amber-600 hover:text-amber-700"}
+                            title={locked ? "Bloqueado (>48h)" : "Editar"}
+                          >
+                            {locked ? <Lock className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon"
+                            onClick={() => tryLockedAction(s, () => handleDelete(s.id))}
+                            className={locked ? "text-muted-foreground" : "text-destructive hover:text-destructive"}
+                            title={locked ? "Bloqueado (>48h)" : "Excluir"}
+                          >
+                            {locked ? <Lock className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               ))}
@@ -568,6 +601,12 @@ export default function SaidaVendaPage() {
           </Table>
         </div>
       </div>
+
+      <MasterPasswordModal
+        open={lockModalOpen}
+        onOpenChange={v => { setLockModalOpen(v); if (!v) setPendingAction(null); }}
+        onAuthorized={() => { if (pendingAction) pendingAction(); setPendingAction(null); }}
+      />
     </div>
   );
 }

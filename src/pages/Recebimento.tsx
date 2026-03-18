@@ -5,14 +5,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAppData, Recebimento } from "@/contexts/AppContext";
-import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X } from "lucide-react";
+import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { maskPlaca, maskKg, unmaskKg } from "@/lib/masks";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { isRecordLocked } from "@/lib/record-lock";
+import { useMasterPassword } from "@/hooks/useMasterPassword";
+import MasterPasswordModal from "@/components/MasterPasswordModal";
 
 export default function RecebimentoPage() {
   const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento } = useAppData();
+  const { hasPassword } = useMasterPassword();
 
   const placaRef = useRef<HTMLInputElement>(null);
 
@@ -27,6 +31,8 @@ export default function RecebimentoPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState(() => localStorage.getItem("receb_umidadeFinalAlvo") || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [lockModalOpen, setLockModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   // Persist sticky fields to localStorage
   useEffect(() => { localStorage.setItem("receb_produtorId", produtorId); }, [produtorId]);
@@ -86,6 +92,16 @@ export default function RecebimentoPage() {
     localStorage.removeItem("receb_tipoGraoId");
     localStorage.removeItem("receb_taxaSecagem");
     localStorage.removeItem("receb_umidadeFinalAlvo");
+  };
+
+  const tryLockedAction = (record: Recebimento, action: () => void) => {
+    const locked = isRecordLocked(record.created_at);
+    if (locked && hasPassword) {
+      setPendingAction(() => action);
+      setLockModalOpen(true);
+    } else {
+      action();
+    }
   };
 
   const handleEdit = (r: Recebimento) => {
@@ -321,10 +337,27 @@ export default function RecebimentoPage() {
                   <TableCell className="text-right tabular-nums">{fmt(r.desconto_secagem_kg || 0)} Kg</TableCell>
                   <TableCell className="text-right font-semibold tabular-nums">{r.peso_liquido.toLocaleString("pt-BR")}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(r)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                    </div>
+                    {(() => {
+                      const locked = isRecordLocked(r.created_at) && hasPassword;
+                      return (
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon"
+                            onClick={() => tryLockedAction(r, () => handleEdit(r))}
+                            className={locked ? "text-muted-foreground" : "text-amber-600 hover:text-amber-700"}
+                            title={locked ? "Bloqueado (>48h)" : "Editar"}
+                          >
+                            {locked ? <Lock className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon"
+                            onClick={() => tryLockedAction(r, () => handleDelete(r.id))}
+                            className={locked ? "text-muted-foreground" : "text-destructive hover:text-destructive"}
+                            title={locked ? "Bloqueado (>48h)" : "Excluir"}
+                          >
+                            {locked ? <Lock className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               ))}
@@ -332,6 +365,12 @@ export default function RecebimentoPage() {
           </Table>
         </div>
       </div>
+
+      <MasterPasswordModal
+        open={lockModalOpen}
+        onOpenChange={v => { setLockModalOpen(v); if (!v) setPendingAction(null); }}
+        onAuthorized={() => { if (pendingAction) pendingAction(); setPendingAction(null); }}
+      />
     </div>
   );
 }
