@@ -95,6 +95,16 @@ export default function RecebimentoPage() {
     localStorage.removeItem("receb_umidadeFinalAlvo");
   };
 
+  const tryLockedAction = (record: Recebimento, action: () => void) => {
+    const locked = isRecordLocked(record.created_at);
+    if (locked && hasPassword) {
+      setPendingAction(() => action);
+      setLockModalOpen(true);
+    } else {
+      action();
+    }
+  };
+
   const handleEdit = (r: Recebimento) => {
     setData(r.data); setPlaca(maskPlaca(r.placa_caminhao)); setProdutorId(r.produtor_id);
     setTipoGraoId(r.tipo_grao_id); setPesoBruto(maskKg(String(r.peso_bruto)));
