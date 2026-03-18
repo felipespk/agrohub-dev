@@ -93,6 +93,7 @@ export interface QuebraTecnica {
   data: string;
   kg_ajuste: number;
   justificativa: string;
+  created_at: string;
 }
 
 interface AppContextType {
