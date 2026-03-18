@@ -281,7 +281,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  const addQuebra = async (data: Omit<QuebraTecnica, "id" | "user_id">) => {
+  const addQuebra = async (data: Omit<QuebraTecnica, "id" | "user_id" | "created_at">) => {
     const { data: row, error } = await supabase.from("quebras_tecnicas").insert({ ...data, user_id: user!.id }).select().single();
     if (error) { toast.error(error.message); return null; }
     setQuebras(prev => [row as any, ...prev]);
