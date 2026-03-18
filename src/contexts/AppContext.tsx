@@ -121,7 +121,7 @@ interface AppContextType {
   addSaida: (data: Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">) => Promise<Saida | null>;
   updateSaida: (id: string, data: Partial<Omit<Saida, "id" | "user_id" | "created_at" | "comprador_nome" | "produtor_nome" | "tipo_grao_nome">>) => Promise<boolean>;
   deleteSaida: (id: string) => Promise<boolean>;
-  addQuebra: (data: Omit<QuebraTecnica, "id" | "user_id">) => Promise<QuebraTecnica | null>;
+  addQuebra: (data: Omit<QuebraTecnica, "id" | "user_id" | "created_at">) => Promise<QuebraTecnica | null>;
   deleteQuebra: (id: string) => Promise<boolean>;
   capacidadeSilo: number;
   setCapacidadeSilo: (v: number) => void;
