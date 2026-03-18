@@ -4,12 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAppData, Recebimento } from "@/contexts/AppContext";
-import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X } from "lucide-react";
+import { ArrowDownToLine, Calculator, Save, Edit2, Trash2, X, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { maskPlaca, maskKg, unmaskKg } from "@/lib/masks";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { isRecordLocked } from "@/lib/record-lock";
+import { useMasterPassword } from "@/hooks/useMasterPassword";
+import MasterPasswordModal from "@/components/MasterPasswordModal";
 
 export default function RecebimentoPage() {
   const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento } = useAppData();
