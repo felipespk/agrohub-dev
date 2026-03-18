@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { maskPlaca, maskClassificacao, maskKg, unmaskKg } from "@/lib/masks";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { differenceInDays, parseISO } from "date-fns";
+import { differenceInCalendarDays, parseISO } from "date-fns";
 import { isRecordLocked } from "@/lib/record-lock";
 import { useMasterPassword } from "@/hooks/useMasterPassword";
 import MasterPasswordModal from "@/components/MasterPasswordModal";
@@ -121,9 +121,23 @@ export default function SaidaVendaPage() {
       const saldo = (lote as any).saldo_restante_kg || 0;
       const consumir = Math.min(saldo, restante);
       
-      const diasArmazenados = differenceInDays(parseISO(data), parseISO(lote.data));
-      const diasCobrados = Math.max(0, diasArmazenados - CARENCIA_DIAS);
-      const quinzenas = diasCobrados > 0 ? Math.ceil(diasCobrados / 15) : 0;
+      const diasArmazenados = differenceInCalendarDays(parseISO(data), parseISO(lote.data));
+      // Guard clause: carência absoluta — 0 dias cobrados e R$ 0,00
+      if (diasArmazenados <= CARENCIA_DIAS) {
+        fatias.push({
+          recebimento_id: lote.id,
+          data_entrada: lote.data,
+          kg_consumidos: Math.round(consumir * 100) / 100,
+          dias_armazenados: diasArmazenados,
+          dias_cobrados: 0,
+          quinzenas: 0,
+          valor_armazenamento: 0,
+        });
+        restante -= consumir;
+        continue;
+      }
+      const diasCobrados = diasArmazenados - CARENCIA_DIAS;
+      const quinzenas = Math.ceil(diasCobrados / 15);
       const sacos = Math.ceil(consumir / 60);
       const valorFatia = quinzenas * taxaQuinzenal * sacos;
 
