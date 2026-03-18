@@ -18,6 +18,7 @@ export default function ContaPage() {
   const [nome, setNome] = useState(farmName);
 
   // Master password fields
+  const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -33,21 +34,25 @@ export default function ContaPage() {
 
   const handleSaveMasterPw = async () => {
     setPwError("");
+    if (hasPassword && !currentPw.trim()) { setPwError("Informe a senha atual para alterar."); return; }
     if (newPw.length < 4) { setPwError("A senha deve ter pelo menos 4 caracteres."); return; }
     if (newPw !== confirmPw) { setPwError("As senhas não conferem."); return; }
 
     setSavingPw(true);
     try {
-      const { data, error } = await supabase.functions.invoke("master-password", {
-        body: { action: "set", password: newPw },
-      });
+      const body: Record<string, string> = { action: "set", password: newPw };
+      if (hasPassword) body.current_password = currentPw;
+
+      const { data, error } = await supabase.functions.invoke("master-password", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(hasPassword ? "Senha Master atualizada com sucesso!" : "Senha Master cadastrada com sucesso!");
-      setNewPw(""); setConfirmPw("");
+      setCurrentPw(""); setNewPw(""); setConfirmPw("");
       refreshMasterPw();
     } catch (e: any) {
-      setPwError(e.message || "Erro ao salvar senha.");
+      const msg = e.message || "Erro ao salvar senha.";
+      setPwError(msg);
+      toast.error(msg);
     } finally {
       setSavingPw(false);
     }
@@ -131,6 +136,26 @@ export default function ContaPage() {
                   <li>A senha é criptografada e nunca armazenada em texto plano.</li>
                 </ul>
               </div>
+
+              {/* Current password — only shown when changing an existing password */}
+              {hasPassword && (
+                <div className="space-y-2">
+                  <Label>Senha Atual</Label>
+                  <div className="relative">
+                    <Input
+                      type={showPw ? "text" : "password"}
+                      value={currentPw}
+                      onChange={e => { setCurrentPw(e.target.value); setPwError(""); }}
+                      placeholder="Informe a senha atual"
+                      className="pr-10"
+                    />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-10 w-10" onClick={() => setShowPw(!showPw)}>
+                      {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>{hasPassword ? "Nova Senha Master" : "Criar Senha Master"}</Label>
                 <div className="relative">
@@ -141,9 +166,11 @@ export default function ContaPage() {
                     placeholder="Mínimo 4 caracteres"
                     className="pr-10"
                   />
-                  <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-10 w-10" onClick={() => setShowPw(!showPw)}>
-                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
+                  {!hasPassword && (
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-10 w-10" onClick={() => setShowPw(!showPw)}>
+                      {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="space-y-2">

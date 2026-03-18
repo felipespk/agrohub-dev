@@ -30,7 +30,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Use anon key client to verify user token
     const anonClient = createClient(supabaseUrl, anonKey);
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await anonClient.auth.getUser(token);
@@ -39,15 +38,31 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Token inválido' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Use service role for DB operations (bypasses RLS)
     const supabase = createClient(supabaseUrl, serviceKey);
-
-    const { action, password } = await req.json();
+    const { action, password, current_password } = await req.json();
 
     if (action === 'set') {
       if (!password || password.length < 4) {
         return new Response(JSON.stringify({ error: 'Senha deve ter pelo menos 4 caracteres' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
+
+      // Check if a password already exists — if so, require current_password
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('master_password_hash')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile?.master_password_hash) {
+        if (!current_password) {
+          return new Response(JSON.stringify({ error: 'A senha atual é obrigatória para alterar a Senha Master.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const currentHash = await hashPassword(current_password, SALT);
+        if (currentHash !== profile.master_password_hash) {
+          return new Response(JSON.stringify({ error: 'A senha atual está incorreta. A alteração não foi permitida.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      }
+
       const hash = await hashPassword(password, SALT);
       const { error } = await supabase
         .from('profiles')
@@ -73,14 +88,12 @@ Deno.serve(async (req) => {
       if (error || !profile) {
         return new Response(JSON.stringify({ error: 'Perfil não encontrado' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
-
       if (!profile.master_password_hash) {
         return new Response(JSON.stringify({ error: 'Senha master não configurada' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       const hash = await hashPassword(password, SALT);
       const valid = hash === profile.master_password_hash;
-
       return new Response(JSON.stringify({ valid }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
