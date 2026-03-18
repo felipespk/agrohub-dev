@@ -170,6 +170,16 @@ export default function SaidaVendaPage() {
     setErrors({}); setShowComposicao(false);
   };
 
+  const tryLockedAction = (record: Saida, action: () => void) => {
+    const locked = isRecordLocked(record.created_at) && hasPassword;
+    if (locked) {
+      setPendingAction(() => action);
+      setLockModalOpen(true);
+    } else {
+      action();
+    }
+  };
+
   const handleEdit = (s: Saida) => {
     setData(s.data); setPlaca(maskPlaca(s.placa_caminhao)); setCompradorId(s.comprador_id);
     setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || "");
