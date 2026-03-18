@@ -5,11 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAppData } from "@/contexts/AppContext";
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, Plus, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { isRecordLocked } from "@/lib/record-lock";
+import { useMasterPassword } from "@/hooks/useMasterPassword";
+import MasterPasswordModal from "@/components/MasterPasswordModal";
 
 export default function QuebraTecnicaPage() {
   const { quebras, addQuebra, deleteQuebra } = useAppData();
