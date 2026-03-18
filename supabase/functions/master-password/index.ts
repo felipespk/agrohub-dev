@@ -5,7 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Simple hash using Web Crypto API (SHA-256 with salt)
 async function hashPassword(password: string, salt: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(salt + password);
@@ -22,31 +21,30 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const anonKey = Deno.env.get('SUPABASE_PUBLISHABLE_KEY')!;
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
-    // Verify user from JWT
+    // Use anon key client to verify user token
+    const anonClient = createClient(supabaseUrl, anonKey);
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_PUBLISHABLE_KEY')!
-    ).auth.getUser(token);
+    const { data: { user }, error: userError } = await anonClient.auth.getUser(token);
 
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Token inválido' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Use service role for DB operations (bypasses RLS)
+    const supabase = createClient(supabaseUrl, serviceKey);
+
     const { action, password } = await req.json();
 
     if (action === 'set') {
-      // Set/update master password
       if (!password || password.length < 4) {
         return new Response(JSON.stringify({ error: 'Senha deve ter pelo menos 4 caracteres' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
@@ -63,7 +61,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'verify') {
-      // Verify master password
       if (!password) {
         return new Response(JSON.stringify({ error: 'Senha não informada' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
@@ -88,7 +85,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'check') {
-      // Check if master password is set
       const { data: profile } = await supabase
         .from('profiles')
         .select('master_password_hash')
