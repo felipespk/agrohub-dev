@@ -141,6 +141,12 @@ export default function QuebraTecnicaPage() {
           </Table>
         </div>
       </div>
+
+      <MasterPasswordModal
+        open={lockModalOpen}
+        onOpenChange={v => { setLockModalOpen(v); if (!v) setPendingAction(null); }}
+        onAuthorized={() => { if (pendingAction) pendingAction(); setPendingAction(null); }}
+      />
     </div>
   );
 }
