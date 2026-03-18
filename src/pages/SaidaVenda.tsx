@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { maskPlaca, maskClassificacao, maskKg, unmaskKg } from "@/lib/masks";
 import { getBrazilDateInputValue, formatDateBR } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { differenceInDays, parseISO } from "date-fns";
+import { differenceInCalendarDays, parseISO } from "date-fns";
 import { isRecordLocked } from "@/lib/record-lock";
 import { useMasterPassword } from "@/hooks/useMasterPassword";
 import MasterPasswordModal from "@/components/MasterPasswordModal";
