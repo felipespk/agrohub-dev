@@ -47,6 +47,16 @@ export default function QuebraTecnicaPage() {
     }
   };
 
+  const tryLockedDelete = (q: typeof quebras[0]) => {
+    const locked = isRecordLocked(q.created_at || "") && hasPassword;
+    if (locked) {
+      setPendingAction(() => () => handleDelete(q.id));
+      setLockModalOpen(true);
+    } else {
+      handleDelete(q.id);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     const ok = await deleteQuebra(id);
     if (ok) toast.success("Quebra removida.");
