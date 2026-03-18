@@ -33,6 +33,7 @@ interface FatiaFIFO {
 
 export default function SaidaVendaPage() {
   const { compradores, produtores, tiposGrao, saidas, recebimentos, addSaida, updateSaida, deleteSaida, refresh } = useAppData();
+  const { hasPassword } = useMasterPassword();
   const [data, setData] = useState(getBrazilDateInputValue());
   const [placa, setPlaca] = useState("");
   const [compradorId, setCompradorId] = useState("");
@@ -49,6 +50,8 @@ export default function SaidaVendaPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showComposicao, setShowComposicao] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [lockModalOpen, setLockModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const clearError = (field: string) =>
     setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
 
