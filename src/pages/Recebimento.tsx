@@ -17,6 +17,7 @@ import MasterPasswordModal from "@/components/MasterPasswordModal";
 
 export default function RecebimentoPage() {
   const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento } = useAppData();
+  const { hasPassword } = useMasterPassword();
 
   const placaRef = useRef<HTMLInputElement>(null);
 
@@ -31,6 +32,8 @@ export default function RecebimentoPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState(() => localStorage.getItem("receb_umidadeFinalAlvo") || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [lockModalOpen, setLockModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   // Persist sticky fields to localStorage
   useEffect(() => { localStorage.setItem("receb_produtorId", produtorId); }, [produtorId]);
