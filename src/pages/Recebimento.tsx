@@ -15,7 +15,7 @@ import { useMasterPassword } from "@/hooks/useMasterPassword";
 import MasterPasswordModal from "@/components/MasterPasswordModal";
 
 export default function RecebimentoPage() {
-  const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento } = useAppData();
+  const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento, variedades } = useAppData();
   const { hasPassword } = useMasterPassword();
 
   const placaRef = useRef<HTMLInputElement>(null);
@@ -28,6 +28,7 @@ export default function RecebimentoPage() {
   const [umidadeInicial, setUmidadeInicial] = useState("");
   const [impureza, setImpureza] = useState("");
   const [taxaSecagem, setTaxaSecagem] = useState(() => localStorage.getItem("receb_taxaSecagem") || "");
+  const [variedadeId, setVariedadeId] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState(() => localStorage.getItem("receb_umidadeFinalAlvo") || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,9 +47,12 @@ export default function RecebimentoPage() {
   const handleTipoGraoChange = (id: string) => {
     setTipoGraoId(id);
     clearError("tipoGraoId");
+    setVariedadeId("");
     const grao = tiposGrao.find(t => t.id === id);
     if (grao) setUmidadeFinalAlvo(String(grao.umidade_padrao));
   };
+
+  const variedadesFiltradas = useMemo(() => variedades.filter(v => v.grao_id === tipoGraoId), [variedades, tipoGraoId]);
 
   const calculos = useMemo(() => {
     const peso = parseFloat(unmaskKg(pesoBruto)) || 0;
@@ -85,7 +89,7 @@ export default function RecebimentoPage() {
   const clearForm = () => {
     setData(getBrazilDateInputValue());
     setPlaca(""); setProdutorId(""); setTipoGraoId(""); setPesoBruto(""); setUmidadeInicial("");
-    setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo("");
+    setImpureza(""); setTaxaSecagem(""); setUmidadeFinalAlvo(""); setVariedadeId("");
     setEditingId(null);
     setErrors({});
     localStorage.removeItem("receb_produtorId");
@@ -110,6 +114,7 @@ export default function RecebimentoPage() {
     setUmidadeInicial(String(r.umidade_inicial)); setImpureza(String(r.impureza));
     setTaxaSecagem(String(r.taxa_secagem_percentual || 0));
     setUmidadeFinalAlvo(String(r.umidade_final_alvo));
+    setVariedadeId((r as any).variedade_id || "");
     setEditingId(r.id);
     setErrors({});
   };
@@ -141,6 +146,7 @@ export default function RecebimentoPage() {
     const entry = {
       data, placa_caminhao: placa.replace(/[^A-Z0-9]/g, "").toUpperCase(),
       produtor_id: produtorId, tipo_grao_id: tipoGraoId,
+      variedade_id: variedadeId || null,
       peso_bruto: parseFloat(unmaskKg(pesoBruto)), umidade_inicial: parseFloat(umidadeInicial),
       umidade_final_alvo: parseFloat(umidadeFinalAlvo) || 12, impureza: parseFloat(impureza) || 0,
       valor_armazenamento: 0,
@@ -211,6 +217,15 @@ export default function RecebimentoPage() {
               </Select>
               {errors.tipoGraoId && <p className="text-xs text-destructive">{errors.tipoGraoId}</p>}
             </div>
+            {variedadesFiltradas.length > 0 && (
+              <div className="space-y-1">
+                <Label>Variedade</Label>
+                <Select value={variedadeId} onValueChange={setVariedadeId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a variedade..." /></SelectTrigger>
+                  <SelectContent>{variedadesFiltradas.map(v => <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-1">
               <Label>Peso Bruto (Kg) *</Label>
               <Input
@@ -319,7 +334,7 @@ export default function RecebimentoPage() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
+             <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead><TableHead>Variedade</TableHead>
               <TableHead className="text-right">Peso Bruto</TableHead><TableHead className="text-right">Umidade (%)</TableHead>
               <TableHead className="text-right">Desc. Umidade</TableHead><TableHead className="text-right">Desc. Impureza</TableHead><TableHead className="text-right">Desc. Secagem</TableHead><TableHead className="text-right">Peso Líquido</TableHead><TableHead className="w-24">Ações</TableHead>
             </TableRow></TableHeader>
@@ -330,6 +345,7 @@ export default function RecebimentoPage() {
                   <TableCell className="font-mono">{r.placa_caminhao}</TableCell>
                   <TableCell>{r.produtor_nome}</TableCell>
                   <TableCell>{r.tipo_grao_nome}</TableCell>
+                  <TableCell>{(r as any).variedade_nome || "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">{r.peso_bruto.toLocaleString("pt-BR")}</TableCell>
                   <TableCell className="text-right tabular-nums">{r.umidade_inicial}%</TableCell>
                   <TableCell className="text-right tabular-nums text-amber-600 dark:text-amber-400">{fmt(r.desconto_umidade_kg || 0)} Kg</TableCell>

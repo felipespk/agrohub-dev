@@ -32,7 +32,7 @@ interface FatiaFIFO {
 }
 
 export default function SaidaVendaPage() {
-  const { compradores, produtores, tiposGrao, saidas, recebimentos, addSaida, updateSaida, deleteSaida, refresh } = useAppData();
+  const { compradores, produtores, tiposGrao, saidas, recebimentos, addSaida, updateSaida, deleteSaida, refresh, variedades } = useAppData();
   const { hasPassword } = useMasterPassword();
   const [data, setData] = useState(getBrazilDateInputValue());
   const [placa, setPlaca] = useState("");
@@ -48,6 +48,7 @@ export default function SaidaVendaPage() {
   const [taxaArmazenamento, setTaxaArmazenamento] = useState("0.15");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [variedadeId, setVariedadeId] = useState("");
   const [showComposicao, setShowComposicao] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [lockModalOpen, setLockModalOpen] = useState(false);
@@ -62,9 +63,9 @@ export default function SaidaVendaPage() {
   const saldoGeral = useMemo(() => {
     if (!produtorId || !tipoGraoId) return 0;
     return recebimentos
-      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId)
+      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId && (!variedadeId || (r as any).variedade_id === variedadeId))
       .reduce((sum, r) => sum + ((r as any).saldo_restante_kg || 0), 0);
-  }, [produtorId, tipoGraoId, recebimentos]);
+  }, [produtorId, tipoGraoId, variedadeId, recebimentos]);
 
   // Calculations — Bifurcated rates with correct sign inversion
   const kgsNum = parseFloat(unmaskKg(kgsExpedidos)) || 0;
@@ -108,9 +109,8 @@ export default function SaidaVendaPage() {
 
     const taxaQuinzenal = parseFloat(taxaArmazenamento.replace(",", ".")) || 0.15;
     
-    // Get all entries for this produtor+grão with remaining balance, ordered by date ASC (FIFO)
     const lotesOrdenados = recebimentos
-      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId && ((r as any).saldo_restante_kg || 0) > 0)
+      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId && (!variedadeId || (r as any).variedade_id === variedadeId) && ((r as any).saldo_restante_kg || 0) > 0)
       .sort((a, b) => a.data.localeCompare(b.data));
 
     const fatias: FatiaFIFO[] = [];
@@ -155,7 +155,7 @@ export default function SaidaVendaPage() {
     }
 
     return fatias;
-  }, [produtorId, tipoGraoId, pesoAjustado, data, recebimentos, taxaArmazenamento]);
+  }, [produtorId, tipoGraoId, variedadeId, pesoAjustado, data, recebimentos, taxaArmazenamento]);
 
   const totalDiasArmazenados = composicaoFIFO.length > 0
     ? Math.round(composicaoFIFO.reduce((sum, f) => sum + f.dias_armazenados * f.kg_consumidos, 0) / composicaoFIFO.reduce((sum, f) => sum + f.kg_consumidos, 0))
@@ -163,10 +163,12 @@ export default function SaidaVendaPage() {
   const totalQuinzenas = composicaoFIFO.reduce((max, f) => Math.max(max, f.quinzenas), 0);
   const totalValorArmazenamento = composicaoFIFO.reduce((sum, f) => sum + f.valor_armazenamento, 0);
 
-  // Auto-fill umidade when grain changes
+  const variedadesFiltradas = useMemo(() => variedades.filter(v => v.grao_id === tipoGraoId), [variedades, tipoGraoId]);
+
   const handleGraoChange = (v: string) => {
     setTipoGraoId(v);
     clearError("tipoGraoId");
+    setVariedadeId("");
     const grao = tiposGrao.find(t => t.id === v);
     if (grao) setUmidadeCombinada(String(grao.umidade_padrao));
   };
@@ -178,7 +180,7 @@ export default function SaidaVendaPage() {
 
   const clearForm = () => {
     setData(getBrazilDateInputValue());
-    setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId("");
+    setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId(""); setVariedadeId("");
     setCategoria("Venda"); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
     setUmidadeCombinada("12"); setTaxaPorTonelada("15"); setTaxaArmazenamento("0.15"); setEditingId(null);
     setErrors({}); setShowComposicao(false);
@@ -196,7 +198,7 @@ export default function SaidaVendaPage() {
 
   const handleEdit = (s: Saida) => {
     setData(s.data); setPlaca(maskPlaca(s.placa_caminhao)); setCompradorId(s.comprador_id);
-    setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || "");
+    setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || ""); setVariedadeId((s as any).variedade_id || "");
     setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || ""));
     setKgsExpedidos(maskKg(String(s.kgs_expedidos))); setUmidadeSaida(String(s.umidade_saida || ""));
     setUmidadeCombinada(String(s.umidade_combinada || 12));
@@ -255,6 +257,7 @@ export default function SaidaVendaPage() {
       comprador_id: compradorId,
       produtor_id: produtorId,
       tipo_grao_id: tipoGraoId,
+      variedade_id: variedadeId || null,
       recebimento_id: null as string | null,
       classificacao,
       kgs_expedidos: kgsNum,
@@ -349,6 +352,15 @@ export default function SaidaVendaPage() {
             </Select>
             {errors.tipoGraoId && <p className="text-xs text-destructive">{errors.tipoGraoId}</p>}
           </div>
+          {variedadesFiltradas.length > 0 && (
+            <div className="space-y-1">
+              <Label>Variedade</Label>
+              <Select value={variedadeId} onValueChange={setVariedadeId}>
+                <SelectTrigger><SelectValue placeholder="Selecione a variedade..." /></SelectTrigger>
+                <SelectContent>{variedadesFiltradas.map(v => <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          )}
           {/* Saldo Geral - Read Only */}
           {produtorId && tipoGraoId && (
           <div className="space-y-1">
@@ -567,7 +579,7 @@ export default function SaidaVendaPage() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
+              <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead><TableHead>Variedade</TableHead>
               <TableHead>Comprador</TableHead><TableHead>Categoria</TableHead>
               <TableHead>Classificação</TableHead><TableHead className="text-right">Umidade (%)</TableHead>
               <TableHead className="text-right">Peso (Kg)</TableHead><TableHead className="text-right">Peso Ajust.</TableHead>
@@ -580,6 +592,7 @@ export default function SaidaVendaPage() {
                   <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
                   <TableCell>{s.produtor_nome || "—"}</TableCell>
                   <TableCell>{s.tipo_grao_nome || "—"}</TableCell>
+                  <TableCell>{(s as any).variedade_nome || "—"}</TableCell>
                   <TableCell>{s.comprador_nome}</TableCell>
                   <TableCell><Badge variant="outline">{s.categoria}</Badge></TableCell>
                   <TableCell>{s.classificacao || "—"}</TableCell>

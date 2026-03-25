@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppData, Produtor, TipoGrao, Comprador } from "@/contexts/AppContext";
-import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Edit2, X, Save } from "lucide-react";
+import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Edit2, X, Save, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { maskDocumento, maskTelefone } from "@/lib/masks";
@@ -179,7 +179,7 @@ function ProdutoresTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
 }
 
 function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
-  const { tiposGrao, addTipoGrao, updateTipoGrao, deleteTipoGrao } = ctx;
+  const { tiposGrao, addTipoGrao, updateTipoGrao, deleteTipoGrao, variedades, addVariedade, deleteVariedade } = ctx;
   const [nome, setNome] = useState("");
   const [umidade, setUmidade] = useState("12");
   const [taxaAgio, setTaxaAgio] = useState("1.3");
@@ -187,6 +187,8 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [expandedGraoId, setExpandedGraoId] = useState<string | null>(null);
+  const [novaVariedade, setNovaVariedade] = useState("");
 
   const clearForm = () => { setNome(""); setUmidade("12"); setTaxaAgio("1.3"); setTaxaDesagio("1.5"); setEditingId(null); setErrors({}); };
 
@@ -224,6 +226,17 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
     if (ok) toast.success("Tipo de grão removido.");
   };
 
+  const handleAddVariedade = async (graoId: string) => {
+    if (!novaVariedade.trim()) return;
+    const row = await addVariedade({ grao_id: graoId, nome: novaVariedade.trim() });
+    if (row) { toast.success("Variedade adicionada!"); setNovaVariedade(""); }
+  };
+
+  const handleDeleteVariedade = async (id: string) => {
+    const ok = await deleteVariedade(id);
+    if (ok) toast.success("Variedade removida.");
+  };
+
   return (
     <div className="form-section space-y-4">
       <div className="flex items-center justify-between">
@@ -258,22 +271,69 @@ function TiposGraoTab({ ctx }: { ctx: ReturnType<typeof useAppData> }) {
       </div>
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Base</TableHead><TableHead>Ágio (%)</TableHead><TableHead>Deságio (%)</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Nome do Grão</TableHead><TableHead>Umidade Base</TableHead><TableHead>Ágio (%)</TableHead><TableHead>Deságio (%)</TableHead><TableHead>Variedades</TableHead><TableHead className="w-24">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {tiposGrao.map(t => (
-              <TableRow key={t.id}>
-                <TableCell className="font-medium">{t.nome}</TableCell>
-                <TableCell>{t.umidade_padrao}%</TableCell>
-                <TableCell>{t.taxa_agio}%</TableCell>
-                <TableCell>{t.taxa_desagio}%</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {tiposGrao.map(t => {
+              const vars = variedades.filter(v => v.grao_id === t.id);
+              const isExpanded = expandedGraoId === t.id;
+              return (
+                <>
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">
+                      <button className="flex items-center gap-1.5 hover:text-primary transition-colors" onClick={() => setExpandedGraoId(isExpanded ? null : t.id)}>
+                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        {t.nome}
+                      </button>
+                    </TableCell>
+                    <TableCell>{t.umidade_padrao}%</TableCell>
+                    <TableCell>{t.taxa_agio}%</TableCell>
+                    <TableCell>{t.taxa_desagio}%</TableCell>
+                    <TableCell><span className="text-xs text-muted-foreground">{vars.length} variedade(s)</span></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="text-amber-600 hover:text-amber-700"><Edit2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {isExpanded && (
+                    <TableRow key={`${t.id}-vars`}>
+                      <TableCell colSpan={6} className="bg-muted/30 p-4">
+                        <div className="space-y-3">
+                          <p className="text-sm font-semibold text-muted-foreground">Variedades de {t.nome}</p>
+                          <div className="flex gap-2 items-center">
+                            <Input
+                              placeholder="Nova variedade (ex: Agulhinha)"
+                              value={novaVariedade}
+                              onChange={e => setNovaVariedade(e.target.value)}
+                              onKeyDown={e => e.key === "Enter" && handleAddVariedade(t.id)}
+                              className="max-w-xs"
+                            />
+                            <Button size="sm" onClick={() => handleAddVariedade(t.id)} className="gap-1">
+                              <Plus className="h-3.5 w-3.5" /> Adicionar
+                            </Button>
+                          </div>
+                          {vars.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic">Nenhuma variedade cadastrada</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {vars.map(v => (
+                                <div key={v.id} className="flex items-center gap-1.5 rounded-md border bg-background px-3 py-1.5 text-sm">
+                                  <span>{v.nome}</span>
+                                  <button onClick={() => handleDeleteVariedade(v.id)} className="text-destructive hover:text-destructive/80 transition-colors">
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

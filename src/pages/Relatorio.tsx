@@ -34,10 +34,16 @@ interface LancamentoUnificado {
 }
 
 export default function RelatorioPage() {
-  const { produtores, tiposGrao, recebimentos, saidas } = useAppData();
+  const { produtores, tiposGrao, recebimentos, saidas, variedades } = useAppData();
   const [filtroProdutorId, setFiltroProdutorId] = useState("todos");
   const [filtroGraoId, setFiltroGraoId] = useState("todos");
+  const [filtroVariedadeId, setFiltroVariedadeId] = useState("todos");
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
+
+  const variedadesFiltradas = useMemo(() => {
+    if (filtroGraoId === "todos") return variedades;
+    return variedades.filter(v => v.grao_id === filtroGraoId);
+  }, [variedades, filtroGraoId]);
 
   // Função para filtrar lançamentos pelo modo
   const filterLancamentos = (lancamentos: LancamentoUnificado[]) => {
@@ -57,6 +63,7 @@ export default function RelatorioPage() {
     for (const r of recebimentos) {
       if (filtroProdutorId !== "todos" && r.produtor_id !== filtroProdutorId) continue;
       if (filtroGraoId !== "todos" && r.tipo_grao_id !== filtroGraoId) continue;
+      if (filtroVariedadeId !== "todos" && (r as any).variedade_id !== filtroVariedadeId) continue;
       const key = `${r.produtor_id}-${r.tipo_grao_id}`;
       const existing = map.get(key) || {
         produtorId: r.produtor_id, tipoGraoId: r.tipo_grao_id,
@@ -85,6 +92,7 @@ export default function RelatorioPage() {
       if (!s.produtor_id || !s.tipo_grao_id) continue;
       if (filtroProdutorId !== "todos" && s.produtor_id !== filtroProdutorId) continue;
       if (filtroGraoId !== "todos" && s.tipo_grao_id !== filtroGraoId) continue;
+      if (filtroVariedadeId !== "todos" && (s as any).variedade_id !== filtroVariedadeId) continue;
       const key = `${s.produtor_id}-${s.tipo_grao_id}`;
       const existing = map.get(key);
       if (existing) {
@@ -101,7 +109,7 @@ export default function RelatorioPage() {
       val.lancamentos.sort((a, b) => a.data.localeCompare(b.data));
       return { key, ...val, saldo: val.kgsEntrada - val.kgsSaida };
     });
-  }, [filtroProdutorId, filtroGraoId, recebimentos, saidas]);
+  }, [filtroProdutorId, filtroGraoId, filtroVariedadeId, recebimentos, saidas]);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const fmt2 = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -335,7 +343,7 @@ export default function RelatorioPage() {
           </div>
           <div className="space-y-2 min-w-[200px]">
             <label className="text-sm font-medium text-foreground">Tipo de Grão</label>
-            <Select value={filtroGraoId} onValueChange={setFiltroGraoId}>
+            <Select value={filtroGraoId} onValueChange={v => { setFiltroGraoId(v); setFiltroVariedadeId("todos"); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
@@ -343,6 +351,18 @@ export default function RelatorioPage() {
               </SelectContent>
             </Select>
           </div>
+          {variedadesFiltradas.length > 0 && (
+            <div className="space-y-2 min-w-[200px]">
+              <label className="text-sm font-medium text-foreground">Variedade</label>
+              <Select value={filtroVariedadeId} onValueChange={setFiltroVariedadeId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todas</SelectItem>
+                  {variedadesFiltradas.map(v => <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Operação</label>
             <ToggleGroup type="single" value={filterMode} onValueChange={v => v && setFilterMode(v as FilterMode)} className="justify-start">
