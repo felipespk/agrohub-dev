@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAppData, Produtor, TipoGrao, Comprador, VariedadeGrao } from "@/contexts/AppContext";
+import { useAppData, Produtor, TipoGrao, Comprador } from "@/contexts/AppContext";
 import { UserPlus, Wheat, ShoppingCart, Plus, Trash2, Edit2, X, Save, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";

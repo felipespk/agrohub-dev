@@ -28,6 +28,7 @@ export default function RecebimentoPage() {
   const [umidadeInicial, setUmidadeInicial] = useState("");
   const [impureza, setImpureza] = useState("");
   const [taxaSecagem, setTaxaSecagem] = useState(() => localStorage.getItem("receb_taxaSecagem") || "");
+  const [variedadeId, setVariedadeId] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [umidadeFinalAlvo, setUmidadeFinalAlvo] = useState(() => localStorage.getItem("receb_umidadeFinalAlvo") || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
