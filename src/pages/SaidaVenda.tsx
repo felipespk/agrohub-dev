@@ -592,6 +592,7 @@ export default function SaidaVendaPage() {
                   <TableCell className="font-mono">{s.placa_caminhao}</TableCell>
                   <TableCell>{s.produtor_nome || "—"}</TableCell>
                   <TableCell>{s.tipo_grao_nome || "—"}</TableCell>
+                  <TableCell>{(s as any).variedade_nome || "—"}</TableCell>
                   <TableCell>{s.comprador_nome}</TableCell>
                   <TableCell><Badge variant="outline">{s.categoria}</Badge></TableCell>
                   <TableCell>{s.classificacao || "—"}</TableCell>
