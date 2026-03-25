@@ -32,7 +32,7 @@ interface FatiaFIFO {
 }
 
 export default function SaidaVendaPage() {
-  const { compradores, produtores, tiposGrao, saidas, recebimentos, addSaida, updateSaida, deleteSaida, refresh } = useAppData();
+  const { compradores, produtores, tiposGrao, saidas, recebimentos, addSaida, updateSaida, deleteSaida, refresh, variedades } = useAppData();
   const { hasPassword } = useMasterPassword();
   const [data, setData] = useState(getBrazilDateInputValue());
   const [placa, setPlaca] = useState("");
