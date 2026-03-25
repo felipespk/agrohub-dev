@@ -217,7 +217,15 @@ export default function RecebimentoPage() {
               </Select>
               {errors.tipoGraoId && <p className="text-xs text-destructive">{errors.tipoGraoId}</p>}
             </div>
-            <div className="space-y-1">
+            {variedadesFiltradas.length > 0 && (
+              <div className="space-y-1">
+                <Label>Variedade</Label>
+                <Select value={variedadeId} onValueChange={setVariedadeId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a variedade..." /></SelectTrigger>
+                  <SelectContent>{variedadesFiltradas.map(v => <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
               <Label>Peso Bruto (Kg) *</Label>
               <Input
                 type="text"
