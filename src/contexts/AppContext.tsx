@@ -111,6 +111,7 @@ interface AppContextType {
   recebimentos: Recebimento[];
   saidas: Saida[];
   quebras: QuebraTecnica[];
+  variedades: VariedadeGrao[];
   loading: boolean;
   refresh: () => Promise<void>;
   // CRUD helpers
@@ -131,6 +132,9 @@ interface AppContextType {
   deleteSaida: (id: string) => Promise<boolean>;
   addQuebra: (data: Omit<QuebraTecnica, "id" | "user_id" | "created_at">) => Promise<QuebraTecnica | null>;
   deleteQuebra: (id: string) => Promise<boolean>;
+  addVariedade: (data: Omit<VariedadeGrao, "id" | "user_id" | "created_at">) => Promise<VariedadeGrao | null>;
+  updateVariedade: (id: string, data: Partial<Omit<VariedadeGrao, "id" | "user_id" | "created_at">>) => Promise<boolean>;
+  deleteVariedade: (id: string) => Promise<boolean>;
   capacidadeSilo: number;
   setCapacidadeSilo: (v: number) => void;
 }
