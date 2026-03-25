@@ -163,18 +163,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     if (!user) {
       setProdutores([]); setTiposGrao([]); setCompradores([]);
-      setRecebimentos([]); setSaidas([]); setQuebras([]);
+      setRecebimentos([]); setSaidas([]); setQuebras([]); setVariedades([]);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const [pRes, tRes, cRes, rRes, sRes, qRes] = await Promise.all([
+    const [pRes, tRes, cRes, rRes, sRes, qRes, vRes] = await Promise.all([
       supabase.from("produtores").select("*").order("nome"),
       supabase.from("tipos_grao").select("*").order("nome"),
       supabase.from("compradores").select("*").order("nome"),
-      supabase.from("recebimentos").select("*, produtores(nome), tipos_grao(nome)").order("created_at", { ascending: false }),
-      supabase.from("saidas").select("*, compradores(nome), produtores(nome), tipos_grao(nome)").order("created_at", { ascending: false }),
+      supabase.from("recebimentos").select("*, produtores(nome), tipos_grao(nome), variedades_grao(nome)").order("created_at", { ascending: false }),
+      supabase.from("saidas").select("*, compradores(nome), produtores(nome), tipos_grao(nome), variedades_grao(nome)").order("created_at", { ascending: false }),
       supabase.from("quebras_tecnicas").select("*").order("created_at", { ascending: false }),
+      supabase.from("variedades_grao").select("*").order("nome"),
     ]);
     if (pRes.data) setProdutores(pRes.data as any);
     if (tRes.data) setTiposGrao(tRes.data as any);
@@ -183,14 +184,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...r,
       produtor_nome: r.produtores?.nome || "",
       tipo_grao_nome: r.tipos_grao?.nome || "",
+      variedade_nome: r.variedades_grao?.nome || "",
     })));
     if (sRes.data) setSaidas(sRes.data.map((s: any) => ({
       ...s,
       comprador_nome: s.compradores?.nome || "",
       produtor_nome: s.produtores?.nome || "",
       tipo_grao_nome: s.tipos_grao?.nome || "",
+      variedade_nome: s.variedades_grao?.nome || "",
     })));
     if (qRes.data) setQuebras(qRes.data as any);
+    if (vRes.data) setVariedades(vRes.data as any);
     setLoading(false);
   }, [user]);
 
