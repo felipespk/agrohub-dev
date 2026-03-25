@@ -63,9 +63,9 @@ export default function SaidaVendaPage() {
   const saldoGeral = useMemo(() => {
     if (!produtorId || !tipoGraoId) return 0;
     return recebimentos
-      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId)
+      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId && (!variedadeId || (r as any).variedade_id === variedadeId))
       .reduce((sum, r) => sum + ((r as any).saldo_restante_kg || 0), 0);
-  }, [produtorId, tipoGraoId, recebimentos]);
+  }, [produtorId, tipoGraoId, variedadeId, recebimentos]);
 
   // Calculations — Bifurcated rates with correct sign inversion
   const kgsNum = parseFloat(unmaskKg(kgsExpedidos)) || 0;
