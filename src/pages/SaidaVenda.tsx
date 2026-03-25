@@ -257,6 +257,7 @@ export default function SaidaVendaPage() {
       comprador_id: compradorId,
       produtor_id: produtorId,
       tipo_grao_id: tipoGraoId,
+      variedade_id: variedadeId || null,
       recebimento_id: null as string | null,
       classificacao,
       kgs_expedidos: kgsNum,
