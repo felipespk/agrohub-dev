@@ -109,9 +109,8 @@ export default function SaidaVendaPage() {
 
     const taxaQuinzenal = parseFloat(taxaArmazenamento.replace(",", ".")) || 0.15;
     
-    // Get all entries for this produtor+grão with remaining balance, ordered by date ASC (FIFO)
     const lotesOrdenados = recebimentos
-      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId && ((r as any).saldo_restante_kg || 0) > 0)
+      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId && (!variedadeId || (r as any).variedade_id === variedadeId) && ((r as any).saldo_restante_kg || 0) > 0)
       .sort((a, b) => a.data.localeCompare(b.data));
 
     const fatias: FatiaFIFO[] = [];
