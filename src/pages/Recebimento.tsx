@@ -344,6 +344,7 @@ export default function RecebimentoPage() {
                   <TableCell className="font-mono">{r.placa_caminhao}</TableCell>
                   <TableCell>{r.produtor_nome}</TableCell>
                   <TableCell>{r.tipo_grao_nome}</TableCell>
+                  <TableCell>{(r as any).variedade_nome || "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">{r.peso_bruto.toLocaleString("pt-BR")}</TableCell>
                   <TableCell className="text-right tabular-nums">{r.umidade_inicial}%</TableCell>
                   <TableCell className="text-right tabular-nums text-amber-600 dark:text-amber-400">{fmt(r.desconto_umidade_kg || 0)} Kg</TableCell>
