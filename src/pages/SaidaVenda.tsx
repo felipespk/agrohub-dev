@@ -198,7 +198,7 @@ export default function SaidaVendaPage() {
 
   const handleEdit = (s: Saida) => {
     setData(s.data); setPlaca(maskPlaca(s.placa_caminhao)); setCompradorId(s.comprador_id);
-    setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || "");
+    setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || ""); setVariedadeId((s as any).variedade_id || "");
     setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || ""));
     setKgsExpedidos(maskKg(String(s.kgs_expedidos))); setUmidadeSaida(String(s.umidade_saida || ""));
     setUmidadeCombinada(String(s.umidade_combinada || 12));
