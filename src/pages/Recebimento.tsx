@@ -15,7 +15,7 @@ import { useMasterPassword } from "@/hooks/useMasterPassword";
 import MasterPasswordModal from "@/components/MasterPasswordModal";
 
 export default function RecebimentoPage() {
-  const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento } = useAppData();
+  const { produtores, tiposGrao, recebimentos, addRecebimento, updateRecebimento, deleteRecebimento, variedades } = useAppData();
   const { hasPassword } = useMasterPassword();
 
   const placaRef = useRef<HTMLInputElement>(null);
