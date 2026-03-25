@@ -92,6 +92,7 @@ export default function RelatorioPage() {
       if (!s.produtor_id || !s.tipo_grao_id) continue;
       if (filtroProdutorId !== "todos" && s.produtor_id !== filtroProdutorId) continue;
       if (filtroGraoId !== "todos" && s.tipo_grao_id !== filtroGraoId) continue;
+      if (filtroVariedadeId !== "todos" && (s as any).variedade_id !== filtroVariedadeId) continue;
       const key = `${s.produtor_id}-${s.tipo_grao_id}`;
       const existing = map.get(key);
       if (existing) {
