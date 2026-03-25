@@ -149,6 +149,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [recebimentos, setRecebimentos] = useState<Recebimento[]>([]);
   const [saidas, setSaidas] = useState<Saida[]>([]);
   const [quebras, setQuebras] = useState<QuebraTecnica[]>([]);
+  const [variedades, setVariedades] = useState<VariedadeGrao[]>([]);
   const [loading, setLoading] = useState(true);
   const [capacidadeSilo, setCapacidadeSiloState] = useState<number>(() => {
     const stored = localStorage.getItem("capacidadeSilo");
