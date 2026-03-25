@@ -163,10 +163,12 @@ export default function SaidaVendaPage() {
   const totalQuinzenas = composicaoFIFO.reduce((max, f) => Math.max(max, f.quinzenas), 0);
   const totalValorArmazenamento = composicaoFIFO.reduce((sum, f) => sum + f.valor_armazenamento, 0);
 
-  // Auto-fill umidade when grain changes
+  const variedadesFiltradas = useMemo(() => variedades.filter(v => v.grao_id === tipoGraoId), [variedades, tipoGraoId]);
+
   const handleGraoChange = (v: string) => {
     setTipoGraoId(v);
     clearError("tipoGraoId");
+    setVariedadeId("");
     const grao = tiposGrao.find(t => t.id === v);
     if (grao) setUmidadeCombinada(String(grao.umidade_padrao));
   };
