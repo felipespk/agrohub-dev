@@ -59,13 +59,24 @@ export default function SaidaVendaPage() {
   // Get selected grain config (used for umidade_padrao auto-fill)
   const _selectedGrao = tiposGrao.find(t => t.id === tipoGraoId);
 
-  // Calculate saldo geral for selected produtor + grão
+  // Variedade é obrigatória se o grão tem variedades cadastradas
+  const variedadeObrigatoria = variedadesFiltradas.length > 0;
+
+  // Calculate saldo geral for selected produtor + grão + variedade (segregação absoluta)
   const saldoGeral = useMemo(() => {
     if (!produtorId || !tipoGraoId) return 0;
+    // Se há variedades cadastradas mas nenhuma selecionada, saldo = 0 (forçar seleção)
+    if (variedadeObrigatoria && !variedadeId) return 0;
     return recebimentos
-      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId && (!variedadeId || (r as any).variedade_id === variedadeId))
+      .filter(r => {
+        if (r.produtor_id !== produtorId || r.tipo_grao_id !== tipoGraoId) return false;
+        // Segregação absoluta: filtrar por variedade exata (incluindo null === null)
+        const rVariedade = (r as any).variedade_id || null;
+        const filtroVariedade = variedadeId || null;
+        return rVariedade === filtroVariedade;
+      })
       .reduce((sum, r) => sum + ((r as any).saldo_restante_kg || 0), 0);
-  }, [produtorId, tipoGraoId, variedadeId, recebimentos]);
+  }, [produtorId, tipoGraoId, variedadeId, variedadeObrigatoria, recebimentos]);
 
   // Calculations — Bifurcated rates with correct sign inversion
   const kgsNum = parseFloat(unmaskKg(kgsExpedidos)) || 0;
@@ -109,8 +120,15 @@ export default function SaidaVendaPage() {
 
     const taxaQuinzenal = parseFloat(taxaArmazenamento.replace(",", ".")) || 0.15;
     
+    const filtroVariedade = variedadeId || null;
     const lotesOrdenados = recebimentos
-      .filter(r => r.produtor_id === produtorId && r.tipo_grao_id === tipoGraoId && (!variedadeId || (r as any).variedade_id === variedadeId) && ((r as any).saldo_restante_kg || 0) > 0)
+      .filter(r => {
+        if (r.produtor_id !== produtorId || r.tipo_grao_id !== tipoGraoId) return false;
+        if (((r as any).saldo_restante_kg || 0) <= 0) return false;
+        // Segregação absoluta por variedade
+        const rVariedade = (r as any).variedade_id || null;
+        return rVariedade === filtroVariedade;
+      })
       .sort((a, b) => a.data.localeCompare(b.data));
 
     const fatias: FatiaFIFO[] = [];
@@ -226,6 +244,7 @@ export default function SaidaVendaPage() {
     if (!produtorId) newErrors.produtorId = "Selecione o produtor";
     if (!tipoGraoId) newErrors.tipoGraoId = "Selecione o tipo de grão";
     if (!compradorId) newErrors.compradorId = "Selecione o comprador";
+    if (variedadeObrigatoria && !variedadeId) newErrors.variedadeId = "Selecione a variedade do grão";
     const rawKgs = unmaskKg(kgsExpedidos);
     if (!rawKgs || parseFloat(rawKgs) <= 0) newErrors.kgsExpedidos = "Peso deve ser maior que zero";
     if (!umidadeSaida || parseFloat(umidadeSaida) <= 0) newErrors.umidadeSaida = "Umidade de saída é obrigatória";
@@ -280,11 +299,17 @@ export default function SaidaVendaPage() {
       if (row) {
         // SERVER-SIDE SAFETY NET: Re-check saldo before deducting
         const { supabase } = await import("@/integrations/supabase/client");
-        const { data: freshLotes } = await supabase
+        let freshQuery = supabase
           .from("recebimentos")
           .select("id, saldo_restante_kg")
           .eq("produtor_id", produtorId)
           .eq("tipo_grao_id", tipoGraoId);
+        if (variedadeId) {
+          freshQuery = freshQuery.eq("variedade_id", variedadeId);
+        } else {
+          freshQuery = freshQuery.is("variedade_id", null);
+        }
+        const { data: freshLotes } = await freshQuery;
         const freshSaldo = (freshLotes || []).reduce((sum: number, r: any) => sum + (r.saldo_restante_kg || 0), 0);
         if (pesoAjustado > freshSaldo) {
           // Abort: delete the just-inserted saida and warn user
