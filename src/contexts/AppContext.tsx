@@ -59,6 +59,7 @@ export interface Recebimento {
   // Joined fields
   produtor_nome?: string;
   tipo_grao_nome?: string;
+  variedade_nome?: string;
 }
 
 export interface Saida {
