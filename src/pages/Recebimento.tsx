@@ -47,9 +47,12 @@ export default function RecebimentoPage() {
   const handleTipoGraoChange = (id: string) => {
     setTipoGraoId(id);
     clearError("tipoGraoId");
+    setVariedadeId("");
     const grao = tiposGrao.find(t => t.id === id);
     if (grao) setUmidadeFinalAlvo(String(grao.umidade_padrao));
   };
+
+  const variedadesFiltradas = useMemo(() => variedades.filter(v => v.grao_id === tipoGraoId), [variedades, tipoGraoId]);
 
   const calculos = useMemo(() => {
     const peso = parseFloat(unmaskKg(pesoBruto)) || 0;
