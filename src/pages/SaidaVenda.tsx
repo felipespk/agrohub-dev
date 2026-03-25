@@ -48,6 +48,7 @@ export default function SaidaVendaPage() {
   const [taxaArmazenamento, setTaxaArmazenamento] = useState("0.15");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [variedadeId, setVariedadeId] = useState("");
   const [showComposicao, setShowComposicao] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [lockModalOpen, setLockModalOpen] = useState(false);
