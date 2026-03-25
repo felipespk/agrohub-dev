@@ -180,7 +180,7 @@ export default function SaidaVendaPage() {
 
   const clearForm = () => {
     setData(getBrazilDateInputValue());
-    setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId("");
+    setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId(""); setVariedadeId("");
     setCategoria("Venda"); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
     setUmidadeCombinada("12"); setTaxaPorTonelada("15"); setTaxaArmazenamento("0.15"); setEditingId(null);
     setErrors({}); setShowComposicao(false);
