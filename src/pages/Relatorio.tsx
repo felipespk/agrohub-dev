@@ -109,7 +109,7 @@ export default function RelatorioPage() {
       val.lancamentos.sort((a, b) => a.data.localeCompare(b.data));
       return { key, ...val, saldo: val.kgsEntrada - val.kgsSaida };
     });
-  }, [filtroProdutorId, filtroGraoId, recebimentos, saidas]);
+  }, [filtroProdutorId, filtroGraoId, filtroVariedadeId, recebimentos, saidas]);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const fmt2 = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
