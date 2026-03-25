@@ -315,15 +315,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
+  const addVariedade = async (data: Omit<VariedadeGrao, "id" | "user_id" | "created_at">) => {
+    const { data: row, error } = await supabase.from("variedades_grao").insert({ ...data, user_id: user!.id }).select().single();
+    if (error) { toast.error(error.message); return null; }
+    setVariedades(prev => [...prev, row as any].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')));
+    return row as any;
+  };
+  const updateVariedade = async (id: string, data: Partial<Omit<VariedadeGrao, "id" | "user_id" | "created_at">>) => {
+    const { error } = await supabase.from("variedades_grao").update(data).eq("id", id);
+    if (error) { toast.error(error.message); return false; }
+    setVariedades(prev => prev.map(v => v.id === id ? { ...v, ...data } : v));
+    return true;
+  };
+  const deleteVariedade = async (id: string) => {
+    const { error } = await supabase.from("variedades_grao").delete().eq("id", id);
+    if (error) { toast.error(error.message); return false; }
+    setVariedades(prev => prev.filter(v => v.id !== id));
+    return true;
+  };
+
   return (
     <AppContext.Provider value={{
-      produtores, tiposGrao, compradores, recebimentos, saidas, quebras, loading, refresh,
+      produtores, tiposGrao, compradores, recebimentos, saidas, quebras, variedades, loading, refresh,
       addProdutor, updateProdutor, deleteProdutor,
       addTipoGrao, updateTipoGrao, deleteTipoGrao,
       addComprador, updateComprador, deleteComprador,
       addRecebimento, updateRecebimento, deleteRecebimento,
       addSaida, updateSaida, deleteSaida,
       addQuebra, deleteQuebra,
+      addVariedade, updateVariedade, deleteVariedade,
       capacidadeSilo, setCapacidadeSilo,
     }}>
       {children}
