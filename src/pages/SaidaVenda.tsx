@@ -32,7 +32,7 @@ interface FatiaFIFO {
 }
 
 export default function SaidaVendaPage() {
-  const { compradores, produtores, tiposGrao, saidas, recebimentos, addSaida, updateSaida, deleteSaida, refresh, variedades } = useAppData();
+  const { compradores, produtores, tiposGrao, saidas, recebimentos, addSaida, updateSaida, deleteSaida, refresh } = useAppData();
   const { hasPassword } = useMasterPassword();
   const [data, setData] = useState(getBrazilDateInputValue());
   const [placa, setPlaca] = useState("");
@@ -168,7 +168,6 @@ export default function SaidaVendaPage() {
   const handleGraoChange = (v: string) => {
     setTipoGraoId(v);
     clearError("tipoGraoId");
-    setVariedadeId("");
     const grao = tiposGrao.find(t => t.id === v);
     if (grao) setUmidadeCombinada(String(grao.umidade_padrao));
   };
@@ -180,7 +179,7 @@ export default function SaidaVendaPage() {
 
   const clearForm = () => {
     setData(getBrazilDateInputValue());
-    setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId(""); setVariedadeId("");
+    setPlaca(""); setCompradorId(""); setProdutorId(""); setTipoGraoId("");
     setCategoria("Venda"); setClassificacao(""); setKgsExpedidos(""); setUmidadeSaida("");
     setUmidadeCombinada("12"); setTaxaPorTonelada("15"); setTaxaArmazenamento("0.15"); setEditingId(null);
     setErrors({}); setShowComposicao(false);
@@ -198,7 +197,7 @@ export default function SaidaVendaPage() {
 
   const handleEdit = (s: Saida) => {
     setData(s.data); setPlaca(maskPlaca(s.placa_caminhao)); setCompradorId(s.comprador_id);
-    setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || ""); setVariedadeId((s as any).variedade_id || "");
+    setProdutorId(s.produtor_id || ""); setTipoGraoId(s.tipo_grao_id || "");
     setCategoria(s.categoria); setClassificacao(maskClassificacao(s.classificacao || ""));
     setKgsExpedidos(maskKg(String(s.kgs_expedidos))); setUmidadeSaida(String(s.umidade_saida || ""));
     setUmidadeCombinada(String(s.umidade_combinada || 12));
