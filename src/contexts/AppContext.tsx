@@ -88,6 +88,7 @@ export interface Saida {
   comprador_nome?: string;
   produtor_nome?: string;
   tipo_grao_nome?: string;
+  variedade_nome?: string;
 }
 
 export interface QuebraTecnica {
