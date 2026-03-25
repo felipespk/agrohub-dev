@@ -96,6 +96,14 @@ export interface QuebraTecnica {
   created_at: string;
 }
 
+export interface VariedadeGrao {
+  id: string;
+  user_id: string;
+  grao_id: string;
+  nome: string;
+  created_at: string;
+}
+
 interface AppContextType {
   produtores: Produtor[];
   tiposGrao: TipoGrao[];
