@@ -226,6 +226,7 @@ export default function RecebimentoPage() {
                 </Select>
               </div>
             )}
+            <div className="space-y-1">
               <Label>Peso Bruto (Kg) *</Label>
               <Input
                 type="text"
