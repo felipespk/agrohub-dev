@@ -343,7 +343,7 @@ export default function RelatorioPage() {
           </div>
           <div className="space-y-2 min-w-[200px]">
             <label className="text-sm font-medium text-foreground">Tipo de Grão</label>
-            <Select value={filtroGraoId} onValueChange={setFiltroGraoId}>
+            <Select value={filtroGraoId} onValueChange={v => { setFiltroGraoId(v); setFiltroVariedadeId("todos"); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
@@ -351,6 +351,18 @@ export default function RelatorioPage() {
               </SelectContent>
             </Select>
           </div>
+          {variedadesFiltradas.length > 0 && (
+            <div className="space-y-2 min-w-[200px]">
+              <label className="text-sm font-medium text-foreground">Variedade</label>
+              <Select value={filtroVariedadeId} onValueChange={setFiltroVariedadeId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todas</SelectItem>
+                  {variedadesFiltradas.map(v => <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Operação</label>
             <ToggleGroup type="single" value={filterMode} onValueChange={v => v && setFilterMode(v as FilterMode)} className="justify-start">
