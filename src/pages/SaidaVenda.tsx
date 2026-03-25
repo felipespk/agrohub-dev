@@ -48,7 +48,7 @@ export default function SaidaVendaPage() {
   const [taxaArmazenamento, setTaxaArmazenamento] = useState("0.15");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [variedadeId, setVariedadeId] = useState("");
+  
   const [showComposicao, setShowComposicao] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [lockModalOpen, setLockModalOpen] = useState(false);
@@ -163,7 +163,7 @@ export default function SaidaVendaPage() {
   const totalQuinzenas = composicaoFIFO.reduce((max, f) => Math.max(max, f.quinzenas), 0);
   const totalValorArmazenamento = composicaoFIFO.reduce((sum, f) => sum + f.valor_armazenamento, 0);
 
-  const variedadesFiltradas = useMemo(() => variedades.filter(v => v.grao_id === tipoGraoId), [variedades, tipoGraoId]);
+  
 
   const handleGraoChange = (v: string) => {
     setTipoGraoId(v);
