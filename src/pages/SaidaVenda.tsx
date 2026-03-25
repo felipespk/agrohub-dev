@@ -352,6 +352,15 @@ export default function SaidaVendaPage() {
             </Select>
             {errors.tipoGraoId && <p className="text-xs text-destructive">{errors.tipoGraoId}</p>}
           </div>
+          {variedadesFiltradas.length > 0 && (
+            <div className="space-y-1">
+              <Label>Variedade</Label>
+              <Select value={variedadeId} onValueChange={setVariedadeId}>
+                <SelectTrigger><SelectValue placeholder="Selecione a variedade..." /></SelectTrigger>
+                <SelectContent>{variedadesFiltradas.map(v => <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          )}
           {/* Saldo Geral - Read Only */}
           {produtorId && tipoGraoId && (
           <div className="space-y-1">
