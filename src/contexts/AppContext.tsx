@@ -42,6 +42,7 @@ export interface Recebimento {
   produtor_id: string;
   tipo_grao_id: string;
   peso_bruto: number;
+  variedade_id?: string | null;
   umidade_inicial: number;
   umidade_final_alvo: number;
   impureza: number;
