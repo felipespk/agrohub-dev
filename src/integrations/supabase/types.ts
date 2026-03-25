@@ -175,6 +175,7 @@ export type Database = {
           updated_at: string
           user_id: string
           valor_armazenamento: number
+          variedade_id: string | null
         }
         Insert: {
           created_at?: string
@@ -198,6 +199,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           valor_armazenamento?: number
+          variedade_id?: string | null
         }
         Update: {
           created_at?: string
@@ -221,6 +223,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           valor_armazenamento?: number
+          variedade_id?: string | null
         }
         Relationships: [
           {
@@ -235,6 +238,13 @@ export type Database = {
             columns: ["tipo_grao_id"]
             isOneToOne: false
             referencedRelation: "tipos_grao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recebimentos_variedade_id_fkey"
+            columns: ["variedade_id"]
+            isOneToOne: false
+            referencedRelation: "variedades_grao"
             referencedColumns: ["id"]
           },
         ]
@@ -262,6 +272,7 @@ export type Database = {
           user_id: string
           valor_armazenamento_exp: number
           valor_expedicao: number
+          variedade_id: string | null
         }
         Insert: {
           categoria?: string
@@ -285,6 +296,7 @@ export type Database = {
           user_id: string
           valor_armazenamento_exp?: number
           valor_expedicao?: number
+          variedade_id?: string | null
         }
         Update: {
           categoria?: string
@@ -308,6 +320,7 @@ export type Database = {
           user_id?: string
           valor_armazenamento_exp?: number
           valor_expedicao?: number
+          variedade_id?: string | null
         }
         Relationships: [
           {
@@ -336,6 +349,13 @@ export type Database = {
             columns: ["tipo_grao_id"]
             isOneToOne: false
             referencedRelation: "tipos_grao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_variedade_id_fkey"
+            columns: ["variedade_id"]
+            isOneToOne: false
+            referencedRelation: "variedades_grao"
             referencedColumns: ["id"]
           },
         ]
@@ -372,6 +392,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      variedades_grao: {
+        Row: {
+          created_at: string
+          grao_id: string
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grao_id: string
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grao_id?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variedades_grao_grao_id_fkey"
+            columns: ["grao_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_grao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
