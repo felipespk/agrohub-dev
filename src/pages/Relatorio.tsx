@@ -63,6 +63,7 @@ export default function RelatorioPage() {
     for (const r of recebimentos) {
       if (filtroProdutorId !== "todos" && r.produtor_id !== filtroProdutorId) continue;
       if (filtroGraoId !== "todos" && r.tipo_grao_id !== filtroGraoId) continue;
+      if (filtroVariedadeId !== "todos" && (r as any).variedade_id !== filtroVariedadeId) continue;
       const key = `${r.produtor_id}-${r.tipo_grao_id}`;
       const existing = map.get(key) || {
         produtorId: r.produtor_id, tipoGraoId: r.tipo_grao_id,
