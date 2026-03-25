@@ -34,10 +34,16 @@ interface LancamentoUnificado {
 }
 
 export default function RelatorioPage() {
-  const { produtores, tiposGrao, recebimentos, saidas } = useAppData();
+  const { produtores, tiposGrao, recebimentos, saidas, variedades } = useAppData();
   const [filtroProdutorId, setFiltroProdutorId] = useState("todos");
   const [filtroGraoId, setFiltroGraoId] = useState("todos");
+  const [filtroVariedadeId, setFiltroVariedadeId] = useState("todos");
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
+
+  const variedadesFiltradas = useMemo(() => {
+    if (filtroGraoId === "todos") return variedades;
+    return variedades.filter(v => v.grao_id === filtroGraoId);
+  }, [variedades, filtroGraoId]);
 
   // Função para filtrar lançamentos pelo modo
   const filterLancamentos = (lancamentos: LancamentoUnificado[]) => {
