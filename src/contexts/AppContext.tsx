@@ -70,6 +70,7 @@ export interface Saida {
   comprador_id: string;
   produtor_id?: string | null;
   tipo_grao_id?: string | null;
+  variedade_id?: string | null;
   classificacao: string;
   kgs_expedidos: number;
   umidade_saida: number;
