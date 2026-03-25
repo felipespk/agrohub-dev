@@ -579,7 +579,7 @@ export default function SaidaVendaPage() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead>
+              <TableHead>Data</TableHead><TableHead>Placa</TableHead><TableHead>Produtor</TableHead><TableHead>Grão</TableHead><TableHead>Variedade</TableHead>
               <TableHead>Comprador</TableHead><TableHead>Categoria</TableHead>
               <TableHead>Classificação</TableHead><TableHead className="text-right">Umidade (%)</TableHead>
               <TableHead className="text-right">Peso (Kg)</TableHead><TableHead className="text-right">Peso Ajust.</TableHead>
