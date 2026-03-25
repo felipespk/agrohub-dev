@@ -155,7 +155,7 @@ export default function SaidaVendaPage() {
     }
 
     return fatias;
-  }, [produtorId, tipoGraoId, pesoAjustado, data, recebimentos, taxaArmazenamento]);
+  }, [produtorId, tipoGraoId, variedadeId, pesoAjustado, data, recebimentos, taxaArmazenamento]);
 
   const totalDiasArmazenados = composicaoFIFO.length > 0
     ? Math.round(composicaoFIFO.reduce((sum, f) => sum + f.dias_armazenados * f.kg_consumidos, 0) / composicaoFIFO.reduce((sum, f) => sum + f.kg_consumidos, 0))
