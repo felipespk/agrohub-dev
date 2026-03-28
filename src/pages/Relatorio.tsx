@@ -56,7 +56,7 @@ export default function RelatorioPage() {
     const map = new Map<string, {
       produtorId: string; tipoGraoId: string;
       produtorNome: string; tipoGraoNome: string;
-      kgsEntrada: number; kgsSaida: number;
+      kgsEntrada: number; kgsSaida: number; kgsBrutoEntrada: number;
       lancamentos: LancamentoUnificado[];
     }>();
 
@@ -68,9 +68,10 @@ export default function RelatorioPage() {
       const existing = map.get(key) || {
         produtorId: r.produtor_id, tipoGraoId: r.tipo_grao_id,
         produtorNome: r.produtor_nome || "", tipoGraoNome: r.tipo_grao_nome || "",
-        kgsEntrada: 0, kgsSaida: 0, lancamentos: [],
+        kgsEntrada: 0, kgsSaida: 0, kgsBrutoEntrada: 0, lancamentos: [],
       };
       existing.kgsEntrada += r.peso_liquido;
+      existing.kgsBrutoEntrada += r.peso_bruto;
       const descontoU = r.desconto_umidade_kg || 0;
       const descontoI = r.desconto_impureza_kg || 0;
       const descontoS = r.desconto_secagem_kg || 0;
@@ -470,9 +471,13 @@ export default function RelatorioPage() {
                     </Table>
                   </div>
                   {/* Summary footer */}
-                  <div className="grid grid-cols-3 divide-x border-t bg-muted/20">
+                  <div className="grid grid-cols-4 divide-x border-t bg-muted/20">
                     <div className="p-3 text-center">
-                      <p className="text-xs text-muted-foreground">Total Entradas</p>
+                      <p className="text-xs text-muted-foreground">Peso Bruto Recebido</p>
+                      <p className="font-semibold text-blue-600 dark:text-blue-400 tabular-nums">{fmt(g.kgsBrutoEntrada)} Kg</p>
+                    </div>
+                    <div className="p-3 text-center">
+                      <p className="text-xs text-muted-foreground">Total Entradas (Ajustado)</p>
                       <p className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">+{fmt(g.kgsEntrada)} Kg</p>
                     </div>
                     <div className="p-3 text-center">

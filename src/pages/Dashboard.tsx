@@ -3,7 +3,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
 } from "recharts";
-import { Package, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Wheat, TrendingUp, TrendingDown, Settings2, Check } from "lucide-react";
+import { Package, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Wheat, TrendingUp, TrendingDown, Settings2, Check, Scale } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [capInput, setCapInput] = useState(String(capacidadeSilo / 1000));
 
   const totalRecebido = recebimentos.reduce((s, r) => s + r.peso_liquido, 0);
+  const totalBruto = recebimentos.reduce((s, r) => s + r.peso_bruto, 0);
   const totalExpedido = saidas.reduce((s, r) => s + r.kgs_expedidos, 0);
   const totalQuebra = quebras.reduce((s, q) => s + q.kg_ajuste, 0);
   const totalEstoque = totalRecebido - totalExpedido + totalQuebra;
@@ -74,9 +75,10 @@ export default function Dashboard() {
         <p className="page-subtitle">Visão geral do secador de grãos</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard icon={Package} label="Estoque Atual" value={`${(totalEstoque / 1000).toFixed(1)} ton`} sub={`${totalEstoque.toLocaleString("pt-BR")} Kg`} color="text-primary" trend={+5.2} />
-        <KpiCard icon={ArrowDownToLine} label="Recebido no Mês" value={`${(totalRecebido / 1000).toFixed(1)} ton`} sub={`${recebimentos.length} entradas`} color="text-emerald-600" trend={+12.0} />
+        <KpiCard icon={Scale} label="Volume Bruto Recebido" value={`${(totalBruto / 1000).toFixed(1)} ton`} sub={`${totalBruto.toLocaleString("pt-BR")} Kg`} color="text-blue-600" trend={+12.0} />
+        <KpiCard icon={ArrowDownToLine} label="Recebido (Ajustado)" value={`${(totalRecebido / 1000).toFixed(1)} ton`} sub={`${recebimentos.length} entradas`} color="text-emerald-600" trend={+12.0} />
         <KpiCard icon={ArrowUpFromLine} label="Expedido no Mês" value={`${(totalExpedido / 1000).toFixed(1)} ton`} sub={`${saidas.length} saídas`} color="text-amber-600" trend={-3.1} />
         <KpiCard icon={AlertTriangle} label="Quebra Técnica" value={`${Math.abs(totalQuebra).toLocaleString("pt-BR")} Kg`} sub={`${quebras.length} registros`} color="text-destructive" trend={-1.5} />
       </div>
