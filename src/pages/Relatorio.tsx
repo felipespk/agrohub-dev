@@ -295,7 +295,7 @@ export default function RelatorioPage() {
         } else if (filterMode === "out") {
           summaryData.pesoKg = kgsSaidaFiltrado;
         } else {
-          summaryData.operacao = `E: ${kgsEntradaFiltrado} | S: ${kgsSaidaFiltrado}`;
+          summaryData.operacao = `Entradas: ${kgsEntradaFiltrado.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Kg | Saídas: ${kgsSaidaFiltrado.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Kg`;
           summaryData.pesoLiq = saldoFiltrado;
         }
 
