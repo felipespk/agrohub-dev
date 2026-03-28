@@ -112,7 +112,10 @@ export default function RelatorioPage() {
     });
   }, [filtroProdutorId, filtroGraoId, filtroVariedadeId, recebimentos, saidas]);
 
-  const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const fmt = (n: number | null | undefined) => {
+    const v = typeof n === "number" && !Number.isNaN(n) ? n : 0;
+    return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
   const fmt2 = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const exportExcel = async () => {
