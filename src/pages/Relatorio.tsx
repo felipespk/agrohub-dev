@@ -147,7 +147,7 @@ export default function RelatorioPage() {
       { header: "Desc. Umidade (Kg)", key: "ajusteUmid", width: 20 },
       { header: "Desc. Impureza (Kg)", key: "descImp", width: 18 },
       { header: "Desc. Secagem (Kg)", key: "descSec", width: 18 },
-      { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
+      { header: "Entrada Ajustada (Kg)", key: "pesoLiq", width: 20 },
     ];
 
     const saidaColumns = [
@@ -175,7 +175,7 @@ export default function RelatorioPage() {
       { header: "Ajuste Umidade (Kg)", key: "ajusteUmid", width: 20 },
       { header: "Desc. Impureza (Kg)", key: "descImp", width: 18 },
       { header: "Desc. Secagem (Kg)", key: "descSec", width: 18 },
-      { header: "Peso Líquido (Kg)", key: "pesoLiq", width: 18 },
+      { header: "Entrada Ajustada (Kg)", key: "pesoLiq", width: 20 },
     ];
 
     if (filterMode === "in") {
@@ -285,8 +285,10 @@ export default function RelatorioPage() {
 
       // Summary row per group
       const kgsEntradaFiltrado = lancamentosFiltrados.filter(l => l.tipo === "entrada").reduce((s, l) => s + l.kg, 0);
+      const kgsBrutoFiltrado = lancamentosFiltrados.filter(l => l.tipo === "entrada").reduce((s, l) => s + (l.pesoBruto || 0), 0);
       const kgsSaidaFiltrado = lancamentosFiltrados.filter(l => l.tipo === "saida").reduce((s, l) => s + l.kg, 0);
       const saldoFiltrado = kgsEntradaFiltrado - kgsSaidaFiltrado;
+      const fmtKg = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " Kg";
 
       if (lancamentosFiltrados.length > 0) {
         const summaryData: Record<string, any> = {
@@ -294,11 +296,12 @@ export default function RelatorioPage() {
         };
 
         if (filterMode === "in") {
+          summaryData.pesoBruto = kgsBrutoFiltrado;
           summaryData.pesoLiq = kgsEntradaFiltrado;
         } else if (filterMode === "out") {
           summaryData.pesoKg = kgsSaidaFiltrado;
         } else {
-          summaryData.operacao = `Entradas: ${kgsEntradaFiltrado.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Kg | Saídas: ${kgsSaidaFiltrado.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Kg`;
+          summaryData.operacao = `Entrada Bruta: ${fmtKg(kgsBrutoFiltrado)} | Entrada Ajustada: ${fmtKg(kgsEntradaFiltrado)} | Saídas: ${fmtKg(kgsSaidaFiltrado)}`;
           summaryData.pesoLiq = saldoFiltrado;
         }
 
