@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wheat, DollarSign, Beef, ArrowRight, LogOut, Leaf } from "lucide-react";
+import { Wheat, DollarSign, Beef, Sprout, ArrowRight, LogOut, Leaf } from "lucide-react";
 
 const modules = [
   {
@@ -27,6 +27,14 @@ const modules = [
     bg: "#FEF3C7",
     path: "/gado",
   },
+  {
+    title: "Lavoura",
+    description: "Planejamento de safra, caderno de campo, estoque de insumos, máquinas e colheita.",
+    icon: Sprout,
+    color: "#16A34A",
+    bg: "#DCFCE7",
+    path: "/lavoura",
+  },
 ];
 
 export default function HubPage() {
@@ -44,7 +52,7 @@ export default function HubPage() {
         </div>
         <p className="text-muted-foreground text-base mb-12">Selecione o módulo</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-5xl">
           {modules.map((mod) => (
             <button
               key={mod.title}

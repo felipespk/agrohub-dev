@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-type ModuleKey = "secador" | "financeiro" | "gado";
+type ModuleKey = "secador" | "financeiro" | "gado" | "lavoura";
 
 interface FarmContextType {
   /** Legacy single name — returns secador name for backward compat */
@@ -22,20 +22,21 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     secador: "",
     financeiro: "",
     gado: "",
+    lavoura: "",
   });
   const [loading, setLoading] = useState(true);
 
   // Fetch all module names on mount
   useEffect(() => {
     if (!user) {
-      setNames({ secador: "", financeiro: "", gado: "" });
+      setNames({ secador: "", financeiro: "", gado: "", lavoura: "" });
       setLoading(false);
       return;
     }
     setLoading(true);
     supabase
       .from("profiles")
-      .select("farm_name, farm_name_financeiro, farm_name_gado")
+      .select("farm_name, farm_name_financeiro, farm_name_gado, farm_name_lavoura")
       .eq("user_id", user.id)
       .single()
       .then(({ data }) => {
@@ -43,6 +44,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           secador: (data as any)?.farm_name || "",
           financeiro: (data as any)?.farm_name_financeiro || "",
           gado: (data as any)?.farm_name_gado || "",
+          lavoura: (data as any)?.farm_name_lavoura || "",
         });
         setLoading(false);
       });
@@ -58,6 +60,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       secador: "farm_name",
       financeiro: "farm_name_financeiro",
       gado: "farm_name_gado",
+      lavoura: "farm_name_lavoura",
     };
 
     const { error } = await supabase

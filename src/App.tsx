@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { FinanceiroLayout } from "@/components/financeiro/FinanceiroLayout";
+import { LavouraLayout } from "@/components/lavoura/LavouraLayout";
 import { GadoLayout } from "@/components/gado/GadoLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
@@ -116,6 +117,19 @@ const ReproducaoPage = lazy(() => import("@/pages/gado/ReproducaoPage"));
 const RacasPage = lazy(() => import("@/pages/gado/RacasPage"));
 const GadoConfiguracoesPage = lazy(() => import("@/pages/GadoConfiguracoesPage"));
 
+const LavouraDashboard = lazy(() => import("@/pages/lavoura/LavouraDashboard"));
+const TalhoesPage = lazy(() => import("@/pages/lavoura/TalhoesPage"));
+const SafrasPage = lazy(() => import("@/pages/lavoura/SafrasPage"));
+const SafraDetalhePage = lazy(() => import("@/pages/lavoura/SafraDetalhePage"));
+const AtividadesPage = lazy(() => import("@/pages/lavoura/AtividadesPage"));
+const InsumosPage = lazy(() => import("@/pages/lavoura/InsumosPage"));
+const MaquinasPage = lazy(() => import("@/pages/lavoura/MaquinasPage"));
+const ColheitasPage = lazy(() => import("@/pages/lavoura/ColheitasPage"));
+const PragasPage = lazy(() => import("@/pages/lavoura/PragasPage"));
+const ComercializacaoPage = lazy(() => import("@/pages/lavoura/ComercializacaoPage"));
+const CulturasPage = lazy(() => import("@/pages/lavoura/CulturasPage"));
+const LavouraConfiguracoesPage = lazy(() => import("@/pages/lavoura/LavouraConfiguracoesPage"));
+
 function ProtectedGado() {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
@@ -151,6 +165,36 @@ function ProtectedHub() {
   return <Hub />;
 }
 
+function ProtectedLavoura() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return (
+    <FarmProvider>
+      <LavouraLayout>
+        <Suspense fallback={<div className="p-8 text-muted-foreground">Carregando...</div>}>
+          <Routes>
+            <Route path="/" element={<LavouraDashboard />} />
+            <Route path="/talhoes" element={<TalhoesPage />} />
+            <Route path="/safras" element={<SafrasPage />} />
+            <Route path="/safras/:id" element={<SafraDetalhePage />} />
+            <Route path="/atividades" element={<AtividadesPage />} />
+            <Route path="/insumos" element={<InsumosPage />} />
+            <Route path="/maquinas" element={<MaquinasPage />} />
+            <Route path="/colheitas" element={<ColheitasPage />} />
+            <Route path="/pragas" element={<PragasPage />} />
+            <Route path="/comercializacao" element={<ComercializacaoPage />} />
+            <Route path="/culturas" element={<CulturasPage />} />
+            <Route path="/configuracoes" element={<LavouraConfiguracoesPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </LavouraLayout>
+    </FarmProvider>
+  );
+}
+
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
@@ -173,6 +217,7 @@ const App = () => (
             <Route path="/hub" element={<ProtectedHub />} />
             <Route path="/financeiro/*" element={<ProtectedFinanceiro />} />
             <Route path="/gado/*" element={<ProtectedGado />} />
+            <Route path="/lavoura/*" element={<ProtectedLavoura />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>
