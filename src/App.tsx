@@ -25,6 +25,8 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Hub from "@/pages/Hub";
 import Gado from "@/pages/Gado";
+import SecadorConfiguracoesPage from "@/pages/SecadorConfiguracoesPage";
+import GadoConfiguracoesPage from "@/pages/GadoConfiguracoesPage";
 import FinanceiroDashboard from "@/pages/financeiro/FinanceiroDashboard";
 import ContasPRPage from "@/pages/financeiro/ContasPRPage";
 import LancamentosPage from "@/pages/financeiro/LancamentosPage";
