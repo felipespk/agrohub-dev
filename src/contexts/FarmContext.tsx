@@ -60,6 +60,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       secador: "farm_name",
       financeiro: "farm_name_financeiro",
       gado: "farm_name_gado",
+      lavoura: "farm_name_lavoura",
     };
 
     const { error } = await supabase
