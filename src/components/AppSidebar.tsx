@@ -29,7 +29,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
-  const { farmName } = useFarm();
+  const { getFarmName } = useFarm();
   const navigate = useNavigate();
 
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "U";
