@@ -117,6 +117,19 @@ const ReproducaoPage = lazy(() => import("@/pages/gado/ReproducaoPage"));
 const RacasPage = lazy(() => import("@/pages/gado/RacasPage"));
 const GadoConfiguracoesPage = lazy(() => import("@/pages/GadoConfiguracoesPage"));
 
+const LavouraDashboard = lazy(() => import("@/pages/lavoura/LavouraDashboard"));
+const TalhoesPage = lazy(() => import("@/pages/lavoura/TalhoesPage"));
+const SafrasPage = lazy(() => import("@/pages/lavoura/SafrasPage"));
+const SafraDetalhePage = lazy(() => import("@/pages/lavoura/SafraDetalhePage"));
+const AtividadesPage = lazy(() => import("@/pages/lavoura/AtividadesPage"));
+const InsumosPage = lazy(() => import("@/pages/lavoura/InsumosPage"));
+const MaquinasPage = lazy(() => import("@/pages/lavoura/MaquinasPage"));
+const ColheitasPage = lazy(() => import("@/pages/lavoura/ColheitasPage"));
+const PragasPage = lazy(() => import("@/pages/lavoura/PragasPage"));
+const ComercializacaoPage = lazy(() => import("@/pages/lavoura/ComercializacaoPage"));
+const CulturasPage = lazy(() => import("@/pages/lavoura/CulturasPage"));
+const LavouraConfiguracoesPage = lazy(() => import("@/pages/lavoura/LavouraConfiguracoesPage"));
+
 function ProtectedGado() {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
