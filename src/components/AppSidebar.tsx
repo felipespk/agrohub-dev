@@ -37,17 +37,20 @@ export function AppSidebar() {
         {/* Logo */}
         <div className={`px-4 pt-5 pb-2 ${collapsed ? "items-center flex flex-col" : ""}`}>
           <div className={`flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
-            <Wheat className="h-7 w-7 text-sidebar-primary shrink-0" />
+            <Wheat className="h-5 w-5 text-sidebar-primary shrink-0" />
             {!collapsed && (
-              <span className="text-lg font-display font-bold text-sidebar-foreground tracking-tight">
+              <span className="text-base font-bold text-sidebar-foreground tracking-tight">
                 AgroHub
               </span>
             )}
           </div>
           {!collapsed && (
-            <p className="text-xs text-sidebar-foreground/50 pl-9 truncate mt-0.5">
+            <button
+              onClick={() => navigate("/conta")}
+              className="text-[11px] text-sidebar-foreground/40 hover:text-sidebar-foreground/70 transition-colors pl-7 truncate mt-0.5 text-left"
+            >
               {farmName || "Configurar Fazenda"}
-            </p>
+            </button>
           )}
         </div>
 
