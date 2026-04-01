@@ -166,6 +166,82 @@ export type Database = {
           },
         ]
       }
+      atividades_campo: {
+        Row: {
+          area_coberta_ha: number | null
+          condicao_climatica: string | null
+          created_at: string | null
+          custo_total: number | null
+          data: string
+          horas_maquina: number | null
+          id: string
+          insumo_id: string | null
+          maquina_id: string | null
+          observacao: string | null
+          operador: string | null
+          quantidade_insumo: number | null
+          safra_talhao_id: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          area_coberta_ha?: number | null
+          condicao_climatica?: string | null
+          created_at?: string | null
+          custo_total?: number | null
+          data?: string
+          horas_maquina?: number | null
+          id?: string
+          insumo_id?: string | null
+          maquina_id?: string | null
+          observacao?: string | null
+          operador?: string | null
+          quantidade_insumo?: number | null
+          safra_talhao_id: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          area_coberta_ha?: number | null
+          condicao_climatica?: string | null
+          created_at?: string | null
+          custo_total?: number | null
+          data?: string
+          horas_maquina?: number | null
+          id?: string
+          insumo_id?: string | null
+          maquina_id?: string | null
+          observacao?: string | null
+          operador?: string | null
+          quantidade_insumo?: number | null
+          safra_talhao_id?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atividades_campo_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atividades_campo_maquina_id_fkey"
+            columns: ["maquina_id"]
+            isOneToOne: false
+            referencedRelation: "maquinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atividades_campo_safra_talhao_id_fkey"
+            columns: ["safra_talhao_id"]
+            isOneToOne: false
+            referencedRelation: "safra_talhoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categorias_financeiras: {
         Row: {
           cor: string | null
@@ -233,6 +309,120 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      colheitas: {
+        Row: {
+          created_at: string | null
+          data: string
+          destino: string | null
+          id: string
+          observacao: string | null
+          produtividade_calculada: number | null
+          quantidade: number
+          safra_talhao_id: string
+          umidade_percentual: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: string
+          destino?: string | null
+          id?: string
+          observacao?: string | null
+          produtividade_calculada?: number | null
+          quantidade: number
+          safra_talhao_id: string
+          umidade_percentual?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: string
+          destino?: string | null
+          id?: string
+          observacao?: string | null
+          produtividade_calculada?: number | null
+          quantidade?: number
+          safra_talhao_id?: string
+          umidade_percentual?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colheitas_safra_talhao_id_fkey"
+            columns: ["safra_talhao_id"]
+            isOneToOne: false
+            referencedRelation: "safra_talhoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comercializacao: {
+        Row: {
+          comprador_id: string | null
+          created_at: string | null
+          cultura_id: string | null
+          data_venda: string
+          id: string
+          observacao: string | null
+          preco_unitario: number
+          quantidade: number
+          safra_id: string | null
+          tipo_contrato: string | null
+          user_id: string
+          valor_total: number
+        }
+        Insert: {
+          comprador_id?: string | null
+          created_at?: string | null
+          cultura_id?: string | null
+          data_venda?: string
+          id?: string
+          observacao?: string | null
+          preco_unitario: number
+          quantidade: number
+          safra_id?: string | null
+          tipo_contrato?: string | null
+          user_id: string
+          valor_total: number
+        }
+        Update: {
+          comprador_id?: string | null
+          created_at?: string | null
+          cultura_id?: string | null
+          data_venda?: string
+          id?: string
+          observacao?: string | null
+          preco_unitario?: number
+          quantidade?: number
+          safra_id?: string | null
+          tipo_contrato?: string | null
+          user_id?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comercializacao_comprador_id_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "contatos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comercializacao_cultura_id_fkey"
+            columns: ["cultura_id"]
+            isOneToOne: false
+            referencedRelation: "culturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comercializacao_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       compradores: {
         Row: {
@@ -416,6 +606,69 @@ export type Database = {
         }
         Relationships: []
       }
+      culturas: {
+        Row: {
+          ciclo_medio_dias: number | null
+          created_at: string | null
+          id: string
+          nome: string
+          unidade_colheita: string | null
+          user_id: string
+        }
+        Insert: {
+          ciclo_medio_dias?: number | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          unidade_colheita?: string | null
+          user_id: string
+        }
+        Update: {
+          ciclo_medio_dias?: number | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          unidade_colheita?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insumos: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          estoque_atual: number | null
+          estoque_minimo: number | null
+          id: string
+          nome: string
+          preco_unitario: number | null
+          unidade_medida: string
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          id?: string
+          nome: string
+          preco_unitario?: number | null
+          unidade_medida: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          id?: string
+          nome?: string
+          preco_unitario?: number | null
+          unidade_medida?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lancamentos: {
         Row: {
           categoria_id: string | null
@@ -539,6 +792,89 @@ export type Database = {
           },
         ]
       }
+      manutencoes: {
+        Row: {
+          created_at: string | null
+          custo: number | null
+          data: string
+          descricao: string | null
+          id: string
+          maquina_id: string
+          proxima_manutencao: string | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          custo?: number | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          maquina_id: string
+          proxima_manutencao?: string | null
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          custo?: number | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          maquina_id?: string
+          proxima_manutencao?: string | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manutencoes_maquina_id_fkey"
+            columns: ["maquina_id"]
+            isOneToOne: false
+            referencedRelation: "maquinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maquinas: {
+        Row: {
+          ano: number | null
+          created_at: string | null
+          custo_hora: number | null
+          id: string
+          modelo: string | null
+          nome: string
+          placa_chassi: string | null
+          tipo: string
+          user_id: string
+          valor_aquisicao: number | null
+        }
+        Insert: {
+          ano?: number | null
+          created_at?: string | null
+          custo_hora?: number | null
+          id?: string
+          modelo?: string | null
+          nome: string
+          placa_chassi?: string | null
+          tipo: string
+          user_id: string
+          valor_aquisicao?: number | null
+        }
+        Update: {
+          ano?: number | null
+          created_at?: string | null
+          custo_hora?: number | null
+          id?: string
+          modelo?: string | null
+          nome?: string
+          placa_chassi?: string | null
+          tipo?: string
+          user_id?: string
+          valor_aquisicao?: number | null
+        }
+        Relationships: []
+      }
       medicamentos: {
         Row: {
           carencia_dias: number | null
@@ -641,6 +977,113 @@ export type Database = {
             columns: ["pasto_origem_id"]
             isOneToOne: false
             referencedRelation: "pastos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimentacoes_insumo: {
+        Row: {
+          atividade_id: string | null
+          created_at: string | null
+          data: string
+          fornecedor_id: string | null
+          id: string
+          insumo_id: string
+          observacao: string | null
+          quantidade: number
+          tipo: string
+          user_id: string
+          valor_total: number | null
+        }
+        Insert: {
+          atividade_id?: string | null
+          created_at?: string | null
+          data?: string
+          fornecedor_id?: string | null
+          id?: string
+          insumo_id: string
+          observacao?: string | null
+          quantidade: number
+          tipo: string
+          user_id: string
+          valor_total?: number | null
+        }
+        Update: {
+          atividade_id?: string | null
+          created_at?: string | null
+          data?: string
+          fornecedor_id?: string | null
+          id?: string
+          insumo_id?: string
+          observacao?: string | null
+          quantidade?: number
+          tipo?: string
+          user_id?: string
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_insumo_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "contatos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_insumo_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "insumos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencias_mip: {
+        Row: {
+          created_at: string | null
+          data: string
+          decisao: string | null
+          foto_url: string | null
+          id: string
+          nivel: string
+          nome_ocorrencia: string
+          observacao: string | null
+          safra_talhao_id: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: string
+          decisao?: string | null
+          foto_url?: string | null
+          id?: string
+          nivel: string
+          nome_ocorrencia: string
+          observacao?: string | null
+          safra_talhao_id: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: string
+          decisao?: string | null
+          foto_url?: string | null
+          id?: string
+          nivel?: string
+          nome_ocorrencia?: string
+          observacao?: string | null
+          safra_talhao_id?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_mip_safra_talhao_id_fkey"
+            columns: ["safra_talhao_id"]
+            isOneToOne: false
+            referencedRelation: "safra_talhoes"
             referencedColumns: ["id"]
           },
         ]
@@ -773,6 +1216,7 @@ export type Database = {
           farm_name: string | null
           farm_name_financeiro: string | null
           farm_name_gado: string | null
+          farm_name_lavoura: string | null
           formato_numero: string | null
           id: string
           master_password_hash: string | null
@@ -790,6 +1234,7 @@ export type Database = {
           farm_name?: string | null
           farm_name_financeiro?: string | null
           farm_name_gado?: string | null
+          farm_name_lavoura?: string | null
           formato_numero?: string | null
           id?: string
           master_password_hash?: string | null
@@ -807,6 +1252,7 @@ export type Database = {
           farm_name?: string | null
           farm_name_financeiro?: string | null
           farm_name_gado?: string | null
+          farm_name_lavoura?: string | null
           formato_numero?: string | null
           id?: string
           master_password_hash?: string | null
@@ -1039,6 +1485,104 @@ export type Database = {
           },
         ]
       }
+      safra_talhoes: {
+        Row: {
+          created_at: string | null
+          cultura_id: string
+          data_colheita_prevista: string | null
+          data_plantio_prevista: string | null
+          id: string
+          meta_produtividade: number | null
+          safra_id: string
+          talhao_id: string
+          user_id: string
+          variedade_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          cultura_id: string
+          data_colheita_prevista?: string | null
+          data_plantio_prevista?: string | null
+          id?: string
+          meta_produtividade?: number | null
+          safra_id: string
+          talhao_id: string
+          user_id: string
+          variedade_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          cultura_id?: string
+          data_colheita_prevista?: string | null
+          data_plantio_prevista?: string | null
+          id?: string
+          meta_produtividade?: number | null
+          safra_id?: string
+          talhao_id?: string
+          user_id?: string
+          variedade_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safra_talhoes_cultura_id_fkey"
+            columns: ["cultura_id"]
+            isOneToOne: false
+            referencedRelation: "culturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safra_talhoes_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safra_talhoes_talhao_id_fkey"
+            columns: ["talhao_id"]
+            isOneToOne: false
+            referencedRelation: "talhoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safra_talhoes_variedade_id_fkey"
+            columns: ["variedade_id"]
+            isOneToOne: false
+            referencedRelation: "variedades_cultura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safras: {
+        Row: {
+          created_at: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          id: string
+          nome: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          nome: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          nome?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       saidas: {
         Row: {
           categoria: string
@@ -1150,6 +1694,39 @@ export type Database = {
           },
         ]
       }
+      talhoes: {
+        Row: {
+          area_hectares: number
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          tipo_solo: string | null
+          user_id: string
+        }
+        Insert: {
+          area_hectares: number
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          tipo_solo?: string | null
+          user_id: string
+        }
+        Update: {
+          area_hectares?: number
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          tipo_solo?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       tipos_grao: {
         Row: {
           created_at: string
@@ -1182,6 +1759,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      variedades_cultura: {
+        Row: {
+          created_at: string | null
+          cultura_id: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          cultura_id: string
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          cultura_id?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variedades_cultura_cultura_id_fkey"
+            columns: ["cultura_id"]
+            isOneToOne: false
+            referencedRelation: "culturas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       variedades_grao: {
         Row: {
