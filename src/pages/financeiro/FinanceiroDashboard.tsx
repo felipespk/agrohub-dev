@@ -4,7 +4,6 @@ import { Landmark, TrendingUp, TrendingDown, Scale, Clock, CheckCircle, ArrowDow
 import { useFinanceiro } from "@/contexts/FinanceiroContext";
 import { formatarMoeda, formatarData } from "@/lib/format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 
 type PeriodoKey = "mes" | "3meses" | "6meses" | "ano";
