@@ -1,11 +1,11 @@
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft,
-  Warehouse, Truck, FileBarChart, AlertTriangle, UserPlus, Wheat, LogOut, Settings
+  Warehouse, Truck, FileBarChart, AlertTriangle, UserPlus, Wheat, LogOut, Settings, ArrowLeft
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFarm } from "@/contexts/FarmContext";
-import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -29,29 +29,46 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
   const { farmName } = useFarm();
+  const navigate = useNavigate();
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="flex flex-col h-full">
-        <div className={`flex flex-col gap-0.5 px-4 py-5 ${collapsed ? "items-center" : ""}`}>
+        {/* Logo */}
+        <div className={`px-4 pt-5 pb-2 ${collapsed ? "items-center flex flex-col" : ""}`}>
           <div className={`flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
             <Wheat className="h-7 w-7 text-sidebar-primary shrink-0" />
             {!collapsed && (
-              <span className="text-lg font-display font-bold text-sidebar-primary-foreground tracking-tight">
-                GrãoControl
+              <span className="text-lg font-display font-bold text-sidebar-foreground tracking-tight">
+                AgroHub
               </span>
             )}
           </div>
           {!collapsed && (
-            <p className="text-xs text-sidebar-foreground/60 pl-9 truncate">
+            <p className="text-xs text-sidebar-foreground/50 pl-9 truncate mt-0.5">
               {farmName || "Configurar Fazenda"}
             </p>
           )}
         </div>
 
-        <SidebarGroup className="flex-1">
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-xs tracking-wider">
-            {!collapsed && "Menu"}
+        {/* Back to Hub */}
+        <div className={`px-3 pb-2 ${collapsed ? "flex justify-center" : ""}`}>
+          <button
+            onClick={() => navigate("/hub")}
+            className={`flex items-center gap-2 text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-sidebar-accent/50 w-full ${collapsed ? "justify-center" : ""}`}
+          >
+            <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+            {!collapsed && <span>Voltar ao Hub</span>}
+          </button>
+        </div>
+
+        {/* Separator */}
+        <div className="mx-4 border-t border-sidebar-border" />
+
+        {/* Menu */}
+        <SidebarGroup className="flex-1 pt-2">
+          <SidebarGroupLabel className="text-sidebar-foreground/40 uppercase text-[11px] tracking-widest font-semibold">
+            {!collapsed && "Secador"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -61,8 +78,8 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="hover:bg-sidebar-accent/70"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      className="hover:bg-sidebar-accent/40 text-sidebar-foreground/80 transition-colors"
+                      activeClassName="bg-sidebar-accent text-sidebar-foreground font-medium border-l-[3px] border-sidebar-primary"
                     >
                       <item.icon className="mr-2 h-4 w-4 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
@@ -74,15 +91,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Conta & Logout */}
-        <div className={`px-3 py-4 border-t border-sidebar-border space-y-1 ${collapsed ? "flex flex-col items-center" : ""}`}>
+        {/* Footer */}
+        <div className="border-t border-sidebar-border" />
+        <div className={`px-3 py-4 space-y-2 ${collapsed ? "flex flex-col items-center" : ""}`}>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <NavLink
                   to="/conta"
-                  className="hover:bg-sidebar-accent/70"
-                  activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                  className="hover:bg-sidebar-accent/40 text-sidebar-foreground/80 transition-colors"
+                  activeClassName="bg-sidebar-accent text-sidebar-foreground font-medium"
                 >
                   <Settings className="mr-2 h-4 w-4 shrink-0" />
                   {!collapsed && <span>Conta</span>}
@@ -91,19 +109,17 @@ export function AppSidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
           {!collapsed && user && (
-            <p className="text-xs text-sidebar-foreground/60 truncate px-2 pt-2">
+            <p className="text-xs text-sidebar-foreground/40 truncate px-2">
               {user.email}
             </p>
           )}
-          <Button
-            variant="destructive"
-            size={collapsed ? "icon" : "sm"}
+          <button
             onClick={signOut}
-            className="w-full gap-2"
+            className={`flex items-center gap-2 text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-sidebar-accent/40 w-full ${collapsed ? "justify-center" : ""}`}
           >
-            <LogOut className="h-4 w-4 shrink-0" />
+            <LogOut className="h-3.5 w-3.5 shrink-0" />
             {!collapsed && <span>Sair</span>}
-          </Button>
+          </button>
         </div>
       </SidebarContent>
     </Sidebar>
