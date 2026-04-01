@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
         {!sent && (
-          <form onSubmit={handleSubmit} className="space-y-4 p-6 rounded-xl border bg-card shadow-sm">
+          <form onSubmit={handleSubmit} className="space-y-4 p-6 rounded-lg border border-border bg-card">
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
               <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} />

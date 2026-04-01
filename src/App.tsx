@@ -21,6 +21,9 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import Hub from "@/pages/Hub";
+import Financeiro from "@/pages/Financeiro";
+import Gado from "@/pages/Gado";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +56,8 @@ function ProtectedRoutes() {
             <Route path="/quebra-tecnica" element={<QuebraTecnica />} />
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/conta" element={<Conta />} />
+            <Route path="/financeiro" element={<Financeiro />} />
+            <Route path="/gado" element={<Gado />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
@@ -61,10 +66,17 @@ function ProtectedRoutes() {
   );
 }
 
+function ProtectedHub() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Hub />;
+}
+
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/hub" replace />;
   return <>{children}</>;
 }
 
@@ -80,6 +92,7 @@ const App = () => (
             <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
             <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/hub" element={<ProtectedHub />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>

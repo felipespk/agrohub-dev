@@ -28,11 +28,11 @@ export default function LoginPage() {
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
             <Wheat className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-display font-bold text-foreground tracking-tight">GrãoControl</span>
+            <span className="text-2xl font-display font-bold text-foreground tracking-tight">AgroHub</span>
           </div>
           <p className="text-sm text-muted-foreground">Faça login para acessar sua conta</p>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4 p-6 rounded-xl border bg-card shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-4 p-6 rounded-lg border border-border bg-card">
           <div className="space-y-2">
             <Label htmlFor="email">E-mail</Label>
             <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} />
