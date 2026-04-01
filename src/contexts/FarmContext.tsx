@@ -36,7 +36,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     supabase
       .from("profiles")
-      .select("farm_name, farm_name_financeiro, farm_name_gado")
+      .select("farm_name, farm_name_financeiro, farm_name_gado, farm_name_lavoura")
       .eq("user_id", user.id)
       .single()
       .then(({ data }) => {
