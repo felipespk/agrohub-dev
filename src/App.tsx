@@ -165,6 +165,36 @@ function ProtectedHub() {
   return <Hub />;
 }
 
+function ProtectedLavoura() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return (
+    <FarmProvider>
+      <LavouraLayout>
+        <Suspense fallback={<div className="p-8 text-muted-foreground">Carregando...</div>}>
+          <Routes>
+            <Route path="/" element={<LavouraDashboard />} />
+            <Route path="/talhoes" element={<TalhoesPage />} />
+            <Route path="/safras" element={<SafrasPage />} />
+            <Route path="/safras/:id" element={<SafraDetalhePage />} />
+            <Route path="/atividades" element={<AtividadesPage />} />
+            <Route path="/insumos" element={<InsumosPage />} />
+            <Route path="/maquinas" element={<MaquinasPage />} />
+            <Route path="/colheitas" element={<ColheitasPage />} />
+            <Route path="/pragas" element={<PragasPage />} />
+            <Route path="/comercializacao" element={<ComercializacaoPage />} />
+            <Route path="/culturas" element={<CulturasPage />} />
+            <Route path="/configuracoes" element={<LavouraConfiguracoesPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </LavouraLayout>
+    </FarmProvider>
+  );
+}
+
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
