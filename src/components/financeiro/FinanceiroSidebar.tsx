@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, FileDown, FileUp, ArrowLeftRight, TrendingUp,
-  Landmark, Tag, Target, Users, LogOut, ArrowLeft, Leaf,
+  Landmark, Tag, Target, Users, LogOut, ArrowLeft, Leaf, Settings,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
