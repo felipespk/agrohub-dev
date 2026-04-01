@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft,
-  Warehouse, Truck, FileBarChart, AlertTriangle, Users, LogOut, ArrowLeft, Leaf
+  Warehouse, Truck, FileBarChart, AlertTriangle, Users, LogOut, ArrowLeft, Leaf, Settings
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
