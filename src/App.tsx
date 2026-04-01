@@ -141,8 +141,9 @@ function ProtectedGado() {
       </GadoLayout>
     </FarmProvider>
   );
+}
 
-function ProtectedHub() {
+
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
   if (!user) return <Navigate to="/login" replace />;
