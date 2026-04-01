@@ -410,6 +410,8 @@ export type Database = {
           display_name: string | null
           exibir_conversao: boolean | null
           farm_name: string | null
+          farm_name_financeiro: string | null
+          farm_name_gado: string | null
           formato_numero: string | null
           id: string
           master_password_hash: string | null
@@ -425,6 +427,8 @@ export type Database = {
           display_name?: string | null
           exibir_conversao?: boolean | null
           farm_name?: string | null
+          farm_name_financeiro?: string | null
+          farm_name_gado?: string | null
           formato_numero?: string | null
           id?: string
           master_password_hash?: string | null
@@ -440,6 +444,8 @@ export type Database = {
           display_name?: string | null
           exibir_conversao?: boolean | null
           farm_name?: string | null
+          farm_name_financeiro?: string | null
+          farm_name_gado?: string | null
           formato_numero?: string | null
           id?: string
           master_password_hash?: string | null
