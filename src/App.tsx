@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { FinanceiroLayout } from "@/components/financeiro/FinanceiroLayout";
+import { GadoLayout } from "@/components/gado/GadoLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { FarmProvider } from "@/contexts/FarmContext";
@@ -24,9 +26,7 @@ import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Hub from "@/pages/Hub";
-import Gado from "@/pages/Gado";
 import SecadorConfiguracoesPage from "@/pages/SecadorConfiguracoesPage";
-import GadoConfiguracoesPage from "@/pages/GadoConfiguracoesPage";
 import FinanceiroDashboard from "@/pages/financeiro/FinanceiroDashboard";
 import ContasPRPage from "@/pages/financeiro/ContasPRPage";
 import LancamentosPage from "@/pages/financeiro/LancamentosPage";
@@ -69,8 +69,6 @@ function ProtectedRoutes() {
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/conta" element={<Conta />} />
             <Route path="/configuracoes" element={<SecadorConfiguracoesPage />} />
-            <Route path="/gado" element={<Gado />} />
-            <Route path="/gado/configuracoes" element={<GadoConfiguracoesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
@@ -107,6 +105,45 @@ function ProtectedFinanceiro() {
   );
 }
 
+const GadoDashboard = lazy(() => import("@/pages/gado/GadoDashboard"));
+const AnimaisPage = lazy(() => import("@/pages/gado/AnimaisPage"));
+const AnimalFichaPage = lazy(() => import("@/pages/gado/AnimalFichaPage"));
+const PastosPage = lazy(() => import("@/pages/gado/PastosPage"));
+const PesagensPage = lazy(() => import("@/pages/gado/PesagensPage"));
+const SanidadePage = lazy(() => import("@/pages/gado/SanidadePage"));
+const MovimentacoesGadoPage = lazy(() => import("@/pages/gado/MovimentacoesPage"));
+const ReproducaoPage = lazy(() => import("@/pages/gado/ReproducaoPage"));
+const RacasPage = lazy(() => import("@/pages/gado/RacasPage"));
+const GadoConfiguracoesPage = lazy(() => import("@/pages/GadoConfiguracoesPage"));
+
+function ProtectedGado() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return (
+    <FarmProvider>
+      <GadoLayout>
+        <Suspense fallback={<div className="p-8 text-muted-foreground">Carregando...</div>}>
+          <Routes>
+            <Route path="/" element={<GadoDashboard />} />
+            <Route path="/animais" element={<AnimaisPage />} />
+            <Route path="/animais/:id" element={<AnimalFichaPage />} />
+            <Route path="/pastos" element={<PastosPage />} />
+            <Route path="/pesagens" element={<PesagensPage />} />
+            <Route path="/sanidade" element={<SanidadePage />} />
+            <Route path="/movimentacoes" element={<MovimentacoesGadoPage />} />
+            <Route path="/reproducao" element={<ReproducaoPage />} />
+            <Route path="/racas" element={<RacasPage />} />
+            <Route path="/configuracoes" element={<GadoConfiguracoesPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </GadoLayout>
+    </FarmProvider>
+  );
+}
+
 function ProtectedHub() {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
@@ -135,6 +172,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/hub" element={<ProtectedHub />} />
             <Route path="/financeiro/*" element={<ProtectedFinanceiro />} />
+            <Route path="/gado/*" element={<ProtectedGado />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>
