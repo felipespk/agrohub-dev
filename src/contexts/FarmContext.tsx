@@ -44,6 +44,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           secador: (data as any)?.farm_name || "",
           financeiro: (data as any)?.farm_name_financeiro || "",
           gado: (data as any)?.farm_name_gado || "",
+          lavoura: (data as any)?.farm_name_lavoura || "",
         });
         setLoading(false);
       });
