@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function CentrosCustoPage() {
-  const { centrosCusto, contasPR, lancamentos, reload } = useFinanceiro();
+  const { centrosCusto, reload } = useFinanceiro();
   const { user } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
