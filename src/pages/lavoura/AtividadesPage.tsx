@@ -202,9 +202,9 @@ export default function AtividadesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Máquina</Label>
-                <Select value={form.maquina_id} onValueChange={v => setForm((p: any) => ({ ...p, maquina_id: v }))}>
+                <Select value={form.maquina_id || "none"} onValueChange={v => setForm((p: any) => ({ ...p, maquina_id: v === "none" ? "" : v }))}>
                   <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
-                  <SelectContent><SelectItem value="">Nenhuma</SelectItem>{maquinas.map(m => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="none">Nenhuma</SelectItem>{maquinas.map(m => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2"><Label>Horas</Label><Input type="number" value={form.horas_maquina} onChange={e => setForm((p: any) => ({ ...p, horas_maquina: e.target.value }))} /></div>
