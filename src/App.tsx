@@ -143,6 +143,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/hub" element={<ProtectedHub />} />
             <Route path="/financeiro/*" element={<ProtectedFinanceiro />} />
+            <Route path="/gado/*" element={<ProtectedGado />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>
