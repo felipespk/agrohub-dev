@@ -113,7 +113,7 @@ export default function CategoriasPage() {
             <div><Label>Categoria Pai</Label>
               <Select value={form.pai_id} onValueChange={v => setForm(f => ({ ...f, pai_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Nenhuma (raiz)" /></SelectTrigger>
-                <SelectContent><SelectItem value="">Nenhuma (raiz)</SelectItem>{pais.filter(p => p.id !== editItem?.id).map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
+                <SelectContent><SelectItem value="__none__">Nenhuma (raiz)</SelectItem>{pais.filter(p => p.id !== editItem?.id).map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Tipo {form.pai_id ? "(herdado do pai)" : ""}</Label>
