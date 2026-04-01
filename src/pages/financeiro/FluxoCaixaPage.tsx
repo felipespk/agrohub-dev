@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from "recharts";
+import { Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart } from "recharts";
 import { AlertTriangle } from "lucide-react";
 import { useFinanceiro } from "@/contexts/FinanceiroContext";
 import { formatarMoeda, formatarData } from "@/lib/format";
