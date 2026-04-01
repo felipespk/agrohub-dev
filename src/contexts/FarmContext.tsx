@@ -37,10 +37,15 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const setFarmName = useCallback(async (name: string) => {
     setFarmNameState(name);
     if (!user) return;
-    await supabase
+    const { error } = await supabase
       .from("profiles")
-      .update({ farm_name: name } as any)
-      .eq("user_id", user.id);
+      .upsert(
+        { user_id: user.id, farm_name: name } as any,
+        { onConflict: "user_id" }
+      );
+    if (error) {
+      console.error("Failed to save farm name:", error);
+    }
   }, [user]);
 
   return (
