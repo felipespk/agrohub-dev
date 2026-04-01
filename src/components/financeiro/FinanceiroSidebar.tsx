@@ -32,7 +32,7 @@ export function FinanceiroSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
-  const { farmName } = useFarm();
+  const { getFarmName } = useFarm();
   const navigate = useNavigate();
 
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "U";
@@ -50,7 +50,7 @@ export function FinanceiroSidebar() {
           {!collapsed && (
             <button onClick={() => navigate("/conta")}
               className="text-[12px] text-[#8A99AF] hover:text-white/80 transition-colors pl-[34px] truncate mt-1 text-left block">
-              {farmName || "Configurar Fazenda"}
+              {getFarmName("financeiro") || "Configurar Fazenda"}
             </button>
           )}
         </div>

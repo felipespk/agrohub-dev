@@ -11,14 +11,15 @@ import { Building2, Save, User, ShieldCheck, Lock, Eye, EyeOff } from "lucide-re
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-export function FarmIdentitySection() {
-  const { farmName, setFarmName, loading } = useFarm();
-  const [nome, setNome] = useState(farmName);
+export function FarmIdentitySection({ module = "secador" }: { module?: "secador" | "financeiro" | "gado" }) {
+  const { getFarmName, setModuleFarmName, loading } = useFarm();
+  const currentName = getFarmName(module);
+  const [nome, setNome] = useState(currentName);
 
-  useEffect(() => { setNome(farmName); }, [farmName]);
+  useEffect(() => { setNome(currentName); }, [currentName]);
 
-  const handleSave = () => {
-    setFarmName(nome.trim());
+  const handleSave = async () => {
+    await setModuleFarmName(module, nome.trim());
     toast.success("Nome da fazenda salvo com sucesso!");
   };
 
