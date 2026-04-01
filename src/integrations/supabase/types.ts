@@ -14,6 +14,158 @@ export type Database = {
   }
   public: {
     Tables: {
+      animais: {
+        Row: {
+          brinco: string
+          categoria: string
+          cor: string | null
+          created_at: string | null
+          data_entrada: string | null
+          data_nascimento: string | null
+          foto_url: string | null
+          id: string
+          lote_id: string | null
+          mae_brinco: string | null
+          nome: string | null
+          observacoes: string | null
+          origem: string | null
+          pai_brinco: string | null
+          pasto_id: string | null
+          peso_atual: number | null
+          raca_id: string | null
+          sexo: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          brinco: string
+          categoria: string
+          cor?: string | null
+          created_at?: string | null
+          data_entrada?: string | null
+          data_nascimento?: string | null
+          foto_url?: string | null
+          id?: string
+          lote_id?: string | null
+          mae_brinco?: string | null
+          nome?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          pai_brinco?: string | null
+          pasto_id?: string | null
+          peso_atual?: number | null
+          raca_id?: string | null
+          sexo: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          brinco?: string
+          categoria?: string
+          cor?: string | null
+          created_at?: string | null
+          data_entrada?: string | null
+          data_nascimento?: string | null
+          foto_url?: string | null
+          id?: string
+          lote_id?: string | null
+          mae_brinco?: string | null
+          nome?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          pai_brinco?: string | null
+          pasto_id?: string | null
+          peso_atual?: number | null
+          raca_id?: string | null
+          sexo?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "animais_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animais_pasto_id_fkey"
+            columns: ["pasto_id"]
+            isOneToOne: false
+            referencedRelation: "pastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animais_raca_id_fkey"
+            columns: ["raca_id"]
+            isOneToOne: false
+            referencedRelation: "racas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aplicacoes_sanitarias: {
+        Row: {
+          animal_id: string | null
+          created_at: string | null
+          data_aplicacao: string
+          dose: string | null
+          id: string
+          lote_id: string | null
+          medicamento_id: string
+          observacao: string | null
+          proxima_dose: string | null
+          user_id: string
+        }
+        Insert: {
+          animal_id?: string | null
+          created_at?: string | null
+          data_aplicacao?: string
+          dose?: string | null
+          id?: string
+          lote_id?: string | null
+          medicamento_id: string
+          observacao?: string | null
+          proxima_dose?: string | null
+          user_id: string
+        }
+        Update: {
+          animal_id?: string | null
+          created_at?: string | null
+          data_aplicacao?: string
+          dose?: string | null
+          id?: string
+          lote_id?: string | null
+          medicamento_id?: string
+          observacao?: string | null
+          proxima_dose?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aplicacoes_sanitarias_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aplicacoes_sanitarias_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aplicacoes_sanitarias_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categorias_financeiras: {
         Row: {
           cor: string | null
@@ -355,6 +507,215 @@ export type Database = {
           },
         ]
       }
+      lotes: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          pasto_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          pasto_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          pasto_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lotes_pasto_id_fkey"
+            columns: ["pasto_id"]
+            isOneToOne: false
+            referencedRelation: "pastos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medicamentos: {
+        Row: {
+          carencia_dias: number | null
+          created_at: string | null
+          fabricante: string | null
+          id: string
+          nome: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          carencia_dias?: number | null
+          created_at?: string | null
+          fabricante?: string | null
+          id?: string
+          nome: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          carencia_dias?: number | null
+          created_at?: string | null
+          fabricante?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      movimentacoes_gado: {
+        Row: {
+          animal_id: string | null
+          causa_morte: string | null
+          contato_id: string | null
+          created_at: string | null
+          data: string
+          id: string
+          observacao: string | null
+          pasto_destino_id: string | null
+          pasto_origem_id: string | null
+          peso_kg: number | null
+          quantidade: number | null
+          tipo: string
+          user_id: string
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          animal_id?: string | null
+          causa_morte?: string | null
+          contato_id?: string | null
+          created_at?: string | null
+          data?: string
+          id?: string
+          observacao?: string | null
+          pasto_destino_id?: string | null
+          pasto_origem_id?: string | null
+          peso_kg?: number | null
+          quantidade?: number | null
+          tipo: string
+          user_id: string
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          animal_id?: string | null
+          causa_morte?: string | null
+          contato_id?: string | null
+          created_at?: string | null
+          data?: string
+          id?: string
+          observacao?: string | null
+          pasto_destino_id?: string | null
+          pasto_origem_id?: string | null
+          peso_kg?: number | null
+          quantidade?: number | null
+          tipo?: string
+          user_id?: string
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_gado_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_gado_pasto_destino_id_fkey"
+            columns: ["pasto_destino_id"]
+            isOneToOne: false
+            referencedRelation: "pastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_gado_pasto_origem_id_fkey"
+            columns: ["pasto_origem_id"]
+            isOneToOne: false
+            referencedRelation: "pastos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pastos: {
+        Row: {
+          area_hectares: number | null
+          ativo: boolean | null
+          capacidade_cabecas: number | null
+          created_at: string | null
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          area_hectares?: number | null
+          ativo?: boolean | null
+          capacidade_cabecas?: number | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          area_hectares?: number | null
+          ativo?: boolean | null
+          capacidade_cabecas?: number | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pesagens: {
+        Row: {
+          animal_id: string | null
+          created_at: string | null
+          data: string
+          gmd: number | null
+          id: string
+          observacao: string | null
+          peso_kg: number
+          user_id: string
+        }
+        Insert: {
+          animal_id?: string | null
+          created_at?: string | null
+          data?: string
+          gmd?: number | null
+          id?: string
+          observacao?: string | null
+          peso_kg: number
+          user_id: string
+        }
+        Update: {
+          animal_id?: string | null
+          created_at?: string | null
+          data?: string
+          gmd?: number | null
+          id?: string
+          observacao?: string | null
+          peso_kg?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesagens_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produtores: {
         Row: {
           cidade: string | null
@@ -601,6 +962,79 @@ export type Database = {
             columns: ["variedade_id"]
             isOneToOne: false
             referencedRelation: "variedades_grao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reproducao: {
+        Row: {
+          bezerro_id: string | null
+          created_at: string | null
+          data_cobertura: string
+          data_diagnostico: string | null
+          data_parto_prevista: string | null
+          data_parto_real: string | null
+          diagnostico: string | null
+          femea_id: string
+          id: string
+          macho_id: string | null
+          observacao: string | null
+          semen_info: string | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          bezerro_id?: string | null
+          created_at?: string | null
+          data_cobertura: string
+          data_diagnostico?: string | null
+          data_parto_prevista?: string | null
+          data_parto_real?: string | null
+          diagnostico?: string | null
+          femea_id: string
+          id?: string
+          macho_id?: string | null
+          observacao?: string | null
+          semen_info?: string | null
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          bezerro_id?: string | null
+          created_at?: string | null
+          data_cobertura?: string
+          data_diagnostico?: string | null
+          data_parto_prevista?: string | null
+          data_parto_real?: string | null
+          diagnostico?: string | null
+          femea_id?: string
+          id?: string
+          macho_id?: string | null
+          observacao?: string | null
+          semen_info?: string | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reproducao_bezerro_id_fkey"
+            columns: ["bezerro_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reproducao_femea_id_fkey"
+            columns: ["femea_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reproducao_macho_id_fkey"
+            columns: ["macho_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
             referencedColumns: ["id"]
           },
         ]
