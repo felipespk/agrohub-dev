@@ -408,9 +408,14 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          exibir_conversao: boolean | null
           farm_name: string | null
+          formato_numero: string | null
           id: string
           master_password_hash: string | null
+          moeda: string | null
+          rendimento_carcaca: number | null
+          unidade_peso: string | null
           updated_at: string
           user_id: string
         }
@@ -418,9 +423,14 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          exibir_conversao?: boolean | null
           farm_name?: string | null
+          formato_numero?: string | null
           id?: string
           master_password_hash?: string | null
+          moeda?: string | null
+          rendimento_carcaca?: number | null
+          unidade_peso?: string | null
           updated_at?: string
           user_id: string
         }
@@ -428,9 +438,14 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          exibir_conversao?: boolean | null
           farm_name?: string | null
+          formato_numero?: string | null
           id?: string
           master_password_hash?: string | null
+          moeda?: string | null
+          rendimento_carcaca?: number | null
+          unidade_peso?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -462,6 +477,27 @@ export type Database = {
           justificativa?: string
           kg_ajuste?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      racas: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
           user_id?: string
         }
         Relationships: []

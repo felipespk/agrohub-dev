@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, FileDown, FileUp, ArrowLeftRight, TrendingUp,
-  Landmark, Tag, Target, Users, LogOut, ArrowLeft, Leaf,
+  Landmark, Tag, Target, Users, LogOut, ArrowLeft, Leaf, Settings,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +25,7 @@ const configItems = [
   { title: "Categorias", url: "/financeiro/categorias", icon: Tag },
   { title: "Centros de Custo", url: "/financeiro/centros-custo", icon: Target },
   { title: "Contatos", url: "/financeiro/contatos", icon: Users },
+  { title: "Configurações", url: "/financeiro/configuracoes", icon: Settings },
 ];
 
 export function FinanceiroSidebar() {

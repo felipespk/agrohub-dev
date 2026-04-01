@@ -25,6 +25,8 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Hub from "@/pages/Hub";
 import Gado from "@/pages/Gado";
+import SecadorConfiguracoesPage from "@/pages/SecadorConfiguracoesPage";
+import GadoConfiguracoesPage from "@/pages/GadoConfiguracoesPage";
 import FinanceiroDashboard from "@/pages/financeiro/FinanceiroDashboard";
 import ContasPRPage from "@/pages/financeiro/ContasPRPage";
 import LancamentosPage from "@/pages/financeiro/LancamentosPage";
@@ -33,6 +35,7 @@ import ContasBancariasPage from "@/pages/financeiro/ContasBancariasPage";
 import CentrosCustoPage from "@/pages/financeiro/CentrosCustoPage";
 import CategoriasPage from "@/pages/financeiro/CategoriasPage";
 import ContatosPage from "@/pages/financeiro/ContatosPage";
+import FinanceiroConfiguracoesPage from "@/pages/financeiro/FinanceiroConfiguracoesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,7 +68,9 @@ function ProtectedRoutes() {
             <Route path="/quebra-tecnica" element={<QuebraTecnica />} />
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/conta" element={<Conta />} />
+            <Route path="/configuracoes" element={<SecadorConfiguracoesPage />} />
             <Route path="/gado" element={<Gado />} />
+            <Route path="/gado/configuracoes" element={<GadoConfiguracoesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
@@ -93,6 +98,7 @@ function ProtectedFinanceiro() {
             <Route path="/centros-custo" element={<CentrosCustoPage />} />
             <Route path="/categorias" element={<CategoriasPage />} />
             <Route path="/contatos" element={<ContatosPage />} />
+            <Route path="/configuracoes" element={<FinanceiroConfiguracoesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </FinanceiroLayout>

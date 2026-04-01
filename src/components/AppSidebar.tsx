@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft,
-  Warehouse, Truck, FileBarChart, AlertTriangle, Users, LogOut, ArrowLeft, Leaf
+  Warehouse, Truck, FileBarChart, AlertTriangle, Users, LogOut, ArrowLeft, Leaf, Settings
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,7 @@ const menuItems = [
   { title: "Relatório", url: "/relatorio", icon: FileBarChart },
   { title: "Quebra Técnica", url: "/quebra-tecnica", icon: AlertTriangle },
   { title: "Cadastro", url: "/cadastro", icon: Users },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 export function AppSidebar() {
