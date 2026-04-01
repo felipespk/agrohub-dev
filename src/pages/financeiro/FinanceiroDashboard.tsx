@@ -110,7 +110,6 @@ export default function FinanceiroDashboard() {
   // Cash flow last 30 days
   const fluxo30d = useMemo(() => {
     const data: { dia: string; saldo: number }[] = [];
-    let saldoAcum = saldoTotal;
     // Go back 30 days from today, accumulate
     const entries: Record<string, number> = {};
     lancamentos.forEach(l => {
