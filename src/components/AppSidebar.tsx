@@ -22,6 +22,7 @@ const menuItems = [
   { title: "Relatório", url: "/relatorio", icon: FileBarChart },
   { title: "Quebra Técnica", url: "/quebra-tecnica", icon: AlertTriangle },
   { title: "Cadastro", url: "/cadastro", icon: Users },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 export function AppSidebar() {

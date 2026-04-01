@@ -98,6 +98,7 @@ function ProtectedFinanceiro() {
             <Route path="/centros-custo" element={<CentrosCustoPage />} />
             <Route path="/categorias" element={<CategoriasPage />} />
             <Route path="/contatos" element={<ContatosPage />} />
+            <Route path="/configuracoes" element={<FinanceiroConfiguracoesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </FinanceiroLayout>
