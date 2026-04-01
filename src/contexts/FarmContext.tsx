@@ -22,6 +22,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     secador: "",
     financeiro: "",
     gado: "",
+    lavoura: "",
   });
   const [loading, setLoading] = useState(true);
 
