@@ -111,7 +111,7 @@ export default function CategoriasPage() {
           <div className="space-y-3">
             <div><Label>Nome *</Label><Input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} /></div>
             <div><Label>Categoria Pai</Label>
-              <Select value={form.pai_id} onValueChange={v => setForm(f => ({ ...f, pai_id: v }))}>
+              <Select value={form.pai_id || "__none__"} onValueChange={v => setForm(f => ({ ...f, pai_id: v === "__none__" ? "" : v }))}>
                 <SelectTrigger><SelectValue placeholder="Nenhuma (raiz)" /></SelectTrigger>
                 <SelectContent><SelectItem value="__none__">Nenhuma (raiz)</SelectItem>{pais.filter(p => p.id !== editItem?.id).map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
               </Select>
