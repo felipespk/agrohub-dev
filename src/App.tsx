@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { FinanceiroLayout } from "@/components/financeiro/FinanceiroLayout";
+import { GadoLayout } from "@/components/gado/GadoLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { FarmProvider } from "@/contexts/FarmContext";
