@@ -101,7 +101,7 @@
 
 @layer components {
   .kpi-card {
-    @apply bg-card rounded-lg border border-border p-5 transition-shadow hover:shadow-sm;
+    @apply bg-card rounded-md border border-border p-5;
   }
 
   .page-header {
@@ -110,6 +110,7 @@
 
   .page-title {
     @apply text-2xl font-bold tracking-tight text-foreground;
+    font-family: 'DM Sans', 'Inter', sans-serif;
   }
 
   .page-subtitle {
@@ -117,10 +118,10 @@
   }
 
   .form-section {
-    @apply bg-card rounded-lg border border-border p-6;
+    @apply bg-card rounded-md border border-border p-6;
   }
 
   .results-section {
-    @apply bg-muted/50 rounded-lg border-2 border-dashed border-primary/30 p-5;
+    @apply bg-muted/50 rounded-md border-2 border-dashed border-primary/30 p-5;
   }
 }

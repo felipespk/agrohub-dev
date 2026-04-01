@@ -3,7 +3,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
 } from "recharts";
-import { Package, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Wheat, TrendingUp, TrendingDown, Settings2, Check, Scale } from "lucide-react";
+import { Package, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, TrendingUp, TrendingDown, Settings2, Check, Scale } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -12,10 +12,10 @@ import { useAppData } from "@/contexts/AppContext";
 import { formatDateBR } from "@/lib/date";
 
 const PIE_COLORS = [
-  "hsl(152, 45%, 28%)", "hsl(42, 80%, 55%)", "hsl(210, 50%, 45%)",
+  "hsl(142, 76%, 36%)", "hsl(217, 91%, 60%)", "hsl(38, 92%, 50%)",
   "hsl(350, 60%, 50%)", "hsl(280, 40%, 50%)",
 ];
-const EMPTY_COLOR = "hsl(210, 10%, 90%)";
+const EMPTY_COLOR = "hsl(220, 13%, 91%)";
 
 export default function Dashboard() {
   const { recebimentos, saidas, quebras, capacidadeSilo, setCapacidadeSilo } = useAppData();
@@ -71,41 +71,41 @@ export default function Dashboard() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <div className="flex items-center gap-2"><Wheat className="h-6 w-6 text-primary" /><h1 className="page-title">Dashboard</h1></div>
+        <h1 className="page-title">Dashboard</h1>
         <p className="page-subtitle">Visão geral do secador de grãos</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <KpiCard icon={Package} label="Estoque Atual" value={`${(totalEstoque / 1000).toFixed(1)} ton`} sub={`${totalEstoque.toLocaleString("pt-BR")} Kg`} color="text-primary" trend={+5.2} />
-        <KpiCard icon={Scale} label="Volume Bruto Recebido" value={`${(totalBruto / 1000).toFixed(1)} ton`} sub={`${totalBruto.toLocaleString("pt-BR")} Kg`} color="text-blue-600" trend={+12.0} />
-        <KpiCard icon={ArrowDownToLine} label="Recebido (Ajustado)" value={`${(totalRecebido / 1000).toFixed(1)} ton`} sub={`${recebimentos.length} entradas`} color="text-emerald-600" trend={+12.0} />
-        <KpiCard icon={ArrowUpFromLine} label="Expedido no Mês" value={`${(totalExpedido / 1000).toFixed(1)} ton`} sub={`${saidas.length} saídas`} color="text-amber-600" trend={-3.1} />
-        <KpiCard icon={AlertTriangle} label="Quebra Técnica" value={`${Math.abs(totalQuebra).toLocaleString("pt-BR")} Kg`} sub={`${quebras.length} registros`} color="text-destructive" trend={-1.5} />
+        <KpiCard icon={Package} label="Estoque Atual" value={`${(totalEstoque / 1000).toFixed(1)} ton`} sub={`${totalEstoque.toLocaleString("pt-BR")} Kg`} trend={+5.2} />
+        <KpiCard icon={Scale} label="Volume Bruto Recebido" value={`${(totalBruto / 1000).toFixed(1)} ton`} sub={`${totalBruto.toLocaleString("pt-BR")} Kg`} trend={+12.0} />
+        <KpiCard icon={ArrowDownToLine} label="Recebido (Ajustado)" value={`${(totalRecebido / 1000).toFixed(1)} ton`} sub={`${recebimentos.length} entradas`} trend={+12.0} />
+        <KpiCard icon={ArrowUpFromLine} label="Expedido no Mês" value={`${(totalExpedido / 1000).toFixed(1)} ton`} sub={`${saidas.length} saídas`} trend={-3.1} />
+        <KpiCard icon={AlertTriangle} label="Quebra Técnica" value={`${Math.abs(totalQuebra).toLocaleString("pt-BR")} Kg`} sub={`${quebras.length} registros`} trend={-1.5} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 form-section">
-          <h2 className="font-display font-semibold text-lg text-foreground mb-4">Fluxo de Entrada vs Saída — 30 dias (Kg)</h2>
+          <h2 className="font-semibold text-base text-foreground mb-4">Fluxo de Entrada vs Saída — 30 dias</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={areaData}>
                 <defs>
                   <linearGradient id="gradEntrada" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(152, 45%, 28%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(152, 45%, 28%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gradSaida" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(42, 80%, 55%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(42, 80%, 55%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(210, 15%, 88%)" />
-                <XAxis dataKey="dia" fontSize={11} interval={4} />
-                <YAxis fontSize={11} tickFormatter={(v: number) => v > 0 ? `${(v / 1000).toFixed(0)}t` : "0"} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 96%)" />
+                <XAxis dataKey="dia" fontSize={11} tick={{ fill: 'hsl(220, 9%, 64%)' }} interval={4} />
+                <YAxis fontSize={11} tick={{ fill: 'hsl(220, 9%, 64%)' }} tickFormatter={(v: number) => v > 0 ? `${(v / 1000).toFixed(0)}t` : "0"} />
                 <Tooltip formatter={(value: number) => `${value.toLocaleString("pt-BR")} Kg`} />
                 <Legend />
-                <Area type="monotone" dataKey="entrada" name="Entrada" stroke="hsl(152, 45%, 28%)" fill="url(#gradEntrada)" strokeWidth={2} />
-                <Area type="monotone" dataKey="saida" name="Saída" stroke="hsl(42, 80%, 55%)" fill="url(#gradSaida)" strokeWidth={2} />
+                <Area type="monotone" dataKey="entrada" name="Entrada" stroke="hsl(142, 76%, 36%)" fill="url(#gradEntrada)" strokeWidth={2} />
+                <Area type="monotone" dataKey="saida" name="Saída" stroke="hsl(217, 91%, 60%)" fill="url(#gradSaida)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -113,7 +113,7 @@ export default function Dashboard() {
 
         <div className="form-section">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold text-lg text-foreground">Ocupação do Silo</h2>
+            <h2 className="font-semibold text-base text-foreground">Ocupação do Silo</h2>
             {editingCap ? (
               <div className="flex items-center gap-2">
                 <Input type="number" className="w-28 h-8 text-sm" value={capInput} onChange={e => setCapInput(e.target.value)} placeholder="Ton" />
@@ -150,22 +150,26 @@ export default function Dashboard() {
       </div>
 
       <div className="form-section">
-        <h2 className="font-display font-semibold text-lg text-foreground mb-4">Últimas Movimentações</h2>
+        <h2 className="font-semibold text-base text-foreground mb-4">Últimas Movimentações</h2>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Data</TableHead><TableHead>Tipo</TableHead><TableHead>Placa</TableHead><TableHead>Descrição</TableHead><TableHead className="text-right">Kgs</TableHead>
+              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Data</TableHead>
+              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Tipo</TableHead>
+              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Placa</TableHead>
+              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Descrição</TableHead>
+              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground text-right">Kgs</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {ultimasMovimentacoes.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma movimentação registrada.</TableCell></TableRow>
               ) : ultimasMovimentacoes.map(m => (
-                <TableRow key={m.id}>
-                  <TableCell>{formatDateBR(m.data)}</TableCell>
-                  <TableCell><Badge variant={m.tipo === "Entrada" ? "default" : "secondary"}>{m.tipo}</Badge></TableCell>
-                  <TableCell className="font-mono">{m.placa}</TableCell>
-                  <TableCell>{m.descricao}</TableCell>
-                  <TableCell className="text-right font-semibold">{m.kgs.toLocaleString("pt-BR")}</TableCell>
+                <TableRow key={m.id} className="hover:bg-muted/50">
+                  <TableCell className="text-sm">{formatDateBR(m.data)}</TableCell>
+                  <TableCell><Badge variant={m.tipo === "Entrada" ? "default" : "secondary"} className="text-xs">{m.tipo}</Badge></TableCell>
+                  <TableCell className="font-mono text-sm">{m.placa}</TableCell>
+                  <TableCell className="text-sm">{m.descricao}</TableCell>
+                  <TableCell className="text-right font-semibold text-sm">{m.kgs.toLocaleString("pt-BR")}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -176,19 +180,19 @@ export default function Dashboard() {
   );
 }
 
-function KpiCard({ icon: Icon, label, value, sub, color, trend }: { icon: any; label: string; value: string; sub: string; color: string; trend: number }) {
+function KpiCard({ icon: Icon, label, value, sub, trend }: { icon: any; label: string; value: string; sub: string; trend: number }) {
   const TrendIcon = trend >= 0 ? TrendingUp : TrendingDown;
   const trendColor = trend >= 0 ? "text-emerald-600" : "text-destructive";
   return (
     <div className="kpi-card">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <Icon className={`h-5 w-5 ${color}`} />
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
+        <Icon className="h-4 w-4 text-muted-foreground/60" />
       </div>
-      <p className="text-2xl font-display font-bold text-foreground">{value}</p>
-      <div className="flex items-center justify-between mt-1">
+      <p className="text-2xl font-bold text-foreground leading-none">{value}</p>
+      <div className="flex items-center justify-between mt-2">
         <p className="text-xs text-muted-foreground">{sub}</p>
-        <div className={`flex items-center gap-1 text-xs font-medium ${trendColor}`}><TrendIcon className="h-3 w-3" />{Math.abs(trend)}%</div>
+        <div className={`flex items-center gap-0.5 text-xs font-medium ${trendColor}`}><TrendIcon className="h-3 w-3" />{Math.abs(trend)}%</div>
       </div>
     </div>
   );
