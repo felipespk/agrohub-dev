@@ -52,7 +52,7 @@ export default function HubPage() {
         </div>
         <p className="text-muted-foreground text-base mb-12">Selecione o módulo</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-5xl">
           {modules.map((mod) => (
             <button
               key={mod.title}
