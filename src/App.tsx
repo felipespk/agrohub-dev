@@ -35,6 +35,7 @@ import ContasBancariasPage from "@/pages/financeiro/ContasBancariasPage";
 import CentrosCustoPage from "@/pages/financeiro/CentrosCustoPage";
 import CategoriasPage from "@/pages/financeiro/CategoriasPage";
 import ContatosPage from "@/pages/financeiro/ContatosPage";
+import FinanceiroConfiguracoesPage from "@/pages/financeiro/FinanceiroConfiguracoesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
