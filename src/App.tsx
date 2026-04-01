@@ -68,7 +68,9 @@ function ProtectedRoutes() {
             <Route path="/quebra-tecnica" element={<QuebraTecnica />} />
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/conta" element={<Conta />} />
+            <Route path="/configuracoes" element={<SecadorConfiguracoesPage />} />
             <Route path="/gado" element={<Gado />} />
+            <Route path="/gado/configuracoes" element={<GadoConfiguracoesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
