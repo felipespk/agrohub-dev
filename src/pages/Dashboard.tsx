@@ -12,10 +12,10 @@ import { useAppData } from "@/contexts/AppContext";
 import { formatDateBR } from "@/lib/date";
 
 const PIE_COLORS = [
-  "hsl(142, 76%, 36%)", "hsl(217, 91%, 60%)", "hsl(38, 92%, 50%)",
+  "hsl(231, 71%, 55%)", "hsl(160, 84%, 39%)", "hsl(38, 92%, 50%)",
   "hsl(350, 60%, 50%)", "hsl(280, 40%, 50%)",
 ];
-const EMPTY_COLOR = "hsl(220, 13%, 91%)";
+const EMPTY_COLOR = "hsl(214, 32%, 91%)";
 
 export default function Dashboard() {
   const { recebimentos, saidas, quebras, capacidadeSilo, setCapacidadeSilo } = useAppData();
@@ -68,19 +68,20 @@ export default function Dashboard() {
     return [...entradas, ...saidasList].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10);
   }, [recebimentos, saidas]);
 
+  const kpis = [
+    { icon: Package, label: "Estoque Atual", value: `${(totalEstoque / 1000).toFixed(1)} ton`, sub: `${totalEstoque.toLocaleString("pt-BR")} Kg`, trend: +5.2, color: "#3C50E0", bg: "#EEF2FF" },
+    { icon: Scale, label: "Volume Bruto", value: `${(totalBruto / 1000).toFixed(1)} ton`, sub: `${totalBruto.toLocaleString("pt-BR")} Kg`, trend: +12.0, color: "#10B981", bg: "#D1FAE5" },
+    { icon: ArrowDownToLine, label: "Recebido (Ajustado)", value: `${(totalRecebido / 1000).toFixed(1)} ton`, sub: `${recebimentos.length} entradas`, trend: +12.0, color: "#3B82F6", bg: "#DBEAFE" },
+    { icon: ArrowUpFromLine, label: "Expedido no Mês", value: `${(totalExpedido / 1000).toFixed(1)} ton`, sub: `${saidas.length} saídas`, trend: -3.1, color: "#F59E0B", bg: "#FEF3C7" },
+    { icon: AlertTriangle, label: "Quebra Técnica", value: `${Math.abs(totalQuebra).toLocaleString("pt-BR")} Kg`, sub: `${quebras.length} registros`, trend: -1.5, color: "#EF4444", bg: "#FEE2E2" },
+  ];
+
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="page-header">
-        <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">Visão geral do secador de grãos</p>
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <KpiCard icon={Package} label="Estoque Atual" value={`${(totalEstoque / 1000).toFixed(1)} ton`} sub={`${totalEstoque.toLocaleString("pt-BR")} Kg`} trend={+5.2} />
-        <KpiCard icon={Scale} label="Volume Bruto Recebido" value={`${(totalBruto / 1000).toFixed(1)} ton`} sub={`${totalBruto.toLocaleString("pt-BR")} Kg`} trend={+12.0} />
-        <KpiCard icon={ArrowDownToLine} label="Recebido (Ajustado)" value={`${(totalRecebido / 1000).toFixed(1)} ton`} sub={`${recebimentos.length} entradas`} trend={+12.0} />
-        <KpiCard icon={ArrowUpFromLine} label="Expedido no Mês" value={`${(totalExpedido / 1000).toFixed(1)} ton`} sub={`${saidas.length} saídas`} trend={-3.1} />
-        <KpiCard icon={AlertTriangle} label="Quebra Técnica" value={`${Math.abs(totalQuebra).toLocaleString("pt-BR")} Kg`} sub={`${quebras.length} registros`} trend={-1.5} />
+        {kpis.map(kpi => (
+          <KpiCard key={kpi.label} {...kpi} />
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -91,21 +92,21 @@ export default function Dashboard() {
               <AreaChart data={areaData}>
                 <defs>
                   <linearGradient id="gradEntrada" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#3C50E0" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#3C50E0" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gradSaida" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 96%)" />
-                <XAxis dataKey="dia" fontSize={11} tick={{ fill: 'hsl(220, 9%, 64%)' }} interval={4} />
-                <YAxis fontSize={11} tick={{ fill: 'hsl(220, 9%, 64%)' }} tickFormatter={(v: number) => v > 0 ? `${(v / 1000).toFixed(0)}t` : "0"} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                <XAxis dataKey="dia" fontSize={11} tick={{ fill: "#94A3B8" }} interval={4} />
+                <YAxis fontSize={11} tick={{ fill: "#94A3B8" }} tickFormatter={(v: number) => v > 0 ? `${(v / 1000).toFixed(0)}t` : "0"} />
                 <Tooltip formatter={(value: number) => `${value.toLocaleString("pt-BR")} Kg`} />
                 <Legend />
-                <Area type="monotone" dataKey="entrada" name="Entrada" stroke="hsl(142, 76%, 36%)" fill="url(#gradEntrada)" strokeWidth={2} />
-                <Area type="monotone" dataKey="saida" name="Saída" stroke="hsl(217, 91%, 60%)" fill="url(#gradSaida)" strokeWidth={2} />
+                <Area type="monotone" dataKey="entrada" name="Entrada" stroke="#3C50E0" fill="url(#gradEntrada)" strokeWidth={2} />
+                <Area type="monotone" dataKey="saida" name="Saída" stroke="#10B981" fill="url(#gradSaida)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -153,7 +154,7 @@ export default function Dashboard() {
         <h2 className="font-semibold text-base text-foreground mb-4">Últimas Movimentações</h2>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader><TableRow>
+            <TableHeader><TableRow className="bg-muted/50">
               <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Data</TableHead>
               <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Tipo</TableHead>
               <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Placa</TableHead>
@@ -164,9 +165,9 @@ export default function Dashboard() {
               {ultimasMovimentacoes.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma movimentação registrada.</TableCell></TableRow>
               ) : ultimasMovimentacoes.map(m => (
-                <TableRow key={m.id} className="hover:bg-muted/50">
+                <TableRow key={m.id} className="hover:bg-muted/30 border-b border-[#F1F5F9]">
                   <TableCell className="text-sm">{formatDateBR(m.data)}</TableCell>
-                  <TableCell><Badge variant={m.tipo === "Entrada" ? "default" : "secondary"} className="text-xs">{m.tipo}</Badge></TableCell>
+                  <TableCell><Badge variant={m.tipo === "Entrada" ? "default" : "secondary"} className="text-[10px]">{m.tipo}</Badge></TableCell>
                   <TableCell className="font-mono text-sm">{m.placa}</TableCell>
                   <TableCell className="text-sm">{m.descricao}</TableCell>
                   <TableCell className="text-right font-semibold text-sm">{m.kgs.toLocaleString("pt-BR")}</TableCell>
@@ -180,19 +181,23 @@ export default function Dashboard() {
   );
 }
 
-function KpiCard({ icon: Icon, label, value, sub, trend }: { icon: any; label: string; value: string; sub: string; trend: number }) {
+function KpiCard({ icon: Icon, label, value, sub, trend, color, bg }: { icon: any; label: string; value: string; sub: string; trend: number; color: string; bg: string }) {
   const TrendIcon = trend >= 0 ? TrendingUp : TrendingDown;
-  const trendColor = trend >= 0 ? "text-emerald-600" : "text-destructive";
+  const isPositive = trend >= 0;
   return (
     <div className="kpi-card">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
-        <Icon className="h-4 w-4 text-muted-foreground/60" />
+      <div className="flex items-center gap-4 mb-3">
+        <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: bg }}>
+          <Icon className="h-[22px] w-[22px]" style={{ color }} />
+        </div>
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-foreground leading-none">{value}</p>
+      <p className="text-[28px] font-bold text-foreground leading-none">{value}</p>
       <div className="flex items-center justify-between mt-2">
         <p className="text-xs text-muted-foreground">{sub}</p>
-        <div className={`flex items-center gap-0.5 text-xs font-medium ${trendColor}`}><TrendIcon className="h-3 w-3" />{Math.abs(trend)}%</div>
+        <span className={`inline-flex items-center gap-0.5 text-[13px] font-medium px-2 py-0.5 rounded-full ${isPositive ? "text-[#10B981] bg-[#D1FAE5]" : "text-[#EF4444] bg-[#FEE2E2]"}`}>
+          <TrendIcon className="h-3.5 w-3.5" />{Math.abs(trend)}%
+        </span>
       </div>
     </div>
   );

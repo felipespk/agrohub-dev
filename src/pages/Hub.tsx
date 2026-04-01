@@ -1,33 +1,30 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wheat, DollarSign, Beef, ArrowRight, LogOut } from "lucide-react";
+import { Wheat, DollarSign, Beef, ArrowRight, LogOut, Leaf } from "lucide-react";
 
 const modules = [
   {
     title: "Secador / Silo",
     description: "Gestão de grãos, pesagem, entrada/saída, quebra técnica e armazenagem.",
     icon: Wheat,
-    color: "hsl(142 64% 36%)",
-    bgColor: "bg-green-50",
-    borderHover: "hover:border-green-500",
+    color: "#10B981",
+    bg: "#D1FAE5",
     path: "/",
   },
   {
     title: "Financeiro",
     description: "Contas a pagar e receber, fluxo de caixa, controle por atividade.",
     icon: DollarSign,
-    color: "hsl(217 91% 60%)",
-    bgColor: "bg-blue-50",
-    borderHover: "hover:border-blue-500",
+    color: "#3C50E0",
+    bg: "#EEF2FF",
     path: "/financeiro",
   },
   {
     title: "Pecuária",
     description: "Cadastro de animais, pesagens, sanidade, compra e venda de gado.",
     icon: Beef,
-    color: "hsl(38 92% 50%)",
-    bgColor: "bg-amber-50",
-    borderHover: "hover:border-amber-500",
+    color: "#F59E0B",
+    bg: "#FEF3C7",
     path: "/gado",
   },
 ];
@@ -40,36 +37,35 @@ export default function HubPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
         <div className="flex items-center gap-2.5 mb-1">
-          <Wheat className="h-7 w-7 text-primary" />
-          <span className="text-2xl font-bold text-foreground tracking-tight">
+          <Leaf className="h-7 w-7 text-primary" />
+          <span className="text-[22px] font-bold text-foreground tracking-tight">
             AgroHub
           </span>
         </div>
-        <p className="text-muted-foreground text-sm mb-12">Selecione o módulo</p>
+        <p className="text-muted-foreground text-base mb-12">Selecione o módulo</p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
           {modules.map((mod) => (
             <button
               key={mod.title}
               onClick={() => navigate(mod.path)}
-              className="group relative bg-card border border-border rounded-lg p-6 text-left transition-all duration-200 cursor-pointer hover:shadow-sm min-h-[200px] flex flex-col"
-              style={{ ['--mod-color' as string]: mod.color }}
+              className="group relative bg-card border border-border rounded-xl p-8 text-left transition-all duration-200 cursor-pointer hover:shadow-md min-h-[220px] flex flex-col"
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = mod.color; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = ''; }}
             >
               <div
-                className="w-12 h-12 rounded-full flex items-center justify-center mb-5"
-                style={{ backgroundColor: `color-mix(in srgb, ${mod.color} 10%, transparent)` }}
+                className="w-14 h-14 rounded-full flex items-center justify-center mb-5"
+                style={{ backgroundColor: mod.bg }}
               >
-                <mod.icon className="h-6 w-6" style={{ color: mod.color }} />
+                <mod.icon className="h-7 w-7" style={{ color: mod.color }} />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-1.5">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 {mod.title}
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed flex-1">
                 {mod.description}
               </p>
-              <ArrowRight className="absolute bottom-5 right-5 h-4 w-4 text-muted-foreground/30 group-hover:text-foreground/60 transition-colors" />
+              <ArrowRight className="absolute bottom-6 right-6 h-[18px] w-[18px] text-[#94A3B8] group-hover:text-foreground/60 transition-colors" />
             </button>
           ))}
         </div>
