@@ -36,7 +36,6 @@ import SanidadePage from "@/pages/gado/SanidadePage";
 import MovimentacoesGadoPage from "@/pages/gado/MovimentacoesPage";
 import ReproducaoPage from "@/pages/gado/ReproducaoPage";
 import RacasPage from "@/pages/gado/RacasPage";
-import GadoConfiguracoesPage from "@/pages/GadoConfiguracoesPage";
 import FinanceiroDashboard from "@/pages/financeiro/FinanceiroDashboard";
 import ContasPRPage from "@/pages/financeiro/ContasPRPage";
 import LancamentosPage from "@/pages/financeiro/LancamentosPage";
