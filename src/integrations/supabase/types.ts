@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      categorias_financeiras: {
+        Row: {
+          cor: string | null
+          created_at: string
+          id: string
+          nome: string
+          pai_id: string | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          pai_id?: string | null
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          pai_id?: string | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_financeiras_pai_id_fkey"
+            columns: ["pai_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      centros_custo: {
+        Row: {
+          ativo: boolean | null
+          cor: string | null
+          created_at: string
+          icone: string | null
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string
+          icone?: string | null
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string
+          icone?: string | null
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       compradores: {
         Row: {
           contato: string | null
@@ -40,6 +108,252 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      contas_bancarias: {
+        Row: {
+          ativa: boolean | null
+          banco: string | null
+          created_at: string
+          id: string
+          nome: string
+          saldo_atual: number | null
+          saldo_inicial: number | null
+          user_id: string
+        }
+        Insert: {
+          ativa?: boolean | null
+          banco?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          saldo_atual?: number | null
+          saldo_inicial?: number | null
+          user_id: string
+        }
+        Update: {
+          ativa?: boolean | null
+          banco?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          saldo_atual?: number | null
+          saldo_inicial?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contas_pr: {
+        Row: {
+          categoria_id: string | null
+          centro_custo_id: string
+          conta_bancaria_id: string | null
+          contato_id: string | null
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          id: string
+          observacao: string | null
+          recorrente: boolean | null
+          status: string | null
+          tipo: string
+          user_id: string
+          valor_pago: number | null
+          valor_total: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          centro_custo_id: string
+          conta_bancaria_id?: string | null
+          contato_id?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          id?: string
+          observacao?: string | null
+          recorrente?: boolean | null
+          status?: string | null
+          tipo: string
+          user_id: string
+          valor_pago?: number | null
+          valor_total: number
+        }
+        Update: {
+          categoria_id?: string | null
+          centro_custo_id?: string
+          conta_bancaria_id?: string | null
+          contato_id?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          id?: string
+          observacao?: string | null
+          recorrente?: boolean | null
+          status?: string | null
+          tipo?: string
+          user_id?: string
+          valor_pago?: number | null
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pr_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pr_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pr_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pr_contato_id_fkey"
+            columns: ["contato_id"]
+            isOneToOne: false
+            referencedRelation: "contatos_financeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contatos_financeiros: {
+        Row: {
+          cpf_cnpj: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nome: string
+          observacao: string | null
+          telefone: string | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome: string
+          observacao?: string | null
+          telefone?: string | null
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          observacao?: string | null
+          telefone?: string | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lancamentos: {
+        Row: {
+          categoria_id: string | null
+          centro_custo_id: string
+          conta_bancaria_id: string | null
+          conta_destino_id: string | null
+          conta_pr_id: string | null
+          contato_id: string | null
+          created_at: string
+          data: string
+          descricao: string | null
+          id: string
+          tipo: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          centro_custo_id: string
+          conta_bancaria_id?: string | null
+          conta_destino_id?: string | null
+          conta_pr_id?: string | null
+          contato_id?: string | null
+          created_at?: string
+          data: string
+          descricao?: string | null
+          id?: string
+          tipo: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          categoria_id?: string | null
+          centro_custo_id?: string
+          conta_bancaria_id?: string | null
+          conta_destino_id?: string | null
+          conta_pr_id?: string | null
+          contato_id?: string | null
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          id?: string
+          tipo?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamentos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_conta_destino_id_fkey"
+            columns: ["conta_destino_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_conta_pr_id_fkey"
+            columns: ["conta_pr_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pr"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_contato_id_fkey"
+            columns: ["contato_id"]
+            isOneToOne: false
+            referencedRelation: "contatos_financeiros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       produtores: {
         Row: {
