@@ -21,9 +21,10 @@ export default function LavouraDashboard() {
   useEffect(() => {
     if (!user) return;
     supabase.from("safras" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setSafras((data as any[]) || []);
-        if (data && data.length > 0) setSelectedSafra(data[0].id);
+      .then(({ data }: any) => {
+        const list = (data as any[]) || [];
+        setSafras(list);
+        if (list.length > 0) setSelectedSafra(list[0].id);
       });
   }, [user]);
 

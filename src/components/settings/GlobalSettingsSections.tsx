@@ -11,7 +11,7 @@ import { Building2, Save, User, ShieldCheck, Lock, Eye, EyeOff } from "lucide-re
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-export function FarmIdentitySection({ module = "secador" }: { module?: "secador" | "financeiro" | "gado" }) {
+export function FarmIdentitySection({ module = "secador" }: { module?: "secador" | "financeiro" | "gado" | "lavoura" }) {
   const { getFarmName, setModuleFarmName, loading } = useFarm();
   const currentName = getFarmName(module);
   const [nome, setNome] = useState(currentName);

@@ -217,6 +217,7 @@ const App = () => (
             <Route path="/hub" element={<ProtectedHub />} />
             <Route path="/financeiro/*" element={<ProtectedFinanceiro />} />
             <Route path="/gado/*" element={<ProtectedGado />} />
+            <Route path="/lavoura/*" element={<ProtectedLavoura />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>
