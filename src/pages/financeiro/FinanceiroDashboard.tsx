@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area } from "recharts";
-import { Landmark, TrendingUp, TrendingDown, Scale, AlertCircle, Clock, CheckCircle, ArrowDown, ArrowUp, ArrowRight } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { Landmark, TrendingUp, TrendingDown, Scale, Clock, CheckCircle, ArrowDown, ArrowUp, ArrowRight } from "lucide-react";
 import { useFinanceiro } from "@/contexts/FinanceiroContext";
 import { formatarMoeda, formatarData } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
