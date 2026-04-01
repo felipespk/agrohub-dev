@@ -29,7 +29,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   // Fetch all module names on mount
   useEffect(() => {
     if (!user) {
-      setNames({ secador: "", financeiro: "", gado: "" });
+      setNames({ secador: "", financeiro: "", gado: "", lavoura: "" });
       setLoading(false);
       return;
     }
