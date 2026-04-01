@@ -27,6 +27,14 @@ const modules = [
     bg: "#FEF3C7",
     path: "/gado",
   },
+  {
+    title: "Lavoura",
+    description: "Planejamento de safra, caderno de campo, estoque de insumos, máquinas e colheita.",
+    icon: Sprout,
+    color: "#16A34A",
+    bg: "#DCFCE7",
+    path: "/lavoura",
+  },
 ];
 
 export default function HubPage() {
