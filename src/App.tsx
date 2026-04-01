@@ -104,6 +104,44 @@ function ProtectedFinanceiro() {
   );
 }
 
+const GadoDashboard = lazy(() => import("@/pages/gado/GadoDashboard"));
+const AnimaisPage = lazy(() => import("@/pages/gado/AnimaisPage"));
+const AnimalFichaPage = lazy(() => import("@/pages/gado/AnimalFichaPage"));
+const PastosPage = lazy(() => import("@/pages/gado/PastosPage"));
+const PesagensPage = lazy(() => import("@/pages/gado/PesagensPage"));
+const SanidadePage = lazy(() => import("@/pages/gado/SanidadePage"));
+const MovimentacoesGadoPage = lazy(() => import("@/pages/gado/MovimentacoesPage"));
+const ReproducaoPage = lazy(() => import("@/pages/gado/ReproducaoPage"));
+const RacasPage = lazy(() => import("@/pages/gado/RacasPage"));
+const GadoConfiguracoesPage = lazy(() => import("@/pages/GadoConfiguracoesPage"));
+
+function ProtectedGado() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return (
+    <FarmProvider>
+      <GadoLayout>
+        <Suspense fallback={<div className="p-8 text-muted-foreground">Carregando...</div>}>
+          <Routes>
+            <Route path="/" element={<GadoDashboard />} />
+            <Route path="/animais" element={<AnimaisPage />} />
+            <Route path="/animais/:id" element={<AnimalFichaPage />} />
+            <Route path="/pastos" element={<PastosPage />} />
+            <Route path="/pesagens" element={<PesagensPage />} />
+            <Route path="/sanidade" element={<SanidadePage />} />
+            <Route path="/movimentacoes" element={<MovimentacoesGadoPage />} />
+            <Route path="/reproducao" element={<ReproducaoPage />} />
+            <Route path="/racas" element={<RacasPage />} />
+            <Route path="/configuracoes" element={<GadoConfiguracoesPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </GadoLayout>
+    </FarmProvider>
+  );
+
 function ProtectedHub() {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
