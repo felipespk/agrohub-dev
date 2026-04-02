@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Layers, MapPin, ChevronLeft, ChevronRight,
-  AlertTriangle, ChevronDown, ChevronUp,
+  AlertTriangle, ChevronDown, ChevronUp, Sprout, Beef,
 } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -599,9 +599,19 @@ export default function MapaFazendaPage() {
 
       {/* ---- TOP BAR ---- */}
       <div className="h-14 bg-white border-b border-[#E5E7EB] flex items-center px-4 gap-4 shrink-0" style={{ zIndex: 1000 }}>
-        <button onClick={() => navigate("/hub")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Voltar ao Hub</span>
-        </button>
+        <div className="flex items-center gap-0 text-[13px]">
+          <button onClick={() => navigate("/hub")} className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 rounded transition-colors">
+            <ArrowLeft className="h-3.5 w-3.5" /> Hub
+          </button>
+          <div className="w-px h-5 bg-gray-200 mx-0.5" />
+          <button onClick={() => navigate("/lavoura")} className="flex items-center gap-1.5 px-2.5 py-1.5 text-green-700 border border-green-200 hover:bg-green-50 rounded transition-colors">
+            <Sprout className="h-3.5 w-3.5" /> Lavoura
+          </button>
+          <div className="w-px h-5 bg-gray-200 mx-0.5" />
+          <button onClick={() => navigate("/gado")} className="flex items-center gap-1.5 px-2.5 py-1.5 text-orange-600 border border-orange-200 hover:bg-orange-50 rounded transition-colors">
+            <Beef className="h-3.5 w-3.5" /> Pecuária
+          </button>
+        </div>
         <span className="text-lg font-bold text-foreground">Mapa da Fazenda</span>
         <div className="flex-1" />
 
