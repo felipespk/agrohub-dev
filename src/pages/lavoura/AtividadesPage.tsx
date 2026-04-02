@@ -45,6 +45,13 @@ export default function AtividadesPage() {
   };
   useEffect(() => { load(); }, [user]);
 
+  // Load safra_talhoes for filter
+  useEffect(() => {
+    if (!user || filterSafra === "all") { setSafraTalhoesFilter([]); return; }
+    supabase.from("safra_talhoes" as any).select("id").eq("safra_id", filterSafra).eq("user_id", user.id)
+      .then(({ data }) => setSafraTalhoesFilter((data as any[]) || []));
+  }, [filterSafra, user]);
+
   const loadSafraTalhoes = async (safraId: string) => {
     const { data } = await supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome, area_hectares)").eq("safra_id", safraId).eq("user_id", user!.id);
     setSafraTalhoes((data as any[]) || []);
@@ -95,6 +102,10 @@ export default function AtividadesPage() {
   };
 
   const filtered = atividades.filter(a => {
+    if (filterSafra !== "all") {
+      const safraSTIds = safraTalhoesFilter.map(st => st.id);
+      if (!safraSTIds.includes(a.safra_talhao_id)) return false;
+    }
     if (filterTipo !== "all" && a.tipo !== filterTipo) return false;
     return true;
   });
@@ -121,6 +132,13 @@ export default function AtividadesPage() {
       </div>
 
       <div className="flex gap-3 flex-wrap">
+        <Select value={filterSafra} onValueChange={setFilterSafra}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Safra" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas Safras</SelectItem>
+            {safras.map(s => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <Select value={filterTipo} onValueChange={setFilterTipo}>
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
