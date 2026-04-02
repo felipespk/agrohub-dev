@@ -82,7 +82,7 @@ export default function MapaFazendaPage() {
   const [profile, setProfile] = useState<any>(null);
   const [settingLocation, setSettingLocation] = useState(false);
   const [tempPin, setTempPin] = useState<[number, number] | null>(null);
-  const [satellite, setSatellite] = useState(false);
+  const [satellite, setSatellite] = useState(true);
   const [showTalhoes, setShowTalhoes] = useState(true);
   const [showPastos, setShowPastos] = useState(true);
   const [safraFilter, setSafraFilter] = useState("all");
@@ -123,10 +123,16 @@ export default function MapaFazendaPage() {
       zoomControl: true,
       doubleClickZoom: true,
     });
-    const tile = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; OpenStreetMap',
+    // Start with satellite
+    const tile = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      attribution: 'Tiles &copy; Esri',
+    }).addTo(map);
+    const labels = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
+      attribution: '',
+      pane: 'overlayPane',
     }).addTo(map);
     tileLayerRef.current = tile;
+    labelsLayerRef.current = labels;
     layersRef.current.addTo(map);
     mapRef.current = map;
     setMapReady(true);
@@ -141,11 +147,24 @@ export default function MapaFazendaPage() {
   useEffect(() => {
     if (!mapRef.current || !tileLayerRef.current) return;
     tileLayerRef.current.remove();
-    const url = satellite
-      ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-      : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-    const tile = L.tileLayer(url, { attribution: satellite ? "" : '&copy; OpenStreetMap' }).addTo(mapRef.current);
-    tileLayerRef.current = tile;
+    if (labelsLayerRef.current) labelsLayerRef.current.remove();
+    if (satellite) {
+      const tile = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        attribution: 'Tiles &copy; Esri',
+      }).addTo(mapRef.current);
+      const labels = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
+        attribution: '',
+        pane: 'overlayPane',
+      }).addTo(mapRef.current);
+      tileLayerRef.current = tile;
+      labelsLayerRef.current = labels;
+    } else {
+      const tile = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; OpenStreetMap',
+      }).addTo(mapRef.current);
+      tileLayerRef.current = tile;
+      labelsLayerRef.current = null;
+    }
   }, [satellite]);
 
   // ---- Load data ----
