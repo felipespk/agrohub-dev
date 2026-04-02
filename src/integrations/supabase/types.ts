@@ -1227,7 +1227,13 @@ export type Database = {
           farm_name_gado: string | null
           farm_name_lavoura: string | null
           fazenda_lat: number | null
+          fazenda_lat_gado: number | null
+          fazenda_lat_lavoura: number | null
+          fazenda_lat_secador: number | null
           fazenda_lng: number | null
+          fazenda_lng_gado: number | null
+          fazenda_lng_lavoura: number | null
+          fazenda_lng_secador: number | null
           fazenda_zoom: number | null
           formato_numero: string | null
           id: string
@@ -1248,7 +1254,13 @@ export type Database = {
           farm_name_gado?: string | null
           farm_name_lavoura?: string | null
           fazenda_lat?: number | null
+          fazenda_lat_gado?: number | null
+          fazenda_lat_lavoura?: number | null
+          fazenda_lat_secador?: number | null
           fazenda_lng?: number | null
+          fazenda_lng_gado?: number | null
+          fazenda_lng_lavoura?: number | null
+          fazenda_lng_secador?: number | null
           fazenda_zoom?: number | null
           formato_numero?: string | null
           id?: string
@@ -1269,7 +1281,13 @@ export type Database = {
           farm_name_gado?: string | null
           farm_name_lavoura?: string | null
           fazenda_lat?: number | null
+          fazenda_lat_gado?: number | null
+          fazenda_lat_lavoura?: number | null
+          fazenda_lat_secador?: number | null
           fazenda_lng?: number | null
+          fazenda_lng_gado?: number | null
+          fazenda_lng_lavoura?: number | null
+          fazenda_lng_secador?: number | null
           fazenda_zoom?: number | null
           formato_numero?: string | null
           id?: string

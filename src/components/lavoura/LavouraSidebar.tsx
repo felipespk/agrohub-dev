@@ -20,7 +20,7 @@ const menuItems = [
   { title: "Estoque de Insumos", url: "/lavoura/insumos", icon: Package },
   { title: "Máquinas", url: "/lavoura/maquinas", icon: Cog },
   { title: "Colheita", url: "/lavoura/colheitas", icon: Wheat },
-  { title: "Mapa", url: "/mapa", icon: Map },
+  { title: "Mapa", url: "/mapa?modulo=lavoura", icon: Map },
 ];
 
 const extraItems = [

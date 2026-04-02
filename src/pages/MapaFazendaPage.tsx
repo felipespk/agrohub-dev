@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,28 @@ const homeIcon = L.divIcon({
   iconAnchor: [16, 16],
 });
 
+// Per-module icons
+const lavouraIcon = L.divIcon({
+  html: `<div style="background:#16A34A;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg></div>`,
+  className: "",
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+});
+
+const gadoIcon = L.divIcon({
+  html: `<div style="background:#D97706;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12.5" cy="8.5" r="2.5"/><path d="M12.5 2a6.5 6.5 0 0 0-6.22 4.6c-1.1 3.13-.78 3.9-3.18 6.08A3 3 0 0 0 5.18 18h1.26c.78 2.26 3.14 4 5.06 4s4.28-1.74 5.06-4h1.26a3 3 0 0 0 2.08-5.32c-2.4-2.18-2.08-2.95-3.18-6.08A6.5 6.5 0 0 0 12.5 2"/></svg></div>`,
+  className: "",
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+});
+
+const secadorIcon = L.divIcon({
+  html: `<div style="background:#2563EB;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z"/><path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M15.47 13.47 17 15l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L9 15l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M19.47 9.47 21 11l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L13 11l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/></svg></div>`,
+  className: "",
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+});
+
 const alertIcon = L.divIcon({
   html: `<div style="animation:pulse 1.5s infinite;background:#EF4444;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>`,
   className: "",
@@ -47,6 +69,8 @@ const CULTURA_COLORS: Record<string, string> = {
 const DEFAULT_TALHAO_COLOR = "#9CA3AF";
 const DEFAULT_CENTER: [number, number] = [-15.78, -47.93];
 
+type ModuloFilter = "todas" | "lavoura" | "pecuaria" | "secador";
+
 function calcAreaHaSimple(coords: [number, number][]): number {
   if (coords.length < 3) return 0;
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -67,8 +91,13 @@ const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", cur
 
 export default function MapaFazendaPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Determine initial module from query param
+  const moduloParam = searchParams.get("modulo");
+  const initialModulo: ModuloFilter = moduloParam === "lavoura" ? "lavoura" : moduloParam === "gado" ? "pecuaria" : "todas";
 
   // Refs
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -90,6 +119,7 @@ export default function MapaFazendaPage() {
   const [panelOpen, setPanelOpen] = useState(true);
   const [talhoesSectionOpen, setTalhoesSectionOpen] = useState(true);
   const [pastosSectionOpen, setPastosSectionOpen] = useState(true);
+  const [moduloFilter, setModuloFilter] = useState<ModuloFilter>(initialModulo);
 
   // Drawing
   const [drawing, setDrawing] = useState(false);
@@ -120,6 +150,33 @@ export default function MapaFazendaPage() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchMarkerRef = useRef<L.Marker | null>(null);
 
+  // React to modulo filter for toggles
+  useEffect(() => {
+    if (moduloFilter === "lavoura") {
+      setShowTalhoes(true);
+      setShowPastos(false);
+    } else if (moduloFilter === "pecuaria") {
+      setShowTalhoes(false);
+      setShowPastos(true);
+    } else {
+      setShowTalhoes(true);
+      setShowPastos(true);
+    }
+  }, [moduloFilter]);
+
+  // ---- Helper: get module location from profile ----
+  const getModuleLocation = useCallback((p: any, mod: ModuloFilter): { lat: number | null; lng: number | null } => {
+    if (!p) return { lat: null, lng: null };
+    if (mod === "lavoura") return { lat: p.fazenda_lat_lavoura ? Number(p.fazenda_lat_lavoura) : null, lng: p.fazenda_lng_lavoura ? Number(p.fazenda_lng_lavoura) : null };
+    if (mod === "pecuaria") return { lat: p.fazenda_lat_gado ? Number(p.fazenda_lat_gado) : null, lng: p.fazenda_lng_gado ? Number(p.fazenda_lng_gado) : null };
+    if (mod === "secador") return { lat: p.fazenda_lat_secador ? Number(p.fazenda_lat_secador) : null, lng: p.fazenda_lng_secador ? Number(p.fazenda_lng_secador) : null };
+    // "todas" — fallback chain
+    if (p.fazenda_lat) return { lat: Number(p.fazenda_lat), lng: Number(p.fazenda_lng) };
+    if (p.fazenda_lat_lavoura) return { lat: Number(p.fazenda_lat_lavoura), lng: Number(p.fazenda_lng_lavoura) };
+    if (p.fazenda_lat_gado) return { lat: Number(p.fazenda_lat_gado), lng: Number(p.fazenda_lng_gado) };
+    if (p.fazenda_lat_secador) return { lat: Number(p.fazenda_lat_secador), lng: Number(p.fazenda_lng_secador) };
+    return { lat: null, lng: null };
+  }, []);
 
   // ---- Initialize map ----
   useEffect(() => {
@@ -130,7 +187,6 @@ export default function MapaFazendaPage() {
       zoomControl: true,
       doubleClickZoom: true,
     });
-    // Start with satellite
     const tile = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       attribution: 'Tiles &copy; Esri',
     }).addTo(map);
@@ -193,7 +249,10 @@ export default function MapaFazendaPage() {
     ]);
     if (pRes.data) {
       setProfile(pRes.data);
-      if (!pRes.data.fazenda_lat) setSettingLocation(true);
+      // Check if module-specific location is needed
+      const loc = getModuleLocation(pRes.data, moduloFilter);
+      if (!loc.lat) setSettingLocation(true);
+      else setSettingLocation(false);
     }
     setTalhoes(tRes.data || []);
     setPastos(paRes.data || []);
@@ -205,17 +264,21 @@ export default function MapaFazendaPage() {
     setAtividades(atRes.data || []);
     setOcorrencias(ocRes.data || []);
     setAplicacoes(apRes.data || []);
-  }, [user]);
+  }, [user, moduloFilter, getModuleLocation]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
-  // ---- Fly to farm when profile loads ----
+  // ---- Fly to module location when profile or module changes ----
   useEffect(() => {
     if (!mapRef.current || !profile) return;
-    if (profile.fazenda_lat) {
-      mapRef.current.flyTo([Number(profile.fazenda_lat), Number(profile.fazenda_lng)], Number(profile.fazenda_zoom) || 15, { duration: 1.2 });
+    const loc = getModuleLocation(profile, moduloFilter);
+    if (loc.lat && loc.lng) {
+      mapRef.current.flyTo([loc.lat, loc.lng], Number(profile.fazenda_zoom) || 15, { duration: 1.2 });
+      setSettingLocation(false);
+    } else {
+      setSettingLocation(true);
     }
-  }, [profile?.fazenda_lat, mapReady]);
+  }, [profile?.fazenda_lat, profile?.fazenda_lat_lavoura, profile?.fazenda_lat_gado, profile?.fazenda_lat_secador, moduloFilter, mapReady]);
 
   // ---- Location picker click handler ----
   useEffect(() => {
@@ -233,19 +296,34 @@ export default function MapaFazendaPage() {
     return () => { map.off("click", handler); map.getContainer().style.cursor = ""; };
   }, [settingLocation, mapReady]);
 
-  // ---- Confirm farm location ----
+  // ---- Confirm farm location (module-aware) ----
   const confirmLocation = async () => {
     if (!tempPin || !user) return;
-    await supabase.from("profiles").update({
-      fazenda_lat: tempPin[0],
-      fazenda_lng: tempPin[1],
-      fazenda_zoom: 15,
-    } as any).eq("user_id", user.id);
-    setProfile((p: any) => ({ ...p, fazenda_lat: tempPin[0], fazenda_lng: tempPin[1], fazenda_zoom: 15 }));
+    const updateData: any = { fazenda_zoom: 15 };
+
+    if (moduloFilter === "lavoura") {
+      updateData.fazenda_lat_lavoura = tempPin[0];
+      updateData.fazenda_lng_lavoura = tempPin[1];
+    } else if (moduloFilter === "pecuaria") {
+      updateData.fazenda_lat_gado = tempPin[0];
+      updateData.fazenda_lng_gado = tempPin[1];
+    } else if (moduloFilter === "secador") {
+      updateData.fazenda_lat_secador = tempPin[0];
+      updateData.fazenda_lng_secador = tempPin[1];
+    } else {
+      // "todas" — save to general
+      updateData.fazenda_lat = tempPin[0];
+      updateData.fazenda_lng = tempPin[1];
+    }
+
+    await supabase.from("profiles").update(updateData).eq("user_id", user.id);
+    setProfile((p: any) => ({ ...p, ...updateData }));
     setSettingLocation(false);
     setTempPin(null);
     mapRef.current?.flyTo(tempPin, 15, { duration: 1.2 });
-    toast({ title: "Localização definida!", description: "O mapa agora centraliza na sua fazenda." });
+
+    const modLabels: Record<ModuloFilter, string> = { todas: "geral", lavoura: "da Lavoura", pecuaria: "da Pecuária", secador: "do Secador" };
+    toast({ title: "Localização definida!", description: `Localização ${modLabels[moduloFilter]} salva.` });
   };
 
   // ---- Drawing mode ----
@@ -253,7 +331,6 @@ export default function MapaFazendaPage() {
     const map = mapRef.current;
     if (!map || settingLocation) return;
 
-    // Cleanup draw artifacts
     drawPointsRef.current.forEach(m => m.remove());
     drawPointsRef.current = [];
     drawLineRef.current?.remove();
@@ -287,7 +364,6 @@ export default function MapaFazendaPage() {
       L.DomEvent.stopPropagation(e as any);
       L.DomEvent.preventDefault(e as any);
       if (points.length < 3) return;
-      // Cleanup temp
       drawPointsRef.current.forEach(m => m.remove());
       drawPointsRef.current = [];
       drawLineRef.current?.remove();
@@ -299,7 +375,7 @@ export default function MapaFazendaPage() {
       setDrawPoints([]);
       setDrawnCoords([...points]);
       setShowBindModal(true);
-      setBindType("talhao");
+      setBindType(moduloFilter === "pecuaria" ? "pasto" : "talhao");
       setBindTarget("new");
       setNewName("");
       setNewExtra("");
@@ -312,7 +388,7 @@ export default function MapaFazendaPage() {
       map.off("click", onClick);
       map.off("dblclick", onDblClick);
     };
-  }, [drawing, settingLocation, mapReady]);
+  }, [drawing, settingLocation, mapReady, moduloFilter]);
 
   // ---- Derived data ----
   const getCulturaNome = (culturaId: string) => culturas.find((c) => c.id === culturaId)?.nome || "";
@@ -379,11 +455,37 @@ export default function MapaFazendaPage() {
 
     layersRef.current.clearLayers();
 
-    // Farm home marker
-    if (profile?.fazenda_lat && !settingLocation) {
-      L.marker([Number(profile.fazenda_lat), Number(profile.fazenda_lng)], { icon: homeIcon })
-        .bindPopup(`<span class="font-semibold text-sm">Sede da Fazenda</span>`)
-        .addTo(layersRef.current);
+    // Module-specific pins
+    if (!settingLocation && profile) {
+      const showAll = moduloFilter === "todas";
+
+      // Lavoura pin
+      if ((showAll || moduloFilter === "lavoura") && profile.fazenda_lat_lavoura) {
+        L.marker([Number(profile.fazenda_lat_lavoura), Number(profile.fazenda_lng_lavoura)], { icon: lavouraIcon })
+          .bindPopup(`<span class="font-semibold text-sm" style="color:#16A34A">Sede — Lavoura</span>`)
+          .addTo(layersRef.current);
+      }
+
+      // Gado pin
+      if ((showAll || moduloFilter === "pecuaria") && profile.fazenda_lat_gado) {
+        L.marker([Number(profile.fazenda_lat_gado), Number(profile.fazenda_lng_gado)], { icon: gadoIcon })
+          .bindPopup(`<span class="font-semibold text-sm" style="color:#D97706">Sede — Pecuária</span>`)
+          .addTo(layersRef.current);
+      }
+
+      // Secador pin
+      if ((showAll || moduloFilter === "secador") && profile.fazenda_lat_secador) {
+        L.marker([Number(profile.fazenda_lat_secador), Number(profile.fazenda_lng_secador)], { icon: secadorIcon })
+          .bindPopup(`<span class="font-semibold text-sm" style="color:#2563EB">Sede — Secador/Silo</span>`)
+          .addTo(layersRef.current);
+      }
+
+      // General fallback pin (only in "todas" mode if no module-specific pin exists but general does)
+      if (showAll && profile.fazenda_lat && !profile.fazenda_lat_lavoura && !profile.fazenda_lat_gado && !profile.fazenda_lat_secador) {
+        L.marker([Number(profile.fazenda_lat), Number(profile.fazenda_lng)], { icon: homeIcon })
+          .bindPopup(`<span class="font-semibold text-sm">Sede da Fazenda</span>`)
+          .addTo(layersRef.current);
+      }
     }
 
     // Temp pin for location setting
@@ -401,7 +503,7 @@ export default function MapaFazendaPage() {
     }
 
     // Talhão polygons
-    if (showTalhoes) {
+    if (showTalhoes && moduloFilter !== "pecuaria" && moduloFilter !== "secador") {
       const mappedTalhoes = talhoes.filter((t) => t.coordenadas);
       mappedTalhoes.forEach((t) => {
         const coords: [number, number][] = (t.coordenadas as any[]).map((c: any) => [c.lat, c.lng]);
@@ -435,7 +537,6 @@ export default function MapaFazendaPage() {
           .bindPopup(popupHtml, { minWidth: 300, maxWidth: 320 })
           .addTo(layersRef.current);
 
-        // Alert marker
         if (info?.alertas && info.alertas.length > 0 && t.centro_lat) {
           L.marker([Number(t.centro_lat), Number(t.centro_lng)], { icon: alertIcon })
             .bindPopup(`<span style="font-size:12px;color:#B91C1C;font-weight:500">${info.alertas[0].nome_ocorrencia}</span>`)
@@ -445,7 +546,7 @@ export default function MapaFazendaPage() {
     }
 
     // Pasto polygons
-    if (showPastos) {
+    if (showPastos && moduloFilter !== "lavoura" && moduloFilter !== "secador") {
       const mappedPastos = pastos.filter((p) => p.coordenadas);
       mappedPastos.forEach((p) => {
         const coords: [number, number][] = (p.coordenadas as any[]).map((c: any) => [c.lat, c.lng]);
@@ -510,7 +611,7 @@ export default function MapaFazendaPage() {
       });
     }
   }, [mapReady, profile, tempPin, settingLocation, showTalhoes, showPastos, talhoes, pastos,
-    safraFilter, safraTalhoes, culturas, animais, colheitas, atividades, ocorrencias, aplicacoes]);
+    safraFilter, safraTalhoes, culturas, animais, colheitas, atividades, ocorrencias, aplicacoes, moduloFilter]);
 
   // ---- Global handlers for popup buttons ----
   useEffect(() => {
@@ -608,7 +709,6 @@ export default function MapaFazendaPage() {
   }
 
   function parseCoordinates(input: string): [number, number] | null {
-    // DMS: 10°24'17.46"S 49°37'15.41"W
     const dmsRe = /(\d+)[°]\s*(\d+)[′']\s*([\d.]+)[″"]?\s*([NSEW])/gi;
     const dmsMatches = Array.from(input.matchAll(dmsRe));
     if (dmsMatches.length >= 2) {
@@ -616,7 +716,6 @@ export default function MapaFazendaPage() {
       const lng = dmsToDecimal(+dmsMatches[1][1], +dmsMatches[1][2], +dmsMatches[1][3], dmsMatches[1][4].toUpperCase());
       return [lat, lng];
     }
-    // Decimal: -10.40, -49.62 or -10.40 -49.62
     const decRe = /(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/;
     const decMatch = input.match(decRe);
     if (decMatch) {
@@ -630,7 +729,6 @@ export default function MapaFazendaPage() {
   const handleSearch = async () => {
     const val = searchInput.trim();
     if (!val) return;
-    // Remove previous search marker
     searchMarkerRef.current?.remove();
     searchMarkerRef.current = null;
 
@@ -646,7 +744,6 @@ export default function MapaFazendaPage() {
       setShowSearchResults(false);
       return;
     }
-    // Nominatim geocoding
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=br&limit=5`);
       const data = await res.json();
@@ -700,6 +797,26 @@ export default function MapaFazendaPage() {
     );
   };
 
+  // ---- Banner text for setting location ----
+  const getSettingBannerText = () => {
+    const labels: Record<ModuloFilter, string> = {
+      todas: "geral",
+      lavoura: "da Lavoura",
+      pecuaria: "da Pecuária",
+      secador: "do Secador/Silo",
+    };
+    return `Defina a localização ${labels[moduloFilter]}. Busque o endereço ou cole as coordenadas na barra acima, depois clique no mapa para confirmar.`;
+  };
+
+  // ---- Handle "Redefinir localização" ----
+  const handleRedefineLocation = () => {
+    setSettingLocation(true);
+    setTempPin(null);
+  };
+
+  // Determine if current module has a location set
+  const currentModuleHasLocation = profile ? !!getModuleLocation(profile, moduloFilter).lat : false;
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       <style>{`@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:0.8}}`}</style>
@@ -720,6 +837,18 @@ export default function MapaFazendaPage() {
           </button>
         </div>
         <span className="text-lg font-bold text-foreground whitespace-nowrap">Mapa da Fazenda</span>
+
+        {/* Module selector */}
+        <select
+          value={moduloFilter}
+          onChange={(e) => setModuloFilter(e.target.value as ModuloFilter)}
+          className="text-xs border border-[#E5E7EB] rounded px-2 py-1 bg-white font-medium"
+        >
+          <option value="todas">Todas</option>
+          <option value="lavoura">Lavoura</option>
+          <option value="pecuaria">Pecuária</option>
+          <option value="secador">Secador/Silo</option>
+        </select>
 
         {/* Search bar */}
         <div className="relative">
@@ -743,7 +872,6 @@ export default function MapaFazendaPage() {
               <LocateFixed className="h-3.5 w-3.5 text-gray-600" />
             </button>
           </div>
-          {/* Search results dropdown */}
           {showSearchResults && (
             <div className="absolute top-9 left-0 w-[320px] z-[2000] bg-white border border-[#E5E7EB] rounded-md shadow-lg max-h-[250px] overflow-y-auto">
               {searchResults.length === 0 ? (
@@ -762,16 +890,21 @@ export default function MapaFazendaPage() {
 
         <div className="flex-1" />
 
-        <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-          <input type="checkbox" checked={showTalhoes} onChange={(e) => setShowTalhoes(e.target.checked)}
-            className="rounded border-[#16A34A] text-[#16A34A] focus:ring-[#16A34A] h-3.5 w-3.5" />
-          <span>Talhões</span>
-        </label>
-        <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-          <input type="checkbox" checked={showPastos} onChange={(e) => setShowPastos(e.target.checked)}
-            className="rounded border-[#D97706] text-[#D97706] focus:ring-[#D97706] h-3.5 w-3.5" />
-          <span>Pastos</span>
-        </label>
+        {/* Toggles — react to module */}
+        {moduloFilter !== "pecuaria" && moduloFilter !== "secador" && (
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+            <input type="checkbox" checked={showTalhoes} onChange={(e) => setShowTalhoes(e.target.checked)}
+              className="rounded border-[#16A34A] text-[#16A34A] focus:ring-[#16A34A] h-3.5 w-3.5" />
+            <span>Talhões</span>
+          </label>
+        )}
+        {moduloFilter !== "lavoura" && moduloFilter !== "secador" && (
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+            <input type="checkbox" checked={showPastos} onChange={(e) => setShowPastos(e.target.checked)}
+              className="rounded border-[#D97706] text-[#D97706] focus:ring-[#D97706] h-3.5 w-3.5" />
+            <span>Pastos</span>
+          </label>
+        )}
 
         <select value={safraFilter} onChange={(e) => setSafraFilter(e.target.value)}
           className="text-xs border border-[#E5E7EB] rounded px-2 py-1 bg-white">
@@ -799,7 +932,7 @@ export default function MapaFazendaPage() {
           {settingLocation && (
             <div className="absolute top-0 left-0 right-0 z-[1001] bg-[#16A34A] text-white px-4 py-2.5 flex items-center gap-2 text-sm font-medium">
               <MapPin className="h-4 w-4" />
-              Busque sua cidade ou cole as coordenadas da fazenda na barra acima. Depois clique no mapa para confirmar a localização exata.
+              {getSettingBannerText()}
             </div>
           )}
           {drawing && (
@@ -812,8 +945,8 @@ export default function MapaFazendaPage() {
           <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 1 }} />
 
           {/* Redefine location button */}
-          {profile?.fazenda_lat && !settingLocation && (
-            <button onClick={() => { setSettingLocation(true); setTempPin(null); }}
+          {currentModuleHasLocation && !settingLocation && (
+            <button onClick={handleRedefineLocation}
               className="absolute bottom-4 right-4 z-[1001] bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-gray-900 shadow-md flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5" /> Redefinir localização
             </button>
@@ -850,71 +983,79 @@ export default function MapaFazendaPage() {
           <div className="h-full overflow-y-auto p-4">
             <h2 className="font-bold text-base mb-3">Áreas Mapeadas</h2>
 
-            <button onClick={() => setTalhoesSectionOpen(!talhoesSectionOpen)}
-              className="flex items-center gap-2 w-full text-left text-sm font-semibold mb-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
-              Talhões ({talhoes.length})
-              {talhoesSectionOpen ? <ChevronUp className="h-3.5 w-3.5 ml-auto" /> : <ChevronDown className="h-3.5 w-3.5 ml-auto" />}
-            </button>
-            {talhoesSectionOpen && (
-              <div className="space-y-1 mb-4">
-                {talhoes.map((t) => {
-                  const hasMapa = !!t.coordenadas;
-                  const info = safraFilter !== "all" ? getTalhaoSafraInfo(t.id) : null;
-                  return (
-                    <button key={t.id} onClick={() => {
-                      if (hasMapa && t.centro_lat) {
-                        flyTo([Number(t.centro_lat), Number(t.centro_lng)], 16);
-                      } else {
-                        setDrawing(true);
-                      }
-                    }}
-                      className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 text-xs flex items-center gap-2 transition-colors">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getTalhaoColor(t.id) }} />
-                      <span className="font-medium truncate flex-1">{t.nome}</span>
-                      {info && <span className="text-[10px] text-gray-400 shrink-0">{info.cultura}</span>}
-                      {info?.alertas && info.alertas.length > 0 && <AlertTriangle className="h-3 w-3 text-red-500 shrink-0" />}
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${hasMapa ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                        {hasMapa ? "Mapeado" : "Sem mapa"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+            {moduloFilter !== "pecuaria" && moduloFilter !== "secador" && (
+              <>
+                <button onClick={() => setTalhoesSectionOpen(!talhoesSectionOpen)}
+                  className="flex items-center gap-2 w-full text-left text-sm font-semibold mb-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
+                  Talhões ({talhoes.length})
+                  {talhoesSectionOpen ? <ChevronUp className="h-3.5 w-3.5 ml-auto" /> : <ChevronDown className="h-3.5 w-3.5 ml-auto" />}
+                </button>
+                {talhoesSectionOpen && (
+                  <div className="space-y-1 mb-4">
+                    {talhoes.map((t) => {
+                      const hasMapa = !!t.coordenadas;
+                      const info = safraFilter !== "all" ? getTalhaoSafraInfo(t.id) : null;
+                      return (
+                        <button key={t.id} onClick={() => {
+                          if (hasMapa && t.centro_lat) {
+                            flyTo([Number(t.centro_lat), Number(t.centro_lng)], 16);
+                          } else {
+                            setDrawing(true);
+                          }
+                        }}
+                          className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 text-xs flex items-center gap-2 transition-colors">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getTalhaoColor(t.id) }} />
+                          <span className="font-medium truncate flex-1">{t.nome}</span>
+                          {info && <span className="text-[10px] text-gray-400 shrink-0">{info.cultura}</span>}
+                          {info?.alertas && info.alertas.length > 0 && <AlertTriangle className="h-3 w-3 text-red-500 shrink-0" />}
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded ${hasMapa ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                            {hasMapa ? "Mapeado" : "Sem mapa"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
 
-            <button onClick={() => setPastosSectionOpen(!pastosSectionOpen)}
-              className="flex items-center gap-2 w-full text-left text-sm font-semibold mb-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#D97706]" />
-              Pastos ({pastos.length})
-              {pastosSectionOpen ? <ChevronUp className="h-3.5 w-3.5 ml-auto" /> : <ChevronDown className="h-3.5 w-3.5 ml-auto" />}
-            </button>
-            {pastosSectionOpen && (
-              <div className="space-y-1 mb-4">
-                {pastos.map((p) => {
-                  const hasMapa = !!p.coordenadas;
-                  const lot = getPastoLotacao(p.id);
-                  const vacinaCount = getPastoVacinaAlerta(p.id);
-                  return (
-                    <button key={p.id} onClick={() => {
-                      if (hasMapa && p.centro_lat) {
-                        flyTo([Number(p.centro_lat), Number(p.centro_lng)], 16);
-                      } else {
-                        setDrawing(true);
-                      }
-                    }}
-                      className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 text-xs flex items-center gap-2 transition-colors">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getPastoColor(p.id) }} />
-                      <span className="font-medium truncate flex-1">{p.nome}</span>
-                      <span className="text-[10px] text-gray-400 shrink-0">{lot.count}/{lot.cap || "∞"}</span>
-                      {vacinaCount > 0 && <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" />}
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${hasMapa ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                        {hasMapa ? "Mapeado" : "Sem mapa"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+            {moduloFilter !== "lavoura" && moduloFilter !== "secador" && (
+              <>
+                <button onClick={() => setPastosSectionOpen(!pastosSectionOpen)}
+                  className="flex items-center gap-2 w-full text-left text-sm font-semibold mb-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#D97706]" />
+                  Pastos ({pastos.length})
+                  {pastosSectionOpen ? <ChevronUp className="h-3.5 w-3.5 ml-auto" /> : <ChevronDown className="h-3.5 w-3.5 ml-auto" />}
+                </button>
+                {pastosSectionOpen && (
+                  <div className="space-y-1 mb-4">
+                    {pastos.map((p) => {
+                      const hasMapa = !!p.coordenadas;
+                      const lot = getPastoLotacao(p.id);
+                      const vacinaCount = getPastoVacinaAlerta(p.id);
+                      return (
+                        <button key={p.id} onClick={() => {
+                          if (hasMapa && p.centro_lat) {
+                            flyTo([Number(p.centro_lat), Number(p.centro_lng)], 16);
+                          } else {
+                            setDrawing(true);
+                          }
+                        }}
+                          className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 text-xs flex items-center gap-2 transition-colors">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getPastoColor(p.id) }} />
+                          <span className="font-medium truncate flex-1">{p.nome}</span>
+                          <span className="text-[10px] text-gray-400 shrink-0">{lot.count}/{lot.cap || "∞"}</span>
+                          {vacinaCount > 0 && <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" />}
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded ${hasMapa ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                            {hasMapa ? "Mapeado" : "Sem mapa"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
 
             <div className="border-t border-[#E5E7EB] pt-3 mt-3 text-[10px] text-gray-500">
@@ -934,10 +1075,8 @@ export default function MapaFazendaPage() {
                 if (!map) return;
                 const pts = [...drawPoints];
                 pts.pop();
-                // remove last circle marker
                 const last = drawPointsRef.current.pop();
                 last?.remove();
-                // redraw line
                 drawLineRef.current?.remove();
                 drawLineRef.current = null;
                 if (pts.length >= 2) {
@@ -955,7 +1094,6 @@ export default function MapaFazendaPage() {
               onClick={() => {
                 const map = mapRef.current;
                 if (!map || drawPoints.length < 3) return;
-                // Cleanup temp markers
                 drawPointsRef.current.forEach(m => m.remove());
                 drawPointsRef.current = [];
                 drawLineRef.current?.remove();
@@ -966,7 +1104,7 @@ export default function MapaFazendaPage() {
                 setDrawnCoords([...drawPoints]);
                 setDrawPoints([]);
                 setShowBindModal(true);
-                setBindType("talhao");
+                setBindType(moduloFilter === "pecuaria" ? "pasto" : "talhao");
                 setBindTarget("new");
                 setNewName("");
                 setNewExtra("");
