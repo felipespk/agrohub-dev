@@ -19,7 +19,7 @@ const menuItems = [
   { title: "Pesagens", url: "/gado/pesagens", icon: Scale },
   { title: "Sanidade", url: "/gado/sanidade", icon: Heart },
   { title: "Movimentações", url: "/gado/movimentacoes", icon: ArrowLeftRight },
-  { title: "Mapa", url: "/mapa", icon: Map },
+  { title: "Mapa", url: "/mapa?modulo=gado", icon: Map },
 ];
 
 const extraItems = [
