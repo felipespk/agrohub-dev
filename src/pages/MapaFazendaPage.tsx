@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Layers, MapPin, ChevronLeft, ChevronRight,
   AlertTriangle, ChevronDown, ChevronUp, Sprout, Beef,
+  Search, LocateFixed,
 } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -112,6 +113,12 @@ export default function MapaFazendaPage() {
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   const [aplicacoes, setAplicacoes] = useState<any[]>([]);
   const [mapReady, setMapReady] = useState(false);
+
+  // Search
+  const [searchInput, setSearchInput] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchMarkerRef = useRef<L.Marker | null>(null);
 
 
   // ---- Initialize map ----
@@ -593,12 +600,112 @@ export default function MapaFazendaPage() {
   const totalAreaTalhoes = talhoes.reduce((s, t) => s + Number(t.area_hectares || 0), 0);
   const totalCabecas = animais.length;
 
+  // ---- Search helpers ----
+  function dmsToDecimal(degrees: number, minutes: number, seconds: number, direction: string): number {
+    let decimal = degrees + minutes / 60 + seconds / 3600;
+    if (direction === "S" || direction === "W") decimal *= -1;
+    return decimal;
+  }
+
+  function parseCoordinates(input: string): [number, number] | null {
+    // DMS: 10°24'17.46"S 49°37'15.41"W
+    const dmsRe = /(\d+)[°]\s*(\d+)[′']\s*([\d.]+)[″"]?\s*([NSEW])/gi;
+    const dmsMatches = Array.from(input.matchAll(dmsRe));
+    if (dmsMatches.length >= 2) {
+      const lat = dmsToDecimal(+dmsMatches[0][1], +dmsMatches[0][2], +dmsMatches[0][3], dmsMatches[0][4].toUpperCase());
+      const lng = dmsToDecimal(+dmsMatches[1][1], +dmsMatches[1][2], +dmsMatches[1][3], dmsMatches[1][4].toUpperCase());
+      return [lat, lng];
+    }
+    // Decimal: -10.40, -49.62 or -10.40 -49.62
+    const decRe = /(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/;
+    const decMatch = input.match(decRe);
+    if (decMatch) {
+      const lat = parseFloat(decMatch[1]);
+      const lng = parseFloat(decMatch[2]);
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) return [lat, lng];
+    }
+    return null;
+  }
+
+  const handleSearch = async () => {
+    const val = searchInput.trim();
+    if (!val) return;
+    // Remove previous search marker
+    searchMarkerRef.current?.remove();
+    searchMarkerRef.current = null;
+
+    const coords = parseCoordinates(val);
+    if (coords) {
+      mapRef.current?.flyTo(coords, 15, { duration: 1.2 });
+      const redIcon = L.divIcon({
+        html: `<div style="background:#EF4444;border-radius:50%;width:16px;height:16px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
+        className: "", iconSize: [16, 16], iconAnchor: [8, 8],
+      });
+      searchMarkerRef.current = L.marker(coords, { icon: redIcon }).addTo(layersRef.current);
+      toast({ title: "Coordenadas encontradas", description: `${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}` });
+      setShowSearchResults(false);
+      return;
+    }
+    // Nominatim geocoding
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=br&limit=5`);
+      const data = await res.json();
+      if (data.length === 0) {
+        setSearchResults([]);
+        setShowSearchResults(true);
+        return;
+      }
+      setSearchResults(data);
+      setShowSearchResults(true);
+    } catch {
+      toast({ title: "Erro na busca", description: "Não foi possível buscar o endereço.", variant: "destructive" });
+    }
+  };
+
+  const handleSearchResultClick = (r: any) => {
+    const lat = parseFloat(r.lat);
+    const lng = parseFloat(r.lon);
+    searchMarkerRef.current?.remove();
+    const redIcon = L.divIcon({
+      html: `<div style="background:#EF4444;border-radius:50%;width:16px;height:16px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
+      className: "", iconSize: [16, 16], iconAnchor: [8, 8],
+    });
+    searchMarkerRef.current = L.marker([lat, lng], { icon: redIcon }).addTo(layersRef.current);
+    mapRef.current?.flyTo([lat, lng], 14, { duration: 1.2 });
+    setShowSearchResults(false);
+    setSearchInput(r.display_name.split(",").slice(0, 2).join(","));
+  };
+
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "GPS indisponível", description: "Seu navegador não suporta geolocalização.", variant: "destructive" });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        mapRef.current?.flyTo(coords, 15, { duration: 1.2 });
+        searchMarkerRef.current?.remove();
+        const blueIcon = L.divIcon({
+          html: `<div style="background:#3B82F6;border-radius:50%;width:16px;height:16px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
+          className: "", iconSize: [16, 16], iconAnchor: [8, 8],
+        });
+        searchMarkerRef.current = L.marker(coords, { icon: blueIcon }).addTo(layersRef.current);
+        toast({ title: "Localização encontrada", description: `${coords[0].toFixed(5)}, ${coords[1].toFixed(5)}` });
+      },
+      () => {
+        toast({ title: "Localização negada", description: "Não foi possível acessar sua localização.", variant: "destructive" });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       <style>{`@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:0.8}}`}</style>
 
       {/* ---- TOP BAR ---- */}
-      <div className="h-14 bg-white border-b border-[#E5E7EB] flex items-center px-4 gap-4 shrink-0" style={{ zIndex: 1000 }}>
+      <div className="h-14 bg-white border-b border-[#E5E7EB] flex items-center px-4 gap-3 shrink-0" style={{ zIndex: 1000 }}>
         <div className="flex items-center gap-0 text-[13px]">
           <button onClick={() => navigate("/hub")} className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 rounded transition-colors">
             <ArrowLeft className="h-3.5 w-3.5" /> Hub
@@ -612,7 +719,47 @@ export default function MapaFazendaPage() {
             <Beef className="h-3.5 w-3.5" /> Pecuária
           </button>
         </div>
-        <span className="text-lg font-bold text-foreground">Mapa da Fazenda</span>
+        <span className="text-lg font-bold text-foreground whitespace-nowrap">Mapa da Fazenda</span>
+
+        {/* Search bar */}
+        <div className="relative">
+          <div className="flex items-center">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <input
+                value={searchInput}
+                onChange={(e) => { setSearchInput(e.target.value); setShowSearchResults(false); }}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Buscar cidade ou colar coordenadas (ex: -10.40, -49.62)"
+                className="w-[320px] h-8 pl-8 pr-2 text-xs border border-[#E5E7EB] rounded-md focus:outline-none focus:ring-1 focus:ring-[#16A34A] focus:border-[#16A34A]"
+              />
+            </div>
+            <button onClick={handleSearch}
+              className="ml-1.5 h-8 px-3 text-xs font-medium text-white bg-[#16A34A] rounded-md hover:bg-[#15803D] transition-colors">
+              Ir
+            </button>
+            <button onClick={handleMyLocation} title="Minha Localização"
+              className="ml-1 h-8 w-8 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-gray-50 transition-colors">
+              <LocateFixed className="h-3.5 w-3.5 text-gray-600" />
+            </button>
+          </div>
+          {/* Search results dropdown */}
+          {showSearchResults && (
+            <div className="absolute top-9 left-0 w-[320px] z-[2000] bg-white border border-[#E5E7EB] rounded-md shadow-lg max-h-[250px] overflow-y-auto">
+              {searchResults.length === 0 ? (
+                <p className="text-xs text-gray-500 p-3 text-center">Nenhum resultado encontrado</p>
+              ) : (
+                searchResults.map((r: any, i: number) => (
+                  <button key={i} onClick={() => handleSearchResultClick(r)}
+                    className="w-full text-left px-3 py-2.5 text-xs hover:bg-gray-50 border-b border-[#F3F4F6] last:border-0 transition-colors">
+                    <span className="line-clamp-2">{r.display_name}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="flex-1" />
 
         <label className="flex items-center gap-1.5 text-xs cursor-pointer">
@@ -652,7 +799,7 @@ export default function MapaFazendaPage() {
           {settingLocation && (
             <div className="absolute top-0 left-0 right-0 z-[1001] bg-[#16A34A] text-white px-4 py-2.5 flex items-center gap-2 text-sm font-medium">
               <MapPin className="h-4 w-4" />
-              Clique no mapa para definir a localização da sua fazenda.
+              Busque sua cidade ou cole as coordenadas da fazenda na barra acima. Depois clique no mapa para confirmar a localização exata.
             </div>
           )}
           {drawing && (
