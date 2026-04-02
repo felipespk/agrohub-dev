@@ -799,7 +799,7 @@ export default function MapaFazendaPage() {
           {settingLocation && (
             <div className="absolute top-0 left-0 right-0 z-[1001] bg-[#16A34A] text-white px-4 py-2.5 flex items-center gap-2 text-sm font-medium">
               <MapPin className="h-4 w-4" />
-              Clique no mapa para definir a localização da sua fazenda.
+              Busque sua cidade ou cole as coordenadas da fazenda na barra acima. Depois clique no mapa para confirmar a localização exata.
             </div>
           )}
           {drawing && (
