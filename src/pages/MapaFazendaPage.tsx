@@ -74,6 +74,7 @@ export default function MapaFazendaPage() {
   const mapRef = useRef<L.Map | null>(null);
   const layersRef = useRef<L.LayerGroup>(L.layerGroup());
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const labelsLayerRef = useRef<L.TileLayer | null>(null);
   const drawPointsRef = useRef<L.CircleMarker[]>([]);
   const drawLineRef = useRef<L.Polyline | null>(null);
 
