@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Map, Calendar, BookOpen, Package, Cog, Wheat,
-  Bug, ShoppingCart, Sprout, LogOut, ArrowLeft, Leaf, Settings,
+  Bug, ShoppingCart, Sprout, LogOut, ArrowLeft, Leaf, Settings, FileBarChart,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +26,7 @@ const extraItems = [
   { title: "Pragas / MIP", url: "/lavoura/pragas", icon: Bug },
   { title: "Comercialização", url: "/lavoura/comercializacao", icon: ShoppingCart },
   { title: "Culturas", url: "/lavoura/culturas", icon: Sprout },
+  { title: "Relatórios", url: "/lavoura/relatorios", icon: FileBarChart },
 ];
 
 const configItems = [

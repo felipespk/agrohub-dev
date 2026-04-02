@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Pencil, Bug, Leaf, CheckCircle, AlertTriangle, Spray } from "lucide-react";
+import { Plus, Trash2, Bug, Leaf, CheckCircle, AlertTriangle, SprayCan } from "lucide-react";
 import { toast } from "sonner";
 
 const nivelConfig: Record<string, { label: string; cls: string }> = {
@@ -168,7 +168,7 @@ export default function PragasPage() {
           <div><p className="text-xs uppercase text-muted-foreground font-medium">Nível Alto</p><p className="text-xl font-bold">{countAlto}</p></div>
         </CardContent></Card>
         <Card className="border-[#E5E7EB]"><CardContent className="p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center"><Spray className="h-5 w-5 text-yellow-600" /></div>
+          <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center"><SprayCan className="h-5 w-5 text-yellow-600" /></div>
           <div><p className="text-xs uppercase text-muted-foreground font-medium">Aguardando Aplicação</p><p className="text-xl font-bold">{countAplicar}</p></div>
         </CardContent></Card>
       </div>
