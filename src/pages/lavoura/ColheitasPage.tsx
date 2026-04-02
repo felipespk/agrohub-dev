@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { criarLancamentoReceita } from "@/lib/financeiro-integration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -120,10 +121,13 @@ export default function ColheitasPage() {
       try {
         const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%lavoura%").limit(1);
         if (cc && cc.length > 0) {
-          await supabase.from("contas_pr").insert({
+          const { data: cpr } = await supabase.from("contas_pr").insert({
             tipo: "receber", descricao: `Venda colheita ${cultName} — ${talhName}`,
-            valor_total: vt, centro_custo_id: cc[0].id, data_vencimento: form.data, status: "aberto", user_id: user.id,
-          } as any);
+            valor_total: vt, valor_pago: vt, centro_custo_id: cc[0].id,
+            data_vencimento: form.data, data_pagamento: form.data,
+            status: "pago", user_id: user.id,
+          } as any).select("id").single();
+          await criarLancamentoReceita(user.id, vt, form.data, `Venda colheita ${cultName} — ${talhName}`, cc[0].id, (cpr as any)?.id);
         }
       } catch {}
     }

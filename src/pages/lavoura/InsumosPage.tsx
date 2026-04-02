@@ -26,7 +26,7 @@ export default function InsumosPage() {
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("all");
   const [form, setForm] = useState({ nome: "", categoria: "semente", unidade_medida: "kg", preco_unitario: "", estoque_atual: "0", estoque_minimo: "0" });
-  const [entradaForm, setEntradaForm] = useState({ insumo_id: "", quantidade: "", data: new Date().toISOString().split("T")[0], valor_total: "" });
+  const [entradaForm, setEntradaForm] = useState({ insumo_id: "", quantidade: "", data: new Date().toISOString().split("T")[0], valor_total: "", fornecedor_id: "" });
   const [contatos, setContatos] = useState<any[]>([]);
 
   const load = useCallback(async () => {
@@ -62,17 +62,21 @@ export default function InsumosPage() {
   const saveEntrada = async () => {
     if (!user || !entradaForm.insumo_id || !entradaForm.quantidade) return;
     const qty = parseFloat(entradaForm.quantidade);
-    await supabase.from("movimentacoes_insumo" as any).insert({ insumo_id: entradaForm.insumo_id, tipo: "entrada", quantidade: qty, data: entradaForm.data, valor_total: entradaForm.valor_total ? parseFloat(entradaForm.valor_total) : null, user_id: user.id } as any);
+    await supabase.from("movimentacoes_insumo" as any).insert({ insumo_id: entradaForm.insumo_id, tipo: "entrada", quantidade: qty, data: entradaForm.data, fornecedor_id: entradaForm.fornecedor_id || null, valor_total: entradaForm.valor_total ? parseFloat(entradaForm.valor_total) : null, user_id: user.id } as any);
     const insumo = insumos.find(i => i.id === entradaForm.insumo_id);
     if (insumo) {
       await supabase.from("insumos" as any).update({ estoque_atual: Number(insumo.estoque_atual) + qty } as any).eq("id", entradaForm.insumo_id);
     }
-    // Try financial integration
+    // Financial integration — create contas_pr for purchases with value
     if (entradaForm.valor_total && parseFloat(entradaForm.valor_total) > 0) {
       try {
         const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%lavoura%").limit(1);
         if (cc && cc.length > 0) {
-          await supabase.from("contas_pr").insert({ tipo: "pagar", descricao: `Compra insumo: ${insumo?.nome}`, valor_total: parseFloat(entradaForm.valor_total), centro_custo_id: cc[0].id, data_vencimento: entradaForm.data, status: "aberto", user_id: user.id } as any);
+          await supabase.from("contas_pr").insert({
+            tipo: "pagar", descricao: `Compra insumo: ${insumo?.nome}`, valor_total: parseFloat(entradaForm.valor_total),
+            centro_custo_id: cc[0].id, contato_id: entradaForm.fornecedor_id || null,
+            data_vencimento: entradaForm.data, status: "aberto", user_id: user.id,
+          } as any);
         }
       } catch {}
     }
@@ -94,7 +98,7 @@ export default function InsumosPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-foreground">Estoque de Insumos</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { setEntradaForm({ insumo_id: "", quantidade: "", data: new Date().toISOString().split("T")[0], valor_total: "" }); setOpenEntrada(true); }}>Registrar Entrada</Button>
+          <Button variant="outline" onClick={() => { setEntradaForm({ insumo_id: "", quantidade: "", data: new Date().toISOString().split("T")[0], valor_total: "", fornecedor_id: "" }); setOpenEntrada(true); }}>Registrar Entrada</Button>
           <Button onClick={() => { setEditItem(null); setForm({ nome: "", categoria: "semente", unidade_medida: "kg", preco_unitario: "", estoque_atual: "0", estoque_minimo: "0" }); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Novo Insumo</Button>
         </div>
       </div>
@@ -192,6 +196,12 @@ export default function InsumosPage() {
             </div>
             <div className="space-y-2"><Label>Quantidade *</Label><Input type="number" value={entradaForm.quantidade} onChange={e => setEntradaForm(p => ({ ...p, quantidade: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Data</Label><Input type="date" value={entradaForm.data} onChange={e => setEntradaForm(p => ({ ...p, data: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Fornecedor</Label>
+              <Select value={entradaForm.fornecedor_id || "none"} onValueChange={v => setEntradaForm(p => ({ ...p, fornecedor_id: v === "none" ? "" : v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent><SelectItem value="none">Nenhum</SelectItem>{contatos.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2"><Label>Valor Total (R$)</Label><Input type="number" value={entradaForm.valor_total} onChange={e => setEntradaForm(p => ({ ...p, valor_total: e.target.value }))} /></div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setOpenEntrada(false)}>Cancelar</Button><Button onClick={saveEntrada} disabled={!entradaForm.insumo_id || !entradaForm.quantidade}>Salvar</Button></DialogFooter>

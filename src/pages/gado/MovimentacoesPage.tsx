@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { criarLancamentoReceita } from "@/lib/financeiro-integration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,6 +37,8 @@ export default function MovimentacoesPage() {
     causa_morte: "", pasto_destino_id: "", observacao: "",
     // nascimento
     sexo_bezerro: "macho", brinco_bezerro: "",
+    // venda payment type
+    tipo_pagamento: "avista",
   });
 
   const fetchAll = useCallback(async () => {
@@ -100,11 +103,19 @@ export default function MovimentacoesPage() {
       try {
         const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%pecuária%").limit(1);
         if (cc && cc.length > 0) {
-          await supabase.from("contas_pr").insert({
+          const vtNum = form.valor_total ? parseFloat(form.valor_total) : 0;
+          const isPago = form.tipo_pagamento === "avista";
+          const { data: cpr } = await supabase.from("contas_pr").insert({
             tipo: "receber", descricao: `Venda de gado`, data_vencimento: form.data,
-            valor_total: form.valor_total ? parseFloat(form.valor_total) : 0,
-            centro_custo_id: cc[0].id, user_id: user.id, status: "aberto",
-          } as any);
+            valor_total: vtNum,
+            valor_pago: isPago ? vtNum : 0,
+            data_pagamento: isPago ? form.data : null,
+            centro_custo_id: cc[0].id, user_id: user.id,
+            status: isPago ? "pago" : "aberto",
+          } as any).select("id").single();
+          if (isPago && vtNum > 0) {
+            await criarLancamentoReceita(user.id, vtNum, form.data, "Venda de gado", cc[0].id, (cpr as any)?.id);
+          }
         }
       } catch { /* silently skip */ }
     } else if (form.tipo === "nascimento") {
@@ -266,6 +277,15 @@ export default function MovimentacoesPage() {
                 }} /></div>
                 <div className="space-y-2"><Label>Valor Total (R$)</Label><Input type="number" value={form.valor_total} onChange={e => setForm({ ...form, valor_total: e.target.value })} /></div>
               </>
+            )}
+
+            {form.tipo === "venda" && (
+              <div className="space-y-2"><Label>Tipo de Pagamento</Label>
+                <Select value={form.tipo_pagamento} onValueChange={v => setForm({ ...form, tipo_pagamento: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="avista">À Vista</SelectItem><SelectItem value="prazo">A Prazo</SelectItem></SelectContent>
+                </Select>
+              </div>
             )}
 
             {form.tipo === "morte" && (

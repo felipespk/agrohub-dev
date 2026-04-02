@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { criarLancamentoReceita } from "@/lib/financeiro-integration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,11 +106,12 @@ export default function ComercializacaoPage() {
         const desc = `Venda ${cultura?.nome || "Grãos"} — ${parseFloat(form.quantidade).toLocaleString("pt-BR")} sacas${comprador ? ` para ${comprador.nome}` : ""}`;
 
         if (form.tipo_contrato === "avista") {
-          await supabase.from("contas_pr").insert({
+          const { data: cpr } = await supabase.from("contas_pr").insert({
             tipo: "receber", descricao: desc, valor_total: vt, valor_pago: vt,
             centro_custo_id: cc[0].id, data_vencimento: form.data_venda, data_pagamento: form.data_venda,
             status: "pago", user_id: user.id,
-          } as any);
+          } as any).select("id").single();
+          await criarLancamentoReceita(user.id, vt, form.data_venda, desc, cc[0].id, (cpr as any)?.id);
         } else {
           const venc = new Date(form.data_venda);
           venc.setDate(venc.getDate() + 30);
