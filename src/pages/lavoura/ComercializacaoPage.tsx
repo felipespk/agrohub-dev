@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { criarLancamentoReceita, buscarCentroCusto } from "@/lib/financeiro-integration";
+import { criarLancamentoReceita } from "@/lib/financeiro-integration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
