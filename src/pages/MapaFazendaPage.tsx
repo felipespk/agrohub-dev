@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Layers, MapPin, ChevronLeft, ChevronRight,
-  AlertTriangle, Syringe, ChevronDown, ChevronUp,
+  AlertTriangle, ChevronDown, ChevronUp,
 } from "lucide-react";
-import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -47,7 +46,6 @@ const CULTURA_COLORS: Record<string, string> = {
 const DEFAULT_TALHAO_COLOR = "#9CA3AF";
 const DEFAULT_CENTER: [number, number] = [-15.78, -47.93];
 
-// ---- Helper: Calculate area from coords (Shoelace on projected coords) ----
 function calcAreaHaSimple(coords: [number, number][]): number {
   if (coords.length < 3) return 0;
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -63,73 +61,21 @@ function calcAreaHaSimple(coords: [number, number][]): number {
   return area / 10000;
 }
 
-// ---- FlyTo component ----
-function FlyTo({ center, zoom }: { center: [number, number]; zoom: number }) {
-  const map = useMap();
-  useEffect(() => {
-    if (center) map.flyTo(center, zoom, { duration: 1.2 });
-  }, [center, zoom]);
-  return null;
-}
+const fmtNum = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-// ---- Location picker for initial setup ----
-function LocationPicker({ onPick }: { onPick: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click(e) {
-      onPick(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
-}
-
-// ---- Draw handler (simple click-based polygon drawing) ----
-function DrawPolygon({
-  active,
-  onComplete,
-}: {
-  active: boolean;
-  onComplete: (coords: [number, number][]) => void;
-}) {
-  const [points, setPoints] = useState<[number, number][]>([]);
-  const map = useMap();
-
-  useEffect(() => {
-    if (!active) {
-      setPoints([]);
-      return;
-    }
-    map.getContainer().style.cursor = "crosshair";
-    return () => { map.getContainer().style.cursor = ""; };
-  }, [active, map]);
-
-  useMapEvents({
-    click(e) {
-      if (!active) return;
-      setPoints((prev) => [...prev, [e.latlng.lat, e.latlng.lng]]);
-    },
-    dblclick(e) {
-      if (!active || points.length < 3) return;
-      e.originalEvent.preventDefault();
-      const final = [...points, [e.latlng.lat, e.latlng.lng]] as [number, number][];
-      onComplete(final);
-      setPoints([]);
-    },
-  });
-
-  if (points.length < 2) return null;
-  return (
-    <Polygon
-      positions={points.map((p) => [p[0], p[1]] as [number, number])}
-      pathOptions={{ color: "#3B82F6", weight: 2, dashArray: "6", fillOpacity: 0.15 }}
-    />
-  );
-}
-
-// ====================== MAIN COMPONENT ======================
 export default function MapaFazendaPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Refs
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const layersRef = useRef<L.LayerGroup>(L.layerGroup());
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const drawPointsRef = useRef<L.CircleMarker[]>([]);
+  const drawLineRef = useRef<L.Polyline | null>(null);
 
   // State
   const [profile, setProfile] = useState<any>(null);
@@ -143,6 +89,16 @@ export default function MapaFazendaPage() {
   const [talhoesSectionOpen, setTalhoesSectionOpen] = useState(true);
   const [pastosSectionOpen, setPastosSectionOpen] = useState(true);
 
+  // Drawing
+  const [drawing, setDrawing] = useState(false);
+  const [drawPoints, setDrawPoints] = useState<[number, number][]>([]);
+  const [drawnCoords, setDrawnCoords] = useState<[number, number][] | null>(null);
+  const [bindType, setBindType] = useState<"talhao" | "pasto">("talhao");
+  const [bindTarget, setBindTarget] = useState<string>("new");
+  const [newName, setNewName] = useState("");
+  const [newExtra, setNewExtra] = useState("");
+  const [showBindModal, setShowBindModal] = useState(false);
+
   // Data
   const [talhoes, setTalhoes] = useState<any[]>([]);
   const [pastos, setPastos] = useState<any[]>([]);
@@ -154,23 +110,42 @@ export default function MapaFazendaPage() {
   const [atividades, setAtividades] = useState<any[]>([]);
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   const [aplicacoes, setAplicacoes] = useState<any[]>([]);
+  const [mapReady, setMapReady] = useState(false);
 
-  // Drawing
-  const [drawing, setDrawing] = useState(false);
-  const [drawnCoords, setDrawnCoords] = useState<[number, number][] | null>(null);
-  const [bindType, setBindType] = useState<"talhao" | "pasto">("talhao");
-  const [bindTarget, setBindTarget] = useState<string>("new");
-  const [newName, setNewName] = useState("");
-  const [newExtra, setNewExtra] = useState("");
-  const [showBindModal, setShowBindModal] = useState(false);
 
-  // Fly
-  const [flyTarget, setFlyTarget] = useState<{ center: [number, number]; zoom: number } | null>(null);
+  // ---- Initialize map ----
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+    const map = L.map(mapContainerRef.current, {
+      center: DEFAULT_CENTER,
+      zoom: 4,
+      zoomControl: true,
+      doubleClickZoom: true,
+    });
+    const tile = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap',
+    }).addTo(map);
+    tileLayerRef.current = tile;
+    layersRef.current.addTo(map);
+    mapRef.current = map;
+    setMapReady(true);
 
-  const mapCenter: [number, number] = profile?.fazenda_lat
-    ? [Number(profile.fazenda_lat), Number(profile.fazenda_lng)]
-    : DEFAULT_CENTER;
-  const mapZoom = profile?.fazenda_lat ? (Number(profile.fazenda_zoom) || 15) : 4;
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // ---- Toggle satellite ----
+  useEffect(() => {
+    if (!mapRef.current || !tileLayerRef.current) return;
+    tileLayerRef.current.remove();
+    const url = satellite
+      ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+    const tile = L.tileLayer(url, { attribution: satellite ? "" : '&copy; OpenStreetMap' }).addTo(mapRef.current);
+    tileLayerRef.current = tile;
+  }, [satellite]);
 
   // ---- Load data ----
   const loadAll = useCallback(async () => {
@@ -207,6 +182,30 @@ export default function MapaFazendaPage() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
+  // ---- Fly to farm when profile loads ----
+  useEffect(() => {
+    if (!mapRef.current || !profile) return;
+    if (profile.fazenda_lat) {
+      mapRef.current.flyTo([Number(profile.fazenda_lat), Number(profile.fazenda_lng)], Number(profile.fazenda_zoom) || 15, { duration: 1.2 });
+    }
+  }, [profile?.fazenda_lat, mapReady]);
+
+  // ---- Location picker click handler ----
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!settingLocation) {
+      map.getContainer().style.cursor = "";
+      return;
+    }
+    map.getContainer().style.cursor = "crosshair";
+    const handler = (e: L.LeafletMouseEvent) => {
+      setTempPin([e.latlng.lat, e.latlng.lng]);
+    };
+    map.on("click", handler);
+    return () => { map.off("click", handler); map.getContainer().style.cursor = ""; };
+  }, [settingLocation, mapReady]);
+
   // ---- Confirm farm location ----
   const confirmLocation = async () => {
     if (!tempPin || !user) return;
@@ -218,9 +217,75 @@ export default function MapaFazendaPage() {
     setProfile((p: any) => ({ ...p, fazenda_lat: tempPin[0], fazenda_lng: tempPin[1], fazenda_zoom: 15 }));
     setSettingLocation(false);
     setTempPin(null);
-    setFlyTarget({ center: tempPin, zoom: 15 });
+    mapRef.current?.flyTo(tempPin, 15, { duration: 1.2 });
     toast({ title: "Localização definida!", description: "O mapa agora centraliza na sua fazenda." });
   };
+
+  // ---- Drawing mode ----
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || settingLocation) return;
+
+    // Cleanup draw artifacts
+    drawPointsRef.current.forEach(m => m.remove());
+    drawPointsRef.current = [];
+    drawLineRef.current?.remove();
+    drawLineRef.current = null;
+
+    if (!drawing) {
+      map.getContainer().style.cursor = "";
+      map.doubleClickZoom.enable();
+      setDrawPoints([]);
+      return;
+    }
+
+    map.getContainer().style.cursor = "crosshair";
+    map.doubleClickZoom.disable();
+
+    const points: [number, number][] = [];
+
+    const onClick = (e: L.LeafletMouseEvent) => {
+      const pt: [number, number] = [e.latlng.lat, e.latlng.lng];
+      points.push(pt);
+      const cm = L.circleMarker(pt, { radius: 5, color: "#3B82F6", fillColor: "#3B82F6", fillOpacity: 1 }).addTo(map);
+      drawPointsRef.current.push(cm);
+      if (points.length >= 2) {
+        drawLineRef.current?.remove();
+        drawLineRef.current = L.polyline(points, { color: "#3B82F6", weight: 2, dashArray: "6" }).addTo(map);
+      }
+      setDrawPoints([...points]);
+    };
+
+    const onDblClick = (e: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(e as any);
+      L.DomEvent.preventDefault(e as any);
+      if (points.length < 3) return;
+      // Cleanup temp
+      drawPointsRef.current.forEach(m => m.remove());
+      drawPointsRef.current = [];
+      drawLineRef.current?.remove();
+      drawLineRef.current = null;
+      map.getContainer().style.cursor = "";
+      map.doubleClickZoom.enable();
+
+      setDrawing(false);
+      setDrawPoints([]);
+      setDrawnCoords([...points]);
+      setShowBindModal(true);
+      setBindType("talhao");
+      setBindTarget("new");
+      setNewName("");
+      setNewExtra("");
+    };
+
+    map.on("click", onClick);
+    map.on("dblclick", onDblClick);
+
+    return () => {
+      map.off("click", onClick);
+      map.off("dblclick", onDblClick);
+    };
+  }, [drawing, settingLocation, mapReady]);
 
   // ---- Derived data ----
   const getCulturaNome = (culturaId: string) => culturas.find((c) => c.id === culturaId)?.nome || "";
@@ -280,17 +345,161 @@ export default function MapaFazendaPage() {
     ).length;
   }, [animais, aplicacoes]);
 
-  // ---- Drawing complete ----
-  const handleDrawComplete = (coords: [number, number][]) => {
-    setDrawing(false);
-    setDrawnCoords(coords);
-    setShowBindModal(true);
-    setBindType("talhao");
-    setBindTarget("new");
-    setNewName("");
-    setNewExtra("");
-  };
+  // ---- Render map layers ----
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
 
+    layersRef.current.clearLayers();
+
+    // Farm home marker
+    if (profile?.fazenda_lat && !settingLocation) {
+      L.marker([Number(profile.fazenda_lat), Number(profile.fazenda_lng)], { icon: homeIcon })
+        .bindPopup(`<span class="font-semibold text-sm">Sede da Fazenda</span>`)
+        .addTo(layersRef.current);
+    }
+
+    // Temp pin for location setting
+    if (tempPin && settingLocation) {
+      const marker = L.marker(tempPin).addTo(layersRef.current);
+      marker.bindPopup(`
+        <div style="text-align:center">
+          <p style="font-weight:600;font-size:14px;margin-bottom:8px">Localização da fazenda</p>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button onclick="window.__confirmFarmLocation()" style="background:#16A34A;color:white;font-size:12px;padding:4px 12px;border-radius:4px;border:none;cursor:pointer">Confirmar</button>
+            <button onclick="window.__cancelFarmPin()" style="border:1px solid #d1d5db;font-size:12px;padding:4px 12px;border-radius:4px;background:white;cursor:pointer">Cancelar</button>
+          </div>
+        </div>
+      `).openPopup();
+    }
+
+    // Talhão polygons
+    if (showTalhoes) {
+      const mappedTalhoes = talhoes.filter((t) => t.coordenadas);
+      mappedTalhoes.forEach((t) => {
+        const coords: [number, number][] = (t.coordenadas as any[]).map((c: any) => [c.lat, c.lng]);
+        const color = getTalhaoColor(t.id);
+        const info = getTalhaoSafraInfo(t.id);
+
+        let popupHtml = `<div style="padding:4px;min-width:280px">
+          <h3 style="font-weight:700;font-size:16px;margin-bottom:4px">${t.nome}</h3>
+          <p style="color:#6B7280;font-size:12px;margin-bottom:4px">${fmtNum(Number(t.area_hectares))} ha
+            ${t.tipo_solo ? `<span style="margin-left:8px;display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;background:#FEF3C7;color:#92400E">${t.tipo_solo}</span>` : ''}
+          </p>`;
+        if (info) {
+          popupHtml += `<p style="font-size:14px;font-weight:500;color:#374151">Cultura: ${info.cultura}</p>`;
+          if (info.produtividade !== null) {
+            popupHtml += `<p style="font-size:14px;font-weight:700;color:#15803D">Produtividade: ${fmtNum(info.produtividade)} sacas/ha</p>`;
+          } else {
+            popupHtml += `<p style="font-size:14px;font-style:italic;color:#9CA3AF">Sem colheita registrada</p>`;
+          }
+          if (info.custoTotal > 0) {
+            popupHtml += `<p style="font-size:14px;color:#4B5563">Custo: ${fmtBRL(info.custoHa)}/ha</p>`;
+          } else {
+            popupHtml += `<p style="font-size:14px;font-style:italic;color:#9CA3AF">Sem custos registrados</p>`;
+          }
+          info.alertas.forEach((al: any) => {
+            popupHtml += `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:4px;padding:6px;margin-top:4px;font-size:12px;color:#B91C1C;display:flex;align-items:center;gap:4px">⚠ ALERTA: ${al.nome_ocorrencia} — Nível ${al.nivel}</div>`;
+          });
+        }
+        popupHtml += `<button onclick="window.__removePolygon('talhao','${t.id}')" style="margin-top:8px;font-size:10px;color:#EF4444;text-decoration:underline;background:none;border:none;cursor:pointer">Remover do mapa</button></div>`;
+
+        L.polygon(coords, { color, fillOpacity: 0.25, weight: 2 })
+          .bindPopup(popupHtml, { minWidth: 300, maxWidth: 320 })
+          .addTo(layersRef.current);
+
+        // Alert marker
+        if (info?.alertas && info.alertas.length > 0 && t.centro_lat) {
+          L.marker([Number(t.centro_lat), Number(t.centro_lng)], { icon: alertIcon })
+            .bindPopup(`<span style="font-size:12px;color:#B91C1C;font-weight:500">${info.alertas[0].nome_ocorrencia}</span>`)
+            .addTo(layersRef.current);
+        }
+      });
+    }
+
+    // Pasto polygons
+    if (showPastos) {
+      const mappedPastos = pastos.filter((p) => p.coordenadas);
+      mappedPastos.forEach((p) => {
+        const coords: [number, number][] = (p.coordenadas as any[]).map((c: any) => [c.lat, c.lng]);
+        const color = getPastoColor(p.id);
+        const lot = getPastoLotacao(p.id);
+        const vacinaCount = getPastoVacinaAlerta(p.id);
+        const pastoAnimais = animais.filter((a) => a.pasto_id === p.id);
+
+        const pctWidth = lot.cap > 0 ? Math.min(lot.pct, 100) : 0;
+        let popupHtml = `<div style="padding:4px;min-width:300px;max-height:380px;overflow-y:auto">
+          <h3 style="font-weight:700;font-size:16px;margin-bottom:4px">${p.nome}</h3>
+          <p style="color:#6B7280;font-size:12px;margin-bottom:4px">${fmtNum(Number(p.area_hectares || 0))} ha</p>
+          <div style="margin-bottom:4px">
+            <span style="font-size:14px">${lot.count} / ${lot.cap || "∞"} cabeças</span>
+            ${lot.cap > 0 ? `<div style="width:100%;background:#E5E7EB;border-radius:9999px;height:8px;margin-top:4px"><div style="height:8px;border-radius:9999px;background:${color};width:${pctWidth}%"></div></div>` : ''}
+          </div>`;
+        if (lot.pesoMedio > 0) popupHtml += `<p style="font-size:14px;color:#4B5563">Peso médio: ${fmtNum(lot.pesoMedio)} KG</p>`;
+        if (vacinaCount > 0) {
+          popupHtml += `<div style="background:#FEFCE8;border:1px solid #FDE68A;border-radius:4px;padding:6px;margin-top:4px;font-size:12px;color:#A16207;display:flex;align-items:center;gap:4px">⚠ ${vacinaCount} animais com vacina atrasada</div>`;
+        }
+        if (pastoAnimais.length > 0) {
+          popupHtml += `<p style="font-weight:700;font-size:12px;margin-top:8px;margin-bottom:4px">Animais neste pasto</p>
+            <table style="width:100%;font-size:11px;border-collapse:collapse">
+              <thead><tr style="border-bottom:1px solid #E5E7EB">
+                <th style="text-align:left;padding:2px 0">Brinco</th>
+                <th style="text-align:left;padding:2px 0">Nome</th>
+                <th style="text-align:left;padding:2px 0">Cat.</th>
+                <th style="text-align:right;padding:2px 0">Peso</th>
+              </tr></thead><tbody>`;
+          pastoAnimais.slice(0, 10).forEach((a) => {
+            const catColors: Record<string, string> = {
+              "Vaca": "background:#FCE7F3;color:#BE185D", "Touro": "background:#DBEAFE;color:#1D4ED8",
+              "Bezerro": "background:#DCFCE7;color:#15803D", "Bezerra": "background:#DCFCE7;color:#15803D",
+              "Novilha": "background:#FEF9C3;color:#A16207",
+            };
+            const catStyle = catColors[a.categoria] || "background:#F3F4F6;color:#374151";
+            popupHtml += `<tr style="border-bottom:1px solid #F3F4F6">
+              <td style="padding:2px 0;font-family:monospace;font-weight:700">${a.brinco}</td>
+              <td style="padding:2px 0">${a.nome || "—"}</td>
+              <td style="padding:2px 0"><span style="padding:1px 4px;border-radius:4px;font-size:9px;${catStyle}">${a.categoria}</span></td>
+              <td style="padding:2px 0;text-align:right">${a.peso_atual ? fmtNum(Number(a.peso_atual)) : "—"}</td>
+            </tr>`;
+          });
+          popupHtml += `</tbody></table>`;
+          if (pastoAnimais.length > 10) {
+            popupHtml += `<a href="/gado/animais" style="font-size:10px;color:#2563EB;margin-top:4px;display:block">Ver todos (${pastoAnimais.length})</a>`;
+          }
+        } else {
+          popupHtml += `<p style="font-size:12px;font-style:italic;color:#9CA3AF;margin-top:4px">Nenhum animal neste pasto</p>`;
+        }
+        popupHtml += `<button onclick="window.__removePolygon('pasto','${p.id}')" style="margin-top:8px;font-size:10px;color:#EF4444;text-decoration:underline;background:none;border:none;cursor:pointer">Remover do mapa</button></div>`;
+
+        L.polygon(coords, { color, fillOpacity: 0.25, weight: 2 })
+          .bindPopup(popupHtml, { minWidth: 320, maxWidth: 360 })
+          .addTo(layersRef.current);
+
+        if (vacinaCount > 0 && p.centro_lat) {
+          L.marker([Number(p.centro_lat), Number(p.centro_lng)], { icon: vacinaIcon })
+            .bindPopup(`<span style="font-size:12px;color:#A16207;font-weight:500">${vacinaCount} vacinas atrasadas</span>`)
+            .addTo(layersRef.current);
+        }
+      });
+    }
+  }, [mapReady, profile, tempPin, settingLocation, showTalhoes, showPastos, talhoes, pastos,
+    safraFilter, safraTalhoes, culturas, animais, colheitas, atividades, ocorrencias, aplicacoes]);
+
+  // ---- Global handlers for popup buttons ----
+  useEffect(() => {
+    (window as any).__confirmFarmLocation = confirmLocation;
+    (window as any).__cancelFarmPin = () => setTempPin(null);
+    (window as any).__removePolygon = (type: string, id: string) => {
+      removePolygon(type as "talhao" | "pasto", id);
+    };
+    return () => {
+      delete (window as any).__confirmFarmLocation;
+      delete (window as any).__cancelFarmPin;
+      delete (window as any).__removePolygon;
+    };
+  });
+
+  // ---- Bind save ----
   const handleBindSave = async () => {
     if (!drawnCoords || !user) return;
     const coordsJson = drawnCoords.map(([lat, lng]) => ({ lat, lng }));
@@ -343,6 +552,11 @@ export default function MapaFazendaPage() {
     loadAll();
   };
 
+  // ---- FlyTo helper ----
+  const flyTo = (center: [number, number], zoom: number) => {
+    mapRef.current?.flyTo(center, zoom, { duration: 1.2 });
+  };
+
   // ---- Legend cultures ----
   const activeCulturas = useMemo(() => {
     if (safraFilter === "all") return [];
@@ -354,21 +568,13 @@ export default function MapaFazendaPage() {
     });
   }, [safraFilter, safraTalhoes, culturas]);
 
-  // Unmapped items
   const unmappedTalhoes = talhoes.filter((t) => !t.coordenadas);
   const unmappedPastos = pastos.filter((p) => !p.coordenadas);
-  const mappedTalhoes = talhoes.filter((t) => t.coordenadas);
-  const mappedPastos = pastos.filter((p) => p.coordenadas);
-
   const totalAreaTalhoes = talhoes.reduce((s, t) => s + Number(t.area_hectares || 0), 0);
   const totalCabecas = animais.length;
 
-  const fmtNum = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
-      {/* Pulse animation */}
       <style>{`@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:0.8}}`}</style>
 
       {/* ---- TOP BAR ---- */}
@@ -413,205 +619,20 @@ export default function MapaFazendaPage() {
       <div className="flex-1 flex relative">
         {/* ---- MAP ---- */}
         <div className="flex-1 relative">
-          {/* Setting location banner */}
           {settingLocation && (
             <div className="absolute top-0 left-0 right-0 z-[1001] bg-[#16A34A] text-white px-4 py-2.5 flex items-center gap-2 text-sm font-medium">
               <MapPin className="h-4 w-4" />
               Clique no mapa para definir a localização da sua fazenda.
             </div>
           )}
-
-          {/* Drawing instructions */}
           {drawing && (
             <div className="absolute top-0 left-0 right-0 z-[1001] bg-blue-600 text-white px-4 py-2.5 flex items-center gap-2 text-sm font-medium">
               <MapPin className="h-4 w-4" />
-              Clique para criar os pontos do polígono. Dê duplo clique para finalizar (mínimo 3 pontos).
+              Clique para criar os pontos do polígono. Dê duplo clique para finalizar (mínimo 3 pontos). [{drawPoints.length} pontos]
             </div>
           )}
 
-          <MapContainer
-            center={mapCenter}
-            zoom={mapZoom}
-            className="h-full w-full"
-            style={{ zIndex: 1 }}
-            doubleClickZoom={!drawing}
-          >
-            {satellite ? (
-              <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-            ) : (
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
-            )}
-
-            {flyTarget && <FlyTo center={flyTarget.center} zoom={flyTarget.zoom} />}
-
-            {/* Location picker */}
-            {settingLocation && (
-              <LocationPicker onPick={(lat, lng) => setTempPin([lat, lng])} />
-            )}
-
-            {/* Temp pin */}
-            {tempPin && settingLocation && (
-              <Marker position={tempPin}>
-                <Popup>
-                  <div className="text-center">
-                    <p className="font-semibold text-sm mb-2">Localização da fazenda</p>
-                    <div className="flex gap-2 justify-center">
-                      <button onClick={confirmLocation}
-                        className="bg-[#16A34A] text-white text-xs px-3 py-1 rounded hover:bg-[#15803D]">Confirmar</button>
-                      <button onClick={() => setTempPin(null)}
-                        className="border border-gray-300 text-xs px-3 py-1 rounded hover:bg-gray-50">Cancelar</button>
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            )}
-
-            {/* Farm location marker */}
-            {profile?.fazenda_lat && !settingLocation && (
-              <Marker position={[Number(profile.fazenda_lat), Number(profile.fazenda_lng)]} icon={homeIcon}>
-                <Popup><span className="font-semibold text-sm">Sede da Fazenda</span></Popup>
-              </Marker>
-            )}
-
-            {/* Drawing tool */}
-            <DrawPolygon active={drawing} onComplete={handleDrawComplete} />
-
-            {/* Talhão polygons */}
-            {showTalhoes && mappedTalhoes.map((t) => {
-              const coords: [number, number][] = (t.coordenadas as any[]).map((c: any) => [c.lat, c.lng]);
-              const color = getTalhaoColor(t.id);
-              const info = getTalhaoSafraInfo(t.id);
-              return (
-                <div key={`t-${t.id}`}>
-                  <Polygon positions={coords} pathOptions={{ color, fillOpacity: 0.25, weight: 2 }}>
-                    <Popup minWidth={300} maxWidth={320}>
-                      <div className="p-1">
-                        <h3 className="font-bold text-base mb-1">{t.nome}</h3>
-                        <p className="text-gray-500 text-xs mb-1">{fmtNum(Number(t.area_hectares))} ha
-                          {t.tipo_solo && <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800">{t.tipo_solo}</span>}
-                        </p>
-                        {info && (
-                          <>
-                            <p className="text-sm font-medium text-gray-700">Cultura: {info.cultura}</p>
-                            {info.produtividade !== null ? (
-                              <p className="text-sm font-bold text-green-700">Produtividade: {fmtNum(info.produtividade)} sacas/ha</p>
-                            ) : (
-                              <p className="text-sm italic text-gray-400">Sem colheita registrada</p>
-                            )}
-                            {info.custoTotal > 0 ? (
-                              <p className="text-sm text-gray-600">Custo: {fmtBRL(info.custoHa)}/ha</p>
-                            ) : (
-                              <p className="text-sm italic text-gray-400">Sem custos registrados</p>
-                            )}
-                            {info.alertas.length > 0 && info.alertas.map((al: any, i: number) => (
-                              <div key={i} className="bg-red-50 border border-red-200 rounded p-1.5 mt-1 flex items-center gap-1 text-xs text-red-700">
-                                <AlertTriangle className="h-3 w-3 shrink-0" />
-                                ALERTA: {al.nome_ocorrencia} — Nível {al.nivel}
-                              </div>
-                            ))}
-                          </>
-                        )}
-                        <button onClick={() => removePolygon("talhao", t.id)}
-                          className="mt-2 text-[10px] text-red-500 hover:text-red-700 underline">Remover do mapa</button>
-                      </div>
-                    </Popup>
-                  </Polygon>
-                  {/* Alert markers */}
-                  {info?.alertas && info.alertas.length > 0 && t.centro_lat && (
-                    <Marker position={[Number(t.centro_lat), Number(t.centro_lng)]} icon={alertIcon}>
-                      <Popup><span className="text-xs text-red-700 font-medium">{info.alertas[0].nome_ocorrencia}</span></Popup>
-                    </Marker>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Pasto polygons */}
-            {showPastos && mappedPastos.map((p) => {
-              const coords: [number, number][] = (p.coordenadas as any[]).map((c: any) => [c.lat, c.lng]);
-              const color = getPastoColor(p.id);
-              const lot = getPastoLotacao(p.id);
-              const vacinaCount = getPastoVacinaAlerta(p.id);
-              const pastoAnimais = animais.filter((a) => a.pasto_id === p.id);
-              return (
-                <div key={`p-${p.id}`}>
-                  <Polygon positions={coords} pathOptions={{ color, fillOpacity: 0.25, weight: 2 }}>
-                    <Popup minWidth={320} maxWidth={360}>
-                      <div className="p-1" style={{ maxHeight: 380, overflowY: "auto" }}>
-                        <h3 className="font-bold text-base mb-1">{p.nome}</h3>
-                        <p className="text-gray-500 text-xs mb-1">{fmtNum(Number(p.area_hectares || 0))} ha</p>
-                        <div className="mb-1">
-                          <span className="text-sm">{lot.count} / {lot.cap || "∞"} cabeças</span>
-                          {lot.cap > 0 && (
-                            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                              <div className="h-2 rounded-full transition-all" style={{
-                                width: `${Math.min(lot.pct, 100)}%`,
-                                backgroundColor: color,
-                              }} />
-                            </div>
-                          )}
-                        </div>
-                        {lot.pesoMedio > 0 && <p className="text-sm text-gray-600">Peso médio: {fmtNum(lot.pesoMedio)} KG</p>}
-                        {vacinaCount > 0 && (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded p-1.5 mt-1 flex items-center gap-1 text-xs text-yellow-700">
-                            <AlertTriangle className="h-3 w-3 shrink-0" />
-                            {vacinaCount} animais com vacina atrasada
-                          </div>
-                        )}
-                        {pastoAnimais.length > 0 && (
-                          <>
-                            <p className="font-bold text-xs mt-2 mb-1">Animais neste pasto</p>
-                            <table className="w-full text-[11px]">
-                              <thead><tr className="border-b">
-                                <th className="text-left py-0.5">Brinco</th>
-                                <th className="text-left py-0.5">Nome</th>
-                                <th className="text-left py-0.5">Cat.</th>
-                                <th className="text-right py-0.5">Peso</th>
-                              </tr></thead>
-                              <tbody>
-                                {pastoAnimais.slice(0, 10).map((a) => (
-                                  <tr key={a.id} className="border-b border-gray-100">
-                                    <td className="py-0.5 font-mono font-bold">{a.brinco}</td>
-                                    <td className="py-0.5">{a.nome || "—"}</td>
-                                    <td className="py-0.5">
-                                      <span className={`px-1 rounded text-[9px] ${
-                                        a.categoria === "Vaca" ? "bg-pink-100 text-pink-700" :
-                                        a.categoria === "Touro" ? "bg-blue-100 text-blue-700" :
-                                        a.categoria === "Bezerro" || a.categoria === "Bezerra" ? "bg-green-100 text-green-700" :
-                                        a.categoria === "Novilha" ? "bg-yellow-100 text-yellow-700" :
-                                        "bg-gray-100 text-gray-700"
-                                      }`}>{a.categoria}</span>
-                                    </td>
-                                    <td className="py-0.5 text-right">{a.peso_atual ? `${fmtNum(Number(a.peso_atual))}` : "—"}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                            {pastoAnimais.length > 10 && (
-                              <button onClick={() => navigate("/gado/animais")}
-                                className="text-[10px] text-blue-600 hover:underline mt-1">
-                                Ver todos ({pastoAnimais.length})
-                              </button>
-                            )}
-                          </>
-                        )}
-                        {pastoAnimais.length === 0 && (
-                          <p className="text-xs italic text-gray-400 mt-1">Nenhum animal neste pasto</p>
-                        )}
-                        <button onClick={() => removePolygon("pasto", p.id)}
-                          className="mt-2 text-[10px] text-red-500 hover:text-red-700 underline">Remover do mapa</button>
-                      </div>
-                    </Popup>
-                  </Polygon>
-                  {vacinaCount > 0 && p.centro_lat && (
-                    <Marker position={[Number(p.centro_lat), Number(p.centro_lng)]} icon={vacinaIcon}>
-                      <Popup><span className="text-xs text-yellow-700 font-medium">{vacinaCount} vacinas atrasadas</span></Popup>
-                    </Marker>
-                  )}
-                </div>
-              );
-            })}
-          </MapContainer>
+          <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 1 }} />
 
           {/* Redefine location button */}
           {profile?.fazenda_lat && !settingLocation && (
@@ -639,13 +660,19 @@ export default function MapaFazendaPage() {
           )}
         </div>
 
+        {/* Panel toggle */}
+        <button onClick={() => setPanelOpen(!panelOpen)}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-[1001] bg-white border border-[#E5E7EB] rounded-l-md p-1.5 shadow"
+          style={{ right: panelOpen ? "288px" : 0 }}>
+          {panelOpen ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
+
         {/* ---- SIDE PANEL ---- */}
         <div className={`shrink-0 bg-white border-l border-[#E5E7EB] transition-all duration-200 overflow-hidden ${panelOpen ? "w-72" : "w-0"}`}
           style={{ zIndex: 999 }}>
           <div className="h-full overflow-y-auto p-4">
             <h2 className="font-bold text-base mb-3">Áreas Mapeadas</h2>
 
-            {/* Talhões section */}
             <button onClick={() => setTalhoesSectionOpen(!talhoesSectionOpen)}
               className="flex items-center gap-2 w-full text-left text-sm font-semibold mb-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
@@ -660,21 +687,17 @@ export default function MapaFazendaPage() {
                   return (
                     <button key={t.id} onClick={() => {
                       if (hasMapa && t.centro_lat) {
-                        setFlyTarget({ center: [Number(t.centro_lat), Number(t.centro_lng)], zoom: 16 });
+                        flyTo([Number(t.centro_lat), Number(t.centro_lng)], 16);
                       } else {
                         setDrawing(true);
                       }
                     }}
-                      className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 transition-colors flex items-center gap-2 text-xs">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium truncate block">
-                          {t.nome}
-                          {info && <span className="text-gray-400 ml-1">({info.cultura})</span>}
-                        </span>
-                        <span className="text-gray-400">{fmtNum(Number(t.area_hectares))} ha</span>
-                      </div>
-                      {info?.alertas && info.alertas.length > 0 && <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0" />}
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${hasMapa ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                      className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 text-xs flex items-center gap-2 transition-colors">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getTalhaoColor(t.id) }} />
+                      <span className="font-medium truncate flex-1">{t.nome}</span>
+                      {info && <span className="text-[10px] text-gray-400 shrink-0">{info.cultura}</span>}
+                      {info?.alertas && info.alertas.length > 0 && <AlertTriangle className="h-3 w-3 text-red-500 shrink-0" />}
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${hasMapa ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                         {hasMapa ? "Mapeado" : "Sem mapa"}
                       </span>
                     </button>
@@ -683,7 +706,6 @@ export default function MapaFazendaPage() {
               </div>
             )}
 
-            {/* Pastos section */}
             <button onClick={() => setPastosSectionOpen(!pastosSectionOpen)}
               className="flex items-center gap-2 w-full text-left text-sm font-semibold mb-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#D97706]" />
@@ -699,19 +721,17 @@ export default function MapaFazendaPage() {
                   return (
                     <button key={p.id} onClick={() => {
                       if (hasMapa && p.centro_lat) {
-                        setFlyTarget({ center: [Number(p.centro_lat), Number(p.centro_lng)], zoom: 16 });
+                        flyTo([Number(p.centro_lat), Number(p.centro_lng)], 16);
                       } else {
                         setDrawing(true);
                       }
                     }}
-                      className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 transition-colors flex items-center gap-2 text-xs">
+                      className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 text-xs flex items-center gap-2 transition-colors">
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getPastoColor(p.id) }} />
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium truncate block">{p.nome}</span>
-                        <span className="text-gray-400">{lot.count}/{lot.cap || "∞"} cab.</span>
-                      </div>
-                      {vacinaCount > 0 && <Syringe className="h-3.5 w-3.5 text-yellow-500 shrink-0" />}
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${hasMapa ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                      <span className="font-medium truncate flex-1">{p.nome}</span>
+                      <span className="text-[10px] text-gray-400 shrink-0">{lot.count}/{lot.cap || "∞"}</span>
+                      {vacinaCount > 0 && <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" />}
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${hasMapa ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                         {hasMapa ? "Mapeado" : "Sem mapa"}
                       </span>
                     </button>
@@ -720,72 +740,68 @@ export default function MapaFazendaPage() {
               </div>
             )}
 
-            {/* Footer */}
-            <div className="border-t border-[#E5E7EB] pt-3 text-[10px] text-gray-400 leading-relaxed">
-              Total: {talhoes.length} talhões ({fmtNum(totalAreaTalhoes)} ha) | {pastos.length} pastos ({totalCabecas} cab.)
+            <div className="border-t border-[#E5E7EB] pt-3 mt-3 text-[10px] text-gray-500">
+              Total: {talhoes.length} talhões ({fmtNum(totalAreaTalhoes)} ha) | {pastos.length} pastos ({totalCabecas} cabeças)
             </div>
           </div>
         </div>
-
-        {/* Panel toggle */}
-        <button onClick={() => setPanelOpen(!panelOpen)}
-          className="absolute top-1/2 -translate-y-1/2 bg-white border border-[#E5E7EB] rounded-l-lg p-1 shadow-md hover:bg-gray-50 transition-colors"
-          style={{ right: panelOpen ? 288 : 0, zIndex: 1000 }}>
-          {panelOpen ? <ChevronRight className="h-4 w-4 text-gray-500" /> : <ChevronLeft className="h-4 w-4 text-gray-500" />}
-        </button>
       </div>
 
       {/* ---- BIND MODAL ---- */}
-      {showBindModal && (
-        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-            <h2 className="text-lg font-bold mb-4">Vincular Polígono</h2>
+      {showBindModal && drawnCoords && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold mb-4">Vincular Polígono</h3>
+            <p className="text-sm text-gray-500 mb-3">
+              Área desenhada: <strong>{calcAreaHaSimple(drawnCoords).toFixed(2)} ha</strong> ({drawnCoords.length} pontos)
+            </p>
 
-            <label className="block text-sm font-medium mb-1">Tipo</label>
-            <select value={bindType} onChange={(e) => { setBindType(e.target.value as any); setBindTarget("new"); }}
-              className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm mb-3">
-              <option value="talhao">Talhão</option>
-              <option value="pasto">Pasto</option>
-            </select>
+            <div className="mb-3">
+              <label className="text-sm font-medium">Tipo</label>
+              <select value={bindType} onChange={(e) => { setBindType(e.target.value as any); setBindTarget("new"); }}
+                className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-sm mt-1">
+                <option value="talhao">Talhão</option>
+                <option value="pasto">Pasto</option>
+              </select>
+            </div>
 
-            <label className="block text-sm font-medium mb-1">
-              {bindType === "talhao" ? "Talhão" : "Pasto"}
-            </label>
-            <select value={bindTarget} onChange={(e) => setBindTarget(e.target.value)}
-              className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm mb-3">
-              <option value="new">+ Criar Novo</option>
-              {(bindType === "talhao" ? unmappedTalhoes : unmappedPastos).map((item) => (
-                <option key={item.id} value={item.id}>{item.nome}</option>
-              ))}
-            </select>
+            <div className="mb-3">
+              <label className="text-sm font-medium">Vincular a</label>
+              <select value={bindTarget} onChange={(e) => setBindTarget(e.target.value)}
+                className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-sm mt-1">
+                <option value="new">+ Criar Novo</option>
+                {(bindType === "talhao" ? unmappedTalhoes : unmappedPastos).map((item) => (
+                  <option key={item.id} value={item.id}>{item.nome}</option>
+                ))}
+              </select>
+            </div>
 
             {bindTarget === "new" && (
               <>
-                <label className="block text-sm font-medium mb-1">Nome</label>
-                <input value={newName} onChange={(e) => setNewName(e.target.value)}
-                  className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm mb-3"
-                  placeholder={bindType === "talhao" ? "Ex: Talhão 01" : "Ex: Pasto Norte"} />
-
-                <label className="block text-sm font-medium mb-1">
-                  {bindType === "talhao" ? "Tipo de Solo (opcional)" : "Capacidade (cabeças, opcional)"}
-                </label>
-                <input value={newExtra} onChange={(e) => setNewExtra(e.target.value)}
-                  className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm mb-3"
-                  placeholder={bindType === "talhao" ? "Argiloso, Arenoso..." : "Ex: 50"} />
+                <div className="mb-3">
+                  <label className="text-sm font-medium">Nome</label>
+                  <input value={newName} onChange={(e) => setNewName(e.target.value)}
+                    className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-sm mt-1"
+                    placeholder={bindType === "talhao" ? "Ex: Talhão 1" : "Ex: Pasto Norte"} />
+                </div>
+                <div className="mb-3">
+                  <label className="text-sm font-medium">{bindType === "talhao" ? "Tipo de Solo" : "Capacidade (cabeças)"}</label>
+                  <input value={newExtra} onChange={(e) => setNewExtra(e.target.value)}
+                    className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-sm mt-1"
+                    placeholder={bindType === "talhao" ? "Ex: Argiloso" : "Ex: 50"} />
+                </div>
               </>
             )}
 
-            {drawnCoords && (
-              <p className="text-sm text-gray-500 mb-4">
-                Área calculada: <strong>{calcAreaHaSimple(drawnCoords).toFixed(2)} ha</strong> ({drawnCoords.length} pontos)
-              </p>
-            )}
-
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => { setShowBindModal(false); setDrawnCoords(null); }}
-                className="px-4 py-2 text-sm border border-[#E5E7EB] rounded-lg hover:bg-gray-50">Cancelar</button>
+            <div className="flex gap-2 mt-4">
               <button onClick={handleBindSave}
-                className="px-4 py-2 text-sm bg-[#16A34A] text-white rounded-lg hover:bg-[#15803D] font-medium">Salvar</button>
+                className="flex-1 bg-[#16A34A] text-white rounded px-4 py-2 text-sm font-medium hover:bg-[#15803D]">
+                Salvar
+              </button>
+              <button onClick={() => { setShowBindModal(false); setDrawnCoords(null); }}
+                className="flex-1 border border-[#E5E7EB] rounded px-4 py-2 text-sm hover:bg-gray-50">
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
