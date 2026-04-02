@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Layers, MapPin, ChevronLeft, ChevronRight,
-  AlertTriangle, Syringe, Home, ChevronDown, ChevronUp,
+  AlertTriangle, Syringe, ChevronDown, ChevronUp,
 } from "lucide-react";
-import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap, FeatureGroup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -47,15 +47,7 @@ const CULTURA_COLORS: Record<string, string> = {
 const DEFAULT_TALHAO_COLOR = "#9CA3AF";
 const DEFAULT_CENTER: [number, number] = [-15.78, -47.93];
 
-// ---- Helper: Calculate area from Leaflet latlngs ----
-function calcAreaHa(latlngs: L.LatLng[]): number {
-  const area = L.GeometryUtil
-    ? (L.GeometryUtil as any).geodesicArea(latlngs)
-    : 0;
-  return area / 10000;
-}
-
-// Simple area calculation fallback (Shoelace on projected coords)
+// ---- Helper: Calculate area from coords (Shoelace on projected coords) ----
 function calcAreaHaSimple(coords: [number, number][]): number {
   if (coords.length < 3) return 0;
   const toRad = (d: number) => (d * Math.PI) / 180;
