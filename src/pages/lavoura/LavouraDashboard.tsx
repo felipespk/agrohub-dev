@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Map, Grid3X3, BookOpen, TrendingUp, CheckCircle, Package, Cog, Bug, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
@@ -17,6 +18,7 @@ export default function LavouraDashboard() {
   const [culturasDist, setCulturasDist] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [custoData, setCustoData] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -103,6 +105,34 @@ export default function LavouraDashboard() {
       alertsList.push({ icon: "bug", text: `Praga crítica no ${o.safra_talhoes?.talhoes?.nome || "talhão"}`, color: "red" });
     });
     setAlerts(alertsList);
+
+    // Custo de produção
+    if (safraTalhoes.length > 0) {
+      const stIds2 = safraTalhoes.map((st: any) => st.id);
+      const { data: ativsCusto } = await supabase.from("atividades_campo" as any)
+        .select("safra_talhao_id, quantidade_insumo, horas_maquina, insumos:insumo_id(preco_unitario), maquinas:maquina_id(custo_hora)")
+        .eq("user_id", user.id).in("safra_talhao_id", stIds2);
+      const { data: colsCusto } = await supabase.from("colheitas" as any)
+        .select("safra_talhao_id, quantidade").eq("user_id", user.id).in("safra_talhao_id", stIds2);
+
+      const custoRows = safraTalhoes.map((st: any) => {
+        const area = Number(st.talhoes?.area_hectares) || 1;
+        const myAtivs = ((ativsCusto as any[]) || []).filter(a => a.safra_talhao_id === st.id);
+        const custoInsumos = myAtivs.reduce((s: number, a: any) => s + ((Number(a.quantidade_insumo) || 0) * (Number(a.insumos?.preco_unitario) || 0)), 0);
+        const custoMaq = myAtivs.reduce((s: number, a: any) => s + ((Number(a.horas_maquina) || 0) * (Number(a.maquinas?.custo_hora) || 0)), 0);
+        const custoTotal = custoInsumos + custoMaq;
+        const colTotal = ((colsCusto as any[]) || []).filter(c => c.safra_talhao_id === st.id).reduce((s: number, c: any) => s + Number(c.quantidade), 0);
+        return {
+          talhao: st.talhoes?.nome || "?", cultura: st.culturas?.nome || "?", area,
+          custoInsumos, custoMaq, custoTotal, custoHa: custoTotal / area,
+          producao: colTotal, custoSaca: colTotal > 0 ? custoTotal / colTotal : 0,
+          resultado: 0 - custoTotal,
+        };
+      });
+      setCustoData(custoRows);
+    } else {
+      setCustoData([]);
+    }
   };
 
   const tipoBadge = (tipo: string) => {
@@ -235,6 +265,48 @@ export default function LavouraDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Custo de Produção */}
+      {custoData.length > 0 && (
+        <Card className="border-[#E5E7EB]">
+          <CardHeader><CardTitle className="text-base">Custo de Produção por Talhão</CardTitle></CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader><TableRow className="bg-[#F9FAFB]">
+                <TableHead className="text-[11px] uppercase">Talhão</TableHead>
+                <TableHead className="text-[11px] uppercase">Cultura</TableHead>
+                <TableHead className="text-[11px] uppercase">Área (ha)</TableHead>
+                <TableHead className="text-[11px] uppercase">Custo Insumos</TableHead>
+                <TableHead className="text-[11px] uppercase">Custo Máquinas</TableHead>
+                <TableHead className="text-[11px] uppercase">Custo Total</TableHead>
+                <TableHead className="text-[11px] uppercase">Custo/ha</TableHead>
+                <TableHead className="text-[11px] uppercase">Produção</TableHead>
+                <TableHead className="text-[11px] uppercase">Custo/saca</TableHead>
+                <TableHead className="text-[11px] uppercase">Resultado</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {custoData.map((r: any, i: number) => (
+                  <TableRow key={i} className="hover:bg-[#F8FAFC]">
+                    <TableCell className="font-medium">{r.talhao}</TableCell>
+                    <TableCell>{r.cultura}</TableCell>
+                    <TableCell>{r.area.toLocaleString("pt-BR", { minimumFractionDigits: 1 })}</TableCell>
+                    <TableCell>R$ {r.custoInsumos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>R$ {r.custoMaq.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="font-medium">R$ {r.custoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>R$ {r.custoHa.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>{r.producao > 0 ? r.producao.toLocaleString("pt-BR") + " sacas" : "—"}</TableCell>
+                    <TableCell>{r.custoSaca > 0 ? `R$ ${r.custoSaca.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}</TableCell>
+                    <TableCell className={r.resultado >= 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>R$ {r.resultado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="text-sm text-muted-foreground bg-[#F9FAFB] p-3 rounded-md mt-3">
+              Custo Total: <strong>R$ {custoData.reduce((s: number, r: any) => s + r.custoTotal, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong> | Produção Total: <strong>{custoData.reduce((s: number, r: any) => s + r.producao, 0).toLocaleString("pt-BR")} sacas</strong> | Resultado: <strong className={custoData.reduce((s: number, r: any) => s + r.resultado, 0) >= 0 ? "text-green-600" : "text-red-600"}>R$ {custoData.reduce((s: number, r: any) => s + r.resultado, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

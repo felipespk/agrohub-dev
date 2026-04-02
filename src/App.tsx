@@ -129,6 +129,7 @@ const PragasPage = lazy(() => import("@/pages/lavoura/PragasPage"));
 const ComercializacaoPage = lazy(() => import("@/pages/lavoura/ComercializacaoPage"));
 const CulturasPage = lazy(() => import("@/pages/lavoura/CulturasPage"));
 const LavouraConfiguracoesPage = lazy(() => import("@/pages/lavoura/LavouraConfiguracoesPage"));
+const RelatoriosLavouraPage = lazy(() => import("@/pages/lavoura/RelatoriosPage"));
 
 function ProtectedGado() {
   const { user, loading } = useAuth();
@@ -186,6 +187,7 @@ function ProtectedLavoura() {
             <Route path="/pragas" element={<PragasPage />} />
             <Route path="/comercializacao" element={<ComercializacaoPage />} />
             <Route path="/culturas" element={<CulturasPage />} />
+            <Route path="/relatorios" element={<RelatoriosLavouraPage />} />
             <Route path="/configuracoes" element={<LavouraConfiguracoesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
