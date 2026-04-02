@@ -114,6 +114,12 @@ export default function MapaFazendaPage() {
   const [aplicacoes, setAplicacoes] = useState<any[]>([]);
   const [mapReady, setMapReady] = useState(false);
 
+  // Search
+  const [searchInput, setSearchInput] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchMarkerRef = useRef<L.Marker | null>(null);
+
 
   // ---- Initialize map ----
   useEffect(() => {
