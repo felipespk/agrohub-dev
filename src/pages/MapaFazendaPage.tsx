@@ -610,7 +610,7 @@ export default function MapaFazendaPage() {
   function parseCoordinates(input: string): [number, number] | null {
     // DMS: 10°24'17.46"S 49°37'15.41"W
     const dmsRe = /(\d+)[°]\s*(\d+)[′']\s*([\d.]+)[″"]?\s*([NSEW])/gi;
-    const dmsMatches = [...input.matchAll(dmsRe)];
+    const dmsMatches = Array.from(input.matchAll(dmsRe));
     if (dmsMatches.length >= 2) {
       const lat = dmsToDecimal(+dmsMatches[0][1], +dmsMatches[0][2], +dmsMatches[0][3], dmsMatches[0][4].toUpperCase());
       const lng = dmsToDecimal(+dmsMatches[1][1], +dmsMatches[1][2], +dmsMatches[1][3], dmsMatches[1][4].toUpperCase());
