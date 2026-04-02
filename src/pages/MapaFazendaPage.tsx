@@ -112,10 +112,6 @@ export default function MapaFazendaPage() {
   const [aplicacoes, setAplicacoes] = useState<any[]>([]);
   const [mapReady, setMapReady] = useState(false);
 
-  const mapCenter: [number, number] = profile?.fazenda_lat
-    ? [Number(profile.fazenda_lat), Number(profile.fazenda_lng)]
-    : DEFAULT_CENTER;
-  const mapZoom = profile?.fazenda_lat ? (Number(profile.fazenda_zoom) || 15) : 4;
 
   // ---- Initialize map ----
   useEffect(() => {
@@ -261,8 +257,8 @@ export default function MapaFazendaPage() {
     };
 
     const onDblClick = (e: L.LeafletMouseEvent) => {
-      L.DomEvent.stopPropagation(e);
-      L.DomEvent.preventDefault(e);
+      L.DomEvent.stopPropagation(e as any);
+      L.DomEvent.preventDefault(e as any);
       if (points.length < 3) return;
       // Cleanup temp
       drawPointsRef.current.forEach(m => m.remove());
