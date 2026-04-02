@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Layers, MapPin, ChevronLeft, ChevronRight,
   AlertTriangle, ChevronDown, ChevronUp, Sprout, Beef,
+  Search, LocateFixed,
 } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
