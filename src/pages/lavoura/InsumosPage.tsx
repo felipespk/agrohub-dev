@@ -196,6 +196,12 @@ export default function InsumosPage() {
             </div>
             <div className="space-y-2"><Label>Quantidade *</Label><Input type="number" value={entradaForm.quantidade} onChange={e => setEntradaForm(p => ({ ...p, quantidade: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Data</Label><Input type="date" value={entradaForm.data} onChange={e => setEntradaForm(p => ({ ...p, data: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Fornecedor</Label>
+              <Select value={entradaForm.fornecedor_id || "none"} onValueChange={v => setEntradaForm(p => ({ ...p, fornecedor_id: v === "none" ? "" : v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent><SelectItem value="none">Nenhum</SelectItem>{contatos.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2"><Label>Valor Total (R$)</Label><Input type="number" value={entradaForm.valor_total} onChange={e => setEntradaForm(p => ({ ...p, valor_total: e.target.value }))} /></div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setOpenEntrada(false)}>Cancelar</Button><Button onClick={saveEntrada} disabled={!entradaForm.insumo_id || !entradaForm.quantidade}>Salvar</Button></DialogFooter>
