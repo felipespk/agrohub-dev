@@ -286,7 +286,7 @@ export default function MovimentacoesPage() {
                   <SelectContent><SelectItem value="avista">À Vista</SelectItem><SelectItem value="prazo">A Prazo</SelectItem></SelectContent>
                 </Select>
               </div>
-            )
+            )}
 
             {form.tipo === "morte" && (
               <div className="space-y-2"><Label>Causa da Morte</Label><Input value={form.causa_morte} onChange={e => setForm({ ...form, causa_morte: e.target.value })} placeholder="Doença, Acidente..." /></div>
