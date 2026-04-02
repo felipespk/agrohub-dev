@@ -646,9 +646,9 @@ export default function MapaFazendaPage() {
             </div>
           )}
           {drawing && (
-            <div className="absolute top-0 left-0 right-0 z-[1001] bg-blue-600 text-white px-4 py-2.5 flex items-center gap-2 text-sm font-medium">
+            <div className="absolute top-0 left-0 right-0 z-[1500] bg-blue-600 text-white px-4 py-2.5 flex items-center gap-2 text-sm font-medium">
               <MapPin className="h-4 w-4" />
-              Clique para criar os pontos do polígono. Dê duplo clique para finalizar (mínimo 3 pontos). [{drawPoints.length} pontos]
+              Clique para criar os pontos do polígono. Dê duplo clique ou use o botão para finalizar (mínimo 3 pontos). [{drawPoints.length} pontos]
             </div>
           )}
 
@@ -767,10 +767,65 @@ export default function MapaFazendaPage() {
         </div>
       </div>
 
+      {/* ---- Finalize / Undo floating buttons ---- */}
+      {drawing && drawPoints.length >= 1 && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[1500] flex items-center gap-2">
+          {drawPoints.length >= 1 && (
+            <button
+              onClick={() => {
+                const map = mapRef.current;
+                if (!map) return;
+                const pts = [...drawPoints];
+                pts.pop();
+                // remove last circle marker
+                const last = drawPointsRef.current.pop();
+                last?.remove();
+                // redraw line
+                drawLineRef.current?.remove();
+                drawLineRef.current = null;
+                if (pts.length >= 2) {
+                  drawLineRef.current = L.polyline(pts, { color: "#3B82F6", weight: 2, dashArray: "6" }).addTo(map);
+                }
+                setDrawPoints(pts);
+              }}
+              className="bg-white border border-gray-300 text-gray-700 rounded-lg px-4 py-2.5 text-sm font-medium shadow-lg hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              ↩ Desfazer ponto
+            </button>
+          )}
+          {drawPoints.length >= 3 && (
+            <button
+              onClick={() => {
+                const map = mapRef.current;
+                if (!map || drawPoints.length < 3) return;
+                // Cleanup temp markers
+                drawPointsRef.current.forEach(m => m.remove());
+                drawPointsRef.current = [];
+                drawLineRef.current?.remove();
+                drawLineRef.current = null;
+                map.getContainer().style.cursor = "";
+                map.doubleClickZoom.enable();
+                setDrawing(false);
+                setDrawnCoords([...drawPoints]);
+                setDrawPoints([]);
+                setShowBindModal(true);
+                setBindType("talhao");
+                setBindTarget("new");
+                setNewName("");
+                setNewExtra("");
+              }}
+              className="bg-[#16A34A] text-white rounded-lg px-6 py-2.5 text-sm font-medium shadow-lg hover:bg-[#15803D] flex items-center gap-1.5"
+            >
+              ✓ Finalizar Polígono ({drawPoints.length} pontos)
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ---- BIND MODAL ---- */}
       {showBindModal && drawnCoords && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold mb-4">Vincular Polígono</h3>
             <p className="text-sm text-gray-500 mb-3">
               Área desenhada: <strong>{calcAreaHaSimple(drawnCoords).toFixed(2)} ha</strong> ({drawnCoords.length} pontos)
