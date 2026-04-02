@@ -1093,6 +1093,9 @@ export type Database = {
           area_hectares: number | null
           ativo: boolean | null
           capacidade_cabecas: number | null
+          centro_lat: number | null
+          centro_lng: number | null
+          coordenadas: Json | null
           created_at: string | null
           id: string
           nome: string
@@ -1102,6 +1105,9 @@ export type Database = {
           area_hectares?: number | null
           ativo?: boolean | null
           capacidade_cabecas?: number | null
+          centro_lat?: number | null
+          centro_lng?: number | null
+          coordenadas?: Json | null
           created_at?: string | null
           id?: string
           nome: string
@@ -1111,6 +1117,9 @@ export type Database = {
           area_hectares?: number | null
           ativo?: boolean | null
           capacidade_cabecas?: number | null
+          centro_lat?: number | null
+          centro_lng?: number | null
+          coordenadas?: Json | null
           created_at?: string | null
           id?: string
           nome?: string
@@ -1217,6 +1226,9 @@ export type Database = {
           farm_name_financeiro: string | null
           farm_name_gado: string | null
           farm_name_lavoura: string | null
+          fazenda_lat: number | null
+          fazenda_lng: number | null
+          fazenda_zoom: number | null
           formato_numero: string | null
           id: string
           master_password_hash: string | null
@@ -1235,6 +1247,9 @@ export type Database = {
           farm_name_financeiro?: string | null
           farm_name_gado?: string | null
           farm_name_lavoura?: string | null
+          fazenda_lat?: number | null
+          fazenda_lng?: number | null
+          fazenda_zoom?: number | null
           formato_numero?: string | null
           id?: string
           master_password_hash?: string | null
@@ -1253,6 +1268,9 @@ export type Database = {
           farm_name_financeiro?: string | null
           farm_name_gado?: string | null
           farm_name_lavoura?: string | null
+          fazenda_lat?: number | null
+          fazenda_lng?: number | null
+          fazenda_zoom?: number | null
           formato_numero?: string | null
           id?: string
           master_password_hash?: string | null
@@ -1698,6 +1716,9 @@ export type Database = {
         Row: {
           area_hectares: number
           ativo: boolean | null
+          centro_lat: number | null
+          centro_lng: number | null
+          coordenadas: Json | null
           created_at: string | null
           id: string
           nome: string
@@ -1708,6 +1729,9 @@ export type Database = {
         Insert: {
           area_hectares: number
           ativo?: boolean | null
+          centro_lat?: number | null
+          centro_lng?: number | null
+          coordenadas?: Json | null
           created_at?: string | null
           id?: string
           nome: string
@@ -1718,6 +1742,9 @@ export type Database = {
         Update: {
           area_hectares?: number
           ativo?: boolean | null
+          centro_lat?: number | null
+          centro_lng?: number | null
+          coordenadas?: Json | null
           created_at?: string | null
           id?: string
           nome?: string
