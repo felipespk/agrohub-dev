@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wheat, DollarSign, Beef, Sprout, ArrowRight, LogOut, Leaf } from "lucide-react";
+import { Wheat, DollarSign, Beef, Sprout, ArrowRight, LogOut, Leaf, MapPin } from "lucide-react";
 
 const modules = [
   {
@@ -77,6 +77,14 @@ export default function HubPage() {
             </button>
           ))}
         </div>
+
+        <button
+          onClick={() => navigate("/mapa")}
+          className="flex items-center gap-2 text-[15px] text-[#6B7280] hover:text-[#16A34A] transition-colors mt-6"
+        >
+          <MapPin className="h-4 w-4" />
+          Mapa da Fazenda
+        </button>
       </div>
 
       <footer className="py-4 px-6 flex items-center justify-center gap-4 text-xs text-muted-foreground border-t border-border">

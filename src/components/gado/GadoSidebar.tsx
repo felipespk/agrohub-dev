@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, List, MapPin, Scale, Heart, ArrowLeftRight,
-  Baby, Tag, LogOut, ArrowLeft, Leaf, Settings,
+  Baby, Tag, LogOut, ArrowLeft, Leaf, Settings, Map,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,7 @@ const menuItems = [
   { title: "Pesagens", url: "/gado/pesagens", icon: Scale },
   { title: "Sanidade", url: "/gado/sanidade", icon: Heart },
   { title: "Movimentações", url: "/gado/movimentacoes", icon: ArrowLeftRight },
+  { title: "Mapa", url: "/mapa", icon: Map },
 ];
 
 const extraItems = [
