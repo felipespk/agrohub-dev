@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { criarLancamentoReceita, buscarCentroCusto } from "@/lib/financeiro-integration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";

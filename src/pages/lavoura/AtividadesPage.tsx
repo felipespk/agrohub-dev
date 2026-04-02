@@ -28,6 +28,7 @@ export default function AtividadesPage() {
   const [open, setOpen] = useState(false);
   const [filterSafra, setFilterSafra] = useState("all");
   const [filterTipo, setFilterTipo] = useState("all");
+  const [safraTalhoesFilter, setSafraTalhoesFilter] = useState<any[]>([]);
   const [form, setForm] = useState<any>({ safra_id: "", safra_talhao_id: "", tipo: "plantio", data: new Date().toISOString().split("T")[0], area_coberta_ha: "", insumo_id: "", quantidade_insumo: "", maquina_id: "", horas_maquina: "", operador: "", condicao_climatica: "", observacao: "" });
   const [custoCalc, setCustoCalc] = useState(0);
 
