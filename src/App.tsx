@@ -27,6 +27,7 @@ import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Hub from "@/pages/Hub";
+import MapaFazendaPage from "@/pages/MapaFazendaPage";
 import SecadorConfiguracoesPage from "@/pages/SecadorConfiguracoesPage";
 import FinanceiroDashboard from "@/pages/financeiro/FinanceiroDashboard";
 import ContasPRPage from "@/pages/financeiro/ContasPRPage";
@@ -166,6 +167,13 @@ function ProtectedHub() {
   return <Hub />;
 }
 
+function ProtectedMapa() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
+  if (!user) return <Navigate to="/login" replace />;
+  return <FarmProvider><MapaFazendaPage /></FarmProvider>;
+}
+
 function ProtectedLavoura() {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
@@ -217,6 +225,7 @@ const App = () => (
             <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/hub" element={<ProtectedHub />} />
+            <Route path="/mapa" element={<ProtectedMapa />} />
             <Route path="/financeiro/*" element={<ProtectedFinanceiro />} />
             <Route path="/gado/*" element={<ProtectedGado />} />
             <Route path="/lavoura/*" element={<ProtectedLavoura />} />
