@@ -103,6 +103,7 @@ export default function AnimalFichaPage() {
     ["Brinco do Pai", animal.pai_brinco || "—"], ["Brinco da Mãe", animal.mae_brinco || "—"],
     ["Pasto", animal.pasto?.nome || "—"], ["Lote", animal.lote?.nome || "—"],
     ["Peso Atual", animal.peso_atual ? `${Number(animal.peso_atual).toFixed(1)} kg (${toArroba(Number(animal.peso_atual))} @)` : "—"],
+    ["Valor Estimado", animal.peso_atual ? fmtBRL(toValorEst(Number(animal.peso_atual))) : "—"],
   ];
 
   const gmdColor = (g: number) => g > 0.5 ? "text-green-600" : g >= 0.3 ? "text-yellow-600" : "text-red-600";
