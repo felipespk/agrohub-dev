@@ -48,7 +48,7 @@ export default function GadoDashboard() {
     if (!user) return;
     const { start, end } = getDateRange();
 
-    supabase.from("animais" as any).select("*").eq("user_id", user.id).eq("status", "ativo").then(({ data }) => setAnimais((data as any) || []));
+    supabase.from("animais" as any).select("*").eq("user_id", user.id).then(({ data }) => setAnimais((data as any) || []));
     supabase.from("movimentacoes_gado" as any).select("*").eq("user_id", user.id).gte("data", start).lte("data", end).order("data", { ascending: false }).then(({ data }) => setMovs((data as any) || []));
 
     // Próximas vacinas (15 dias)
