@@ -33,6 +33,8 @@ export default function AnimaisPage() {
   const [pastos, setPastos] = useState<any[]>([]);
   const [lotes, setLotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rendimento, setRendimento] = useState(52);
+  const [valorArrobaConfig, setValorArrobaConfig] = useState(300);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(0);
   const perPage = 15;
