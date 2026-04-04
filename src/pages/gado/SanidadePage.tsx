@@ -392,10 +392,6 @@ export default function SanidadePage() {
                                 {a.categoria}
                               </span>
                             </td>
-                              <span className={`px-2 py-0.5 rounded-full text-xs ${CAT_BADGE[a.categoria?.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>
-                                {a.categoria}
-                              </span>
-                            </td>
                             <td className="px-3 py-1.5 text-muted-foreground">{pastoName(a.pasto_id)}</td>
                             <td className="px-3 py-1.5 text-right">{a.peso_atual ? `${a.peso_atual} kg` : "—"}</td>
                           </tr>
