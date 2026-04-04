@@ -299,10 +299,11 @@ export default function RelatoriosPage() {
                 ))}
               </TableBody>
             </Table>
-            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(
-              ["Máquina","Horas","Custo Operacional","Manutenções","Custo Manutenções","Custo Total"],
-              maqData.map(r => [r.nome, String(r.horas), fmt(r.custoOp), String(r.manuCount), fmt(r.custoManu), fmt(r.custoOp + r.custoManu)])
-            )}><Download className="h-4 w-4" />CSV</Button></div>
+            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportRelatorio(
+              "historico-maquinas", "Histórico de Máquinas",
+              [{ header: "Máquina", key: "nome", width: 25, tipo: "texto" }, { header: "Horas", key: "horas", width: 12, tipo: "numero" }, { header: "Custo Operacional", key: "custoOp", width: 18, tipo: "moeda" }, { header: "Manutenções", key: "manuCount", width: 15, tipo: "numero" }, { header: "Custo Manutenções", key: "custoManu", width: 18, tipo: "moeda" }, { header: "Custo Total", key: "custoTotal", width: 18, tipo: "moeda" }],
+              maqData.map(r => ({ ...r, custoTotal: r.custoOp + r.custoManu }))
+            )}><Download className="h-4 w-4" />Excel</Button></div>
           </>
         )}
       </div>
