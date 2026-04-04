@@ -172,7 +172,6 @@ export default function PastosPage() {
     if (!user || moveSelectedIds.size === 0) { toast.error("Selecione pelo menos um animal."); return; }
     if (!movePastoDestino) { toast.error("Selecione o pasto destino."); return; }
     const ids = Array.from(moveSelectedIds);
-    const pastoOrigem = pastos.find(p => p.id === movePastoOrigemId);
     const pastoDestObj = pastos.find(p => p.id === movePastoDestino);
     for (const animalId of ids) {
       await supabase.from("animais" as any).update({
