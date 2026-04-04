@@ -55,16 +55,21 @@ export default function AnimaisPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [a, r, p, l] = await Promise.all([
+    const [a, r, p, l, prof] = await Promise.all([
       supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome)").eq("user_id", user.id).order("brinco"),
       supabase.from("racas" as any).select("id, nome").eq("user_id", user.id).order("nome"),
       supabase.from("pastos" as any).select("id, nome").eq("user_id", user.id).order("nome"),
       supabase.from("lotes" as any).select("id, nome, pasto_id").eq("user_id", user.id).order("nome"),
+      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", user.id).single(),
     ]);
     setAnimais((a.data as any) || []);
     setRacas((r.data as any) || []);
     setPastos((p.data as any) || []);
     setLotes((l.data as any) || []);
+    if (prof.data) {
+      if (prof.data.rendimento_carcaca) setRendimento(Number(prof.data.rendimento_carcaca));
+      if ((prof.data as any).valor_arroba) setValorArrobaConfig(Number((prof.data as any).valor_arroba));
+    }
     setLoading(false);
   }, [user]);
 
