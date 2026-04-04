@@ -231,10 +231,11 @@ export default function RelatoriosPage() {
                 </ResponsiveContainer>
               </CardContent></Card>
             ) : <p className="text-center text-muted-foreground py-8">Registre colheitas para ver o comparativo.</p>}
-            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(
-              ["Talhão","Safra","Produtividade","Meta"],
-              prodData.map(r => [r.talhao, r.safra, r.produtividade.toFixed(1), r.meta.toFixed(1)])
-            )}><Download className="h-4 w-4" />CSV</Button></div>
+            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportRelatorio(
+              "produtividade", "Comparativo de Produtividade",
+              [{ header: "Talhão", key: "talhao", width: 20, tipo: "texto" }, { header: "Safra", key: "safra", width: 20, tipo: "texto" }, { header: "Produtividade", key: "produtividade", width: 15, tipo: "numero" }, { header: "Meta", key: "meta", width: 15, tipo: "numero" }],
+              prodData
+            )}><Download className="h-4 w-4" />Excel</Button></div>
           </>
         )}
 
