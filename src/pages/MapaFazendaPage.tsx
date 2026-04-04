@@ -380,6 +380,7 @@ export default function MapaFazendaPage() {
       setBindTarget("new");
       setNewName("");
       setNewExtra("");
+      setNewArea(calcAreaHaSimple([...points]).toFixed(2));
     };
 
     map.on("click", onClick);
