@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Map, Grid3X3, BookOpen, TrendingUp, CheckCircle, Package, Cog, Bug, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
@@ -13,12 +14,29 @@ export default function LavouraDashboard() {
   const { user } = useAuth();
   const [safras, setSafras] = useState<any[]>([]);
   const [selectedSafra, setSelectedSafra] = useState<string>("all");
+  const [periodo, setPeriodo] = useState("mes");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
   const [kpis, setKpis] = useState({ area: 0, talhoes: 0, atividades: 0, produtividade: 0 });
   const [prodByTalhao, setProdByTalhao] = useState<any[]>([]);
   const [culturasDist, setCulturasDist] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [custoData, setCustoData] = useState<any[]>([]);
+
+  const getDateRange = useCallback(() => {
+    const now = new Date();
+    const fmtD = (d: Date) => d.toISOString().split("T")[0];
+    if (periodo === "personalizado") {
+      return { start: customStart || fmtD(new Date(now.getFullYear(), 0, 1)), end: customEnd || fmtD(now) };
+    }
+    let start: Date;
+    if (periodo === "mes") { start = new Date(now.getFullYear(), now.getMonth(), 1); }
+    else if (periodo === "3meses") { start = new Date(now.getFullYear(), now.getMonth() - 2, 1); }
+    else if (periodo === "6meses") { start = new Date(now.getFullYear(), now.getMonth() - 5, 1); }
+    else { start = new Date(now.getFullYear(), 0, 1); }
+    return { start: fmtD(start), end: fmtD(now) };
+  }, [periodo, customStart, customEnd]);
 
   useEffect(() => {
     if (!user) return;
@@ -33,10 +51,11 @@ export default function LavouraDashboard() {
   useEffect(() => {
     if (!user) return;
     loadDashboard();
-  }, [user, selectedSafra]);
+  }, [user, selectedSafra, periodo, customStart, customEnd]);
 
   const loadDashboard = async () => {
     if (!user) return;
+    const { start: firstDay, end: lastDay } = getDateRange();
 
     // KPIs
     let stQuery = supabase.from("safra_talhoes" as any).select("*, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome)").eq("user_id", user.id);
@@ -46,10 +65,7 @@ export default function LavouraDashboard() {
 
     const totalArea = safraTalhoes.reduce((s, st) => s + (Number((st as any).talhoes?.area_hectares) || 0), 0);
 
-    // Atividades no mês
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+    // Atividades no período
     const { count: atividadesCount } = await supabase.from("atividades_campo" as any).select("*", { count: "exact", head: true }).eq("user_id", user.id).gte("data", firstDay).lte("data", lastDay);
 
     // Produtividade
@@ -149,13 +165,37 @@ export default function LavouraDashboard() {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-foreground">Dashboard da Lavoura</h1>
-        <Select value={selectedSafra} onValueChange={setSelectedSafra}>
-          <SelectTrigger className="w-[220px]"><SelectValue placeholder="Safra" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Safras</SelectItem>
-            {safras.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-end gap-3">
+          <Select value={selectedSafra} onValueChange={setSelectedSafra}>
+            <SelectTrigger className="w-[220px]"><SelectValue placeholder="Safra" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as Safras</SelectItem>
+              {safras.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={periodo} onValueChange={setPeriodo}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mes">Este Mês</SelectItem>
+              <SelectItem value="3meses">Últimos 3 Meses</SelectItem>
+              <SelectItem value="6meses">Últimos 6 Meses</SelectItem>
+              <SelectItem value="ano">Este Ano</SelectItem>
+              <SelectItem value="personalizado">Personalizado</SelectItem>
+            </SelectContent>
+          </Select>
+          {periodo === "personalizado" && (
+            <div className="flex items-center gap-2 animate-fade-in">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">De</span>
+                <Input type="date" className="w-[150px] h-9" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Até</span>
+                <Input type="date" className="w-[150px] h-9" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* KPIs */}

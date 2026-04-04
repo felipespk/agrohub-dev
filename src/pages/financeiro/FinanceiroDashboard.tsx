@@ -4,18 +4,23 @@ import { Landmark, TrendingUp, TrendingDown, Scale, Clock, CheckCircle, ArrowDow
 import { useFinanceiro } from "@/contexts/FinanceiroContext";
 import { formatarMoeda, formatarData } from "@/lib/format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 
-type PeriodoKey = "mes" | "3meses" | "6meses" | "ano";
+type PeriodoKey = "mes" | "3meses" | "6meses" | "ano" | "personalizado";
 
-function getPeriodoRange(key: PeriodoKey): { start: string; label: string } {
+function getPeriodoRange(key: PeriodoKey, customStart?: string, customEnd?: string): { start: string; end: string; label: string } {
   const now = new Date();
   const fmt = (d: Date) => d.toISOString().split("T")[0];
+  const todayStr = fmt(now);
+  if (key === "personalizado") {
+    return { start: customStart || fmt(new Date(now.getFullYear(), 0, 1)), end: customEnd || todayStr, label: "Personalizado" };
+  }
   switch (key) {
-    case "mes": { const s = new Date(now.getFullYear(), now.getMonth(), 1); return { start: fmt(s), label: "Este Mês" }; }
-    case "3meses": { const s = new Date(now.getFullYear(), now.getMonth() - 2, 1); return { start: fmt(s), label: "Últimos 3 Meses" }; }
-    case "6meses": { const s = new Date(now.getFullYear(), now.getMonth() - 5, 1); return { start: fmt(s), label: "Últimos 6 Meses" }; }
-    case "ano": { const s = new Date(now.getFullYear(), 0, 1); return { start: fmt(s), label: "Este Ano" }; }
+    case "mes": { const s = new Date(now.getFullYear(), now.getMonth(), 1); return { start: fmt(s), end: todayStr, label: "Este Mês" }; }
+    case "3meses": { const s = new Date(now.getFullYear(), now.getMonth() - 2, 1); return { start: fmt(s), end: todayStr, label: "Últimos 3 Meses" }; }
+    case "6meses": { const s = new Date(now.getFullYear(), now.getMonth() - 5, 1); return { start: fmt(s), end: todayStr, label: "Últimos 6 Meses" }; }
+    case "ano": { const s = new Date(now.getFullYear(), 0, 1); return { start: fmt(s), end: todayStr, label: "Este Ano" }; }
   }
 }
 
@@ -23,22 +28,24 @@ export default function FinanceiroDashboard() {
   const { centrosCusto, contasBancarias, contasPR, lancamentos, loading } = useFinanceiro();
   const [ccFiltro, setCcFiltro] = useState("todos");
   const [periodo, setPeriodo] = useState<PeriodoKey>("mes");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
   const navigate = useNavigate();
 
   const today = new Date().toISOString().split("T")[0];
-  const { start: periodoStart, label: periodoLabel } = getPeriodoRange(periodo);
+  const { start: periodoStart, end: periodoEnd, label: periodoLabel } = getPeriodoRange(periodo, customStart, customEnd);
 
   const lancFiltrados = useMemo(() => {
-    let l = lancamentos.filter(x => x.data >= periodoStart && x.data <= today);
+    let l = lancamentos.filter(x => x.data >= periodoStart && x.data <= periodoEnd);
     if (ccFiltro !== "todos") l = l.filter(x => x.centro_custo_id === ccFiltro);
     return l;
-  }, [lancamentos, periodoStart, today, ccFiltro]);
+  }, [lancamentos, periodoStart, periodoEnd, ccFiltro]);
 
   // Previous period for comparison
   const prevPeriodLanc = useMemo(() => {
     const startDate = new Date(periodoStart);
-    const todayDate = new Date(today);
-    const diff = todayDate.getTime() - startDate.getTime();
+    const endDate = new Date(periodoEnd);
+    const diff = endDate.getTime() - startDate.getTime();
     const prevEnd = new Date(startDate.getTime() - 1);
     const prevStart = new Date(prevEnd.getTime() - diff);
     const ps = prevStart.toISOString().split("T")[0];
@@ -46,7 +53,7 @@ export default function FinanceiroDashboard() {
     let l = lancamentos.filter(x => x.data >= ps && x.data <= pe);
     if (ccFiltro !== "todos") l = l.filter(x => x.centro_custo_id === ccFiltro);
     return l;
-  }, [lancamentos, periodoStart, today, ccFiltro]);
+  }, [lancamentos, periodoStart, periodoEnd, ccFiltro]);
 
   const saldoTotal = contasBancarias.reduce((s, c) => s + Number(c.saldo_atual || 0), 0);
   const receitasMes = lancFiltrados.filter(l => l.tipo === "receita").reduce((s, l) => s + Number(l.valor), 0);
@@ -80,11 +87,14 @@ export default function FinanceiroDashboard() {
 
   const chartData = useMemo(() => {
     const months: { mes: string; receitas: number; despesas: number }[] = [];
-    const numMonths = periodo === "ano" ? 12 : periodo === "6meses" ? 6 : periodo === "3meses" ? 3 : 1;
-    for (let i = numMonths - 1; i >= 0; i--) {
-      const d = new Date(); d.setMonth(d.getMonth() - i);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      const label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+    const startD = new Date(periodoStart + "T12:00:00");
+    const endD = new Date(periodoEnd + "T12:00:00");
+    // Build month list from start to end
+    const cur = new Date(startD.getFullYear(), startD.getMonth(), 1);
+    const endMonth = new Date(endD.getFullYear(), endD.getMonth(), 1);
+    while (cur <= endMonth) {
+      const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
+      const label = cur.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
       let lans = lancamentos.filter(l => l.data?.startsWith(key));
       if (ccFiltro !== "todos") lans = lans.filter(l => l.centro_custo_id === ccFiltro);
       months.push({
@@ -92,9 +102,10 @@ export default function FinanceiroDashboard() {
         receitas: lans.filter(l => l.tipo === "receita").reduce((s, l) => s + Number(l.valor), 0),
         despesas: lans.filter(l => l.tipo === "despesa").reduce((s, l) => s + Number(l.valor), 0),
       });
+      cur.setMonth(cur.getMonth() + 1);
     }
     return months;
-  }, [lancamentos, ccFiltro, periodo]);
+  }, [lancamentos, ccFiltro, periodoStart, periodoEnd]);
 
   // Result by cost center
   const resultadoPorCentro = useMemo(() => {
@@ -158,8 +169,21 @@ export default function FinanceiroDashboard() {
               <SelectItem value="3meses">Últimos 3 Meses</SelectItem>
               <SelectItem value="6meses">Últimos 6 Meses</SelectItem>
               <SelectItem value="ano">Este Ano</SelectItem>
+              <SelectItem value="personalizado">Personalizado</SelectItem>
             </SelectContent>
           </Select>
+          {periodo === "personalizado" && (
+            <div className="flex items-center gap-2 animate-fade-in">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">De</span>
+                <Input type="date" className="w-[150px] h-9" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Até</span>
+                <Input type="date" className="w-[150px] h-9" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
