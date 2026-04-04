@@ -337,8 +337,6 @@ export default function MovimentacoesPage() {
                 )}
               </div>
             )}
-            )}
-
             {(form.tipo === "compra" || form.tipo === "venda") && (
               <>
                 <div className="space-y-2"><Label>Valor por Cabeça (R$)</Label><Input type="number" value={form.valor_unitario} onChange={e => {
