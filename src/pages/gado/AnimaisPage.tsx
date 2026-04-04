@@ -33,6 +33,8 @@ export default function AnimaisPage() {
   const [pastos, setPastos] = useState<any[]>([]);
   const [lotes, setLotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rendimento, setRendimento] = useState(52);
+  const [valorArrobaConfig, setValorArrobaConfig] = useState(300);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(0);
   const perPage = 15;
@@ -53,16 +55,21 @@ export default function AnimaisPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [a, r, p, l] = await Promise.all([
+    const [a, r, p, l, prof] = await Promise.all([
       supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome)").eq("user_id", user.id).order("brinco"),
       supabase.from("racas" as any).select("id, nome").eq("user_id", user.id).order("nome"),
       supabase.from("pastos" as any).select("id, nome").eq("user_id", user.id).order("nome"),
       supabase.from("lotes" as any).select("id, nome, pasto_id").eq("user_id", user.id).order("nome"),
+      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", user.id).single(),
     ]);
     setAnimais((a.data as any) || []);
     setRacas((r.data as any) || []);
     setPastos((p.data as any) || []);
     setLotes((l.data as any) || []);
+    if (prof.data) {
+      if (prof.data.rendimento_carcaca) setRendimento(Number(prof.data.rendimento_carcaca));
+      if ((prof.data as any).valor_arroba) setValorArrobaConfig(Number((prof.data as any).valor_arroba));
+    }
     setLoading(false);
   }, [user]);
 
@@ -80,8 +87,9 @@ export default function AnimaisPage() {
   const paged = filtered.slice(page * perPage, (page + 1) * perPage);
   const totalPages = Math.ceil(filtered.length / perPage);
 
-  const rendimento = 52;
   const toArroba = (peso: number) => (peso * rendimento / 100 / 15).toFixed(2);
+  const toValorEst = (peso: number) => (peso * rendimento / 100 / 15) * valorArrobaConfig;
+  const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const handleSave = async () => {
     if (!user || !form.brinco.trim() || !form.sexo || !form.categoria) {
@@ -229,6 +237,7 @@ export default function AnimaisPage() {
                   <th className="px-4 py-3 font-semibold">Pasto</th>
                   <th className="px-4 py-3 font-semibold">Peso KG</th>
                   <th className="px-4 py-3 font-semibold">Peso @</th>
+                  <th className="px-4 py-3 font-semibold">Valor Est.</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 font-semibold">Ações</th>
                 </tr>
@@ -243,6 +252,7 @@ export default function AnimaisPage() {
                     <td className="px-4 py-3">{a.pasto?.nome || "—"}</td>
                     <td className="px-4 py-3">{a.peso_atual ? Number(a.peso_atual).toFixed(1) : "—"}</td>
                     <td className="px-4 py-3">{a.peso_atual ? toArroba(Number(a.peso_atual)) : "—"}</td>
+                    <td className="px-4 py-3 text-green-700 font-medium">{a.peso_atual ? fmtBRL(toValorEst(Number(a.peso_atual))) : "—"}</td>
                     <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[a.status] || ""}`}>{a.status}</span></td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
@@ -253,7 +263,7 @@ export default function AnimaisPage() {
                   </tr>
                 ))}
                 {paged.length === 0 && (
-                  <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">Nenhum animal encontrado</td></tr>
+                  <tr><td colSpan={10} className="text-center py-12 text-muted-foreground">Nenhum animal encontrado</td></tr>
                 )}
               </tbody>
             </table>

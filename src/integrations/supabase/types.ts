@@ -1220,6 +1220,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          data_cotacao_arroba: string | null
           display_name: string | null
           exibir_conversao: boolean | null
           farm_name: string | null
@@ -1243,10 +1244,12 @@ export type Database = {
           unidade_peso: string | null
           updated_at: string
           user_id: string
+          valor_arroba: number | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          data_cotacao_arroba?: string | null
           display_name?: string | null
           exibir_conversao?: boolean | null
           farm_name?: string | null
@@ -1270,10 +1273,12 @@ export type Database = {
           unidade_peso?: string | null
           updated_at?: string
           user_id: string
+          valor_arroba?: number | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          data_cotacao_arroba?: string | null
           display_name?: string | null
           exibir_conversao?: boolean | null
           farm_name?: string | null
@@ -1297,6 +1302,7 @@ export type Database = {
           unidade_peso?: string | null
           updated_at?: string
           user_id?: string
+          valor_arroba?: number | null
         }
         Relationships: []
       }

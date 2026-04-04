@@ -28,6 +28,8 @@ export default function MovimentacoesPage() {
   const [movs, setMovs] = useState<any[]>([]);
   const [animais, setAnimais] = useState<any[]>([]);
   const [pastos, setPastos] = useState<any[]>([]);
+  const [rendimento, setRendimento] = useState(52);
+  const [valorArrobaConfig, setValorArrobaConfig] = useState(300);
   const [open, setOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [fTipo, setFTipo] = useState("__all__");
@@ -43,14 +45,19 @@ export default function MovimentacoesPage() {
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
-    const [m, a, p] = await Promise.all([
+    const [m, a, p, prof] = await Promise.all([
       supabase.from("movimentacoes_gado" as any).select("*, animal:animais!animal_id(brinco, nome)").eq("user_id", user.id).order("data", { ascending: false }),
       supabase.from("animais" as any).select("id, brinco, nome, sexo, pasto_id, peso_atual").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
       supabase.from("pastos" as any).select("id, nome").eq("user_id", user.id).order("nome"),
+      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", user.id).single(),
     ]);
     setMovs((m.data as any) || []);
     setAnimais((a.data as any) || []);
     setPastos((p.data as any) || []);
+    if (prof.data) {
+      if (prof.data.rendimento_carcaca) setRendimento(Number(prof.data.rendimento_carcaca));
+      if ((prof.data as any).valor_arroba) setValorArrobaConfig(Number((prof.data as any).valor_arroba));
+    }
   }, [user]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -319,9 +326,17 @@ export default function MovimentacoesPage() {
             )}
 
             {(form.tipo === "compra" || form.tipo === "venda" || form.tipo === "nascimento") && (
-              <div className="space-y-2"><Label>Peso KG</Label><Input type="number" value={form.peso_kg} onChange={e => setForm({ ...form, peso_kg: e.target.value })} /></div>
+              <div className="space-y-2">
+                <Label>Peso KG</Label>
+                <Input type="number" value={form.peso_kg} onChange={e => setForm({ ...form, peso_kg: e.target.value })} />
+                {form.tipo === "venda" && form.peso_kg && (
+                  <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1.5">
+                    Valor sugerido pela cotação: <strong>{((parseFloat(form.peso_kg) * rendimento / 100 / 15) * valorArrobaConfig).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                    {" "}({(parseFloat(form.peso_kg) * rendimento / 100 / 15).toFixed(2)} @ × {valorArrobaConfig.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })})
+                  </p>
+                )}
+              </div>
             )}
-
             {(form.tipo === "compra" || form.tipo === "venda") && (
               <>
                 <div className="space-y-2"><Label>Valor por Cabeça (R$)</Label><Input type="number" value={form.valor_unitario} onChange={e => {

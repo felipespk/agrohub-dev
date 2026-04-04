@@ -44,25 +44,33 @@ export default function AnimalFichaPage() {
   const [openPesagem, setOpenPesagem] = useState(false);
   const [pesoNovo, setPesoNovo] = useState("");
   const [dataPesagem, setDataPesagem] = useState(new Date().toISOString().split("T")[0]);
+  const [rendimento, setRendimento] = useState(52);
+  const [valorArrobaConfig, setValorArrobaConfig] = useState(300);
 
-  const rendimento = 52;
   const toArroba = (p: number) => (p * rendimento / 100 / 15).toFixed(2);
+  const toValorEst = (p: number) => (p * rendimento / 100 / 15) * valorArrobaConfig;
+  const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const fetchData = useCallback(async () => {
     if (!user || !id) return;
-    const [a, p, s, m, r] = await Promise.all([
+    const [a, p, s, m, r, prof] = await Promise.all([
       supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome), lote:lotes!lote_id(nome)").eq("id", id).single(),
       supabase.from("pesagens" as any).select("*").eq("animal_id", id).order("data", { ascending: true }),
       supabase.from("aplicacoes_sanitarias" as any).select("*, medicamento:medicamentos!medicamento_id(nome, tipo)").eq("animal_id", id).order("data_aplicacao", { ascending: false }),
       supabase.from("movimentacoes_gado" as any).select("*").eq("animal_id", id).order("data", { ascending: false }),
       supabase.from("reproducao" as any).select("*, femea:animais!femea_id(brinco), macho:animais!macho_id(brinco), bezerro:animais!bezerro_id(brinco)")
         .or(`femea_id.eq.${id},macho_id.eq.${id}`).order("data_cobertura", { ascending: false }),
+      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", user.id).single(),
     ]);
     setAnimal((a.data as any));
     setPesagens((p.data as any) || []);
     setSanidade((s.data as any) || []);
     setMovs((m.data as any) || []);
     setRepro((r.data as any) || []);
+    if (prof.data) {
+      if (prof.data.rendimento_carcaca) setRendimento(Number(prof.data.rendimento_carcaca));
+      if ((prof.data as any).valor_arroba) setValorArrobaConfig(Number((prof.data as any).valor_arroba));
+    }
   }, [user, id]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -95,6 +103,7 @@ export default function AnimalFichaPage() {
     ["Brinco do Pai", animal.pai_brinco || "—"], ["Brinco da Mãe", animal.mae_brinco || "—"],
     ["Pasto", animal.pasto?.nome || "—"], ["Lote", animal.lote?.nome || "—"],
     ["Peso Atual", animal.peso_atual ? `${Number(animal.peso_atual).toFixed(1)} kg (${toArroba(Number(animal.peso_atual))} @)` : "—"],
+    ["Valor Estimado", animal.peso_atual ? fmtBRL(toValorEst(Number(animal.peso_atual))) : "—"],
   ];
 
   const gmdColor = (g: number) => g > 0.5 ? "text-green-600" : g >= 0.3 ? "text-yellow-600" : "text-red-600";
