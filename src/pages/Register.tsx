@@ -33,7 +33,9 @@ export default function RegisterPage() {
       <div className="w-full max-w-[440px]">
         <div className="bg-card rounded-xl shadow-lg p-10 space-y-6">
           <div className="text-center space-y-2">
-            <img src="/logo-agrohub.png" alt="AgroHub" className="mx-auto mb-4 mix-blend-multiply" style={{ maxWidth: 280 }} />
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', display: 'inline-block' }} className="mx-auto mb-4">
+              <img src="/logo-agrohub.png" alt="AgroHub" style={{ maxWidth: 280, display: 'block' }} />
+            </div>
             <p className="text-sm text-muted-foreground">Crie sua conta para começar</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
