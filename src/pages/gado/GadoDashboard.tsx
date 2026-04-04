@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { List, Scale, Baby, Skull, CheckCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
@@ -22,6 +23,8 @@ function fmt(v: number) {
 export default function GadoDashboard() {
   const { user } = useAuth();
   const [periodo, setPeriodo] = useState("mes");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
   const [animais, setAnimais] = useState<any[]>([]);
   const [movs, setMovs] = useState<any[]>([]);
   const [vacinas, setVacinas] = useState<any[]>([]);
@@ -29,12 +32,17 @@ export default function GadoDashboard() {
 
   const getDateRange = useCallback(() => {
     const now = new Date();
+    const fmtD = (d: Date) => d.toISOString().split("T")[0];
+    if (periodo === "personalizado") {
+      return { start: customStart || fmtD(new Date(now.getFullYear(), 0, 1)), end: customEnd || fmtD(now) };
+    }
     let start: Date;
     if (periodo === "mes") { start = new Date(now.getFullYear(), now.getMonth(), 1); }
     else if (periodo === "3meses") { start = new Date(now.getFullYear(), now.getMonth() - 3, 1); }
+    else if (periodo === "6meses") { start = new Date(now.getFullYear(), now.getMonth() - 5, 1); }
     else { start = new Date(now.getFullYear(), 0, 1); }
-    return { start: start.toISOString().split("T")[0], end: now.toISOString().split("T")[0] };
-  }, [periodo]);
+    return { start: fmtD(start), end: fmtD(now) };
+  }, [periodo, customStart, customEnd]);
 
   useEffect(() => {
     if (!user) return;
