@@ -140,10 +140,8 @@ export default function RelatoriosPage() {
     setMaqData(Object.values(byMaq));
   };
 
-  const exportCSV = (headers: string[], rows: string[][]) => {
-    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `relatorio-${active}.csv`; a.click();
+  const exportRelatorio = (nomeArquivo: string, titulo: string, colunas: { header: string; key: string; width: number; tipo?: "texto" | "moeda" | "numero" }[], dados: Record<string, any>[]) => {
+    exportarExcel({ nomeArquivo, titulo, colunas, dados });
   };
 
   const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
