@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, List, MapPin, Scale, Heart, ArrowLeftRight,
-  Baby, Tag, LogOut, ArrowLeft, Leaf, Settings, Map,
+  Baby, Tag, LogOut, ArrowLeft, Settings, Map,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,7 +58,7 @@ export function GadoSidebar() {
       <SidebarContent className="flex flex-col h-full bg-[hsl(var(--sidebar-background))]">
         <div className={`px-6 pt-6 pb-3 ${collapsed ? "items-center flex flex-col px-2" : ""}`}>
           <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : ""}`}>
-            <Leaf className="h-6 w-6 text-white shrink-0" />
+            <img src="/icon-agrohub.png" alt="AgroHub" width={28} height={28} className="shrink-0" />
             {!collapsed && <span className="text-[20px] font-bold text-white tracking-tight">AgroHub</span>}
           </div>
           {!collapsed && (

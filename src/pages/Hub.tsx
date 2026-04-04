@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wheat, DollarSign, Beef, Sprout, ArrowRight, LogOut, Leaf, MapPin } from "lucide-react";
+import { Wheat, DollarSign, Beef, Sprout, ArrowRight, LogOut, MapPin } from "lucide-react";
 
 const modules = [
   {
@@ -44,12 +44,7 @@ export default function HubPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-        <div className="flex items-center gap-2.5 mb-1">
-          <Leaf className="h-7 w-7 text-primary" />
-          <span className="text-[22px] font-bold text-foreground tracking-tight">
-            AgroHub
-          </span>
-        </div>
+        <img src="/logo-agrohub.png" alt="AgroHub" className="mb-2" style={{ maxWidth: 220 }} />
         <p className="text-muted-foreground text-base mb-12">Selecione o módulo</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-5xl">
