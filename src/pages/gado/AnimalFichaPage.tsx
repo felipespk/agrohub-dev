@@ -53,19 +53,24 @@ export default function AnimalFichaPage() {
 
   const fetchData = useCallback(async () => {
     if (!user || !id) return;
-    const [a, p, s, m, r] = await Promise.all([
+    const [a, p, s, m, r, prof] = await Promise.all([
       supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome), lote:lotes!lote_id(nome)").eq("id", id).single(),
       supabase.from("pesagens" as any).select("*").eq("animal_id", id).order("data", { ascending: true }),
       supabase.from("aplicacoes_sanitarias" as any).select("*, medicamento:medicamentos!medicamento_id(nome, tipo)").eq("animal_id", id).order("data_aplicacao", { ascending: false }),
       supabase.from("movimentacoes_gado" as any).select("*").eq("animal_id", id).order("data", { ascending: false }),
       supabase.from("reproducao" as any).select("*, femea:animais!femea_id(brinco), macho:animais!macho_id(brinco), bezerro:animais!bezerro_id(brinco)")
         .or(`femea_id.eq.${id},macho_id.eq.${id}`).order("data_cobertura", { ascending: false }),
+      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", user.id).single(),
     ]);
     setAnimal((a.data as any));
     setPesagens((p.data as any) || []);
     setSanidade((s.data as any) || []);
     setMovs((m.data as any) || []);
     setRepro((r.data as any) || []);
+    if (prof.data) {
+      if (prof.data.rendimento_carcaca) setRendimento(Number(prof.data.rendimento_carcaca));
+      if ((prof.data as any).valor_arroba) setValorArrobaConfig(Number((prof.data as any).valor_arroba));
+    }
   }, [user, id]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
