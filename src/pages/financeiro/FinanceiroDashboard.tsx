@@ -44,8 +44,8 @@ export default function FinanceiroDashboard() {
   // Previous period for comparison
   const prevPeriodLanc = useMemo(() => {
     const startDate = new Date(periodoStart);
-    const todayDate = new Date(today);
-    const diff = todayDate.getTime() - startDate.getTime();
+    const endDate = new Date(periodoEnd);
+    const diff = endDate.getTime() - startDate.getTime();
     const prevEnd = new Date(startDate.getTime() - 1);
     const prevStart = new Date(prevEnd.getTime() - diff);
     const ps = prevStart.toISOString().split("T")[0];
@@ -53,7 +53,7 @@ export default function FinanceiroDashboard() {
     let l = lancamentos.filter(x => x.data >= ps && x.data <= pe);
     if (ccFiltro !== "todos") l = l.filter(x => x.centro_custo_id === ccFiltro);
     return l;
-  }, [lancamentos, periodoStart, today, ccFiltro]);
+  }, [lancamentos, periodoStart, periodoEnd, ccFiltro]);
 
   const saldoTotal = contasBancarias.reduce((s, c) => s + Number(c.saldo_atual || 0), 0);
   const receitasMes = lancFiltrados.filter(l => l.tipo === "receita").reduce((s, l) => s + Number(l.valor), 0);
