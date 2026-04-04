@@ -46,8 +46,8 @@ export default function MovimentacoesPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [m, a, p, prof] = await Promise.all([
-      supabase.from("movimentacoes_gado" as any).select("*, animal:animais!animal_id(brinco, nome)").eq("user_id", user.id).order("data", { ascending: false }),
-      supabase.from("animais" as any).select("id, brinco, nome, sexo, pasto_id, peso_atual").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
+      supabase.from("movimentacoes_gado" as any).select("*, animal:animais!animal_id(brinco, categoria)").eq("user_id", user.id).order("data", { ascending: false }),
+      supabase.from("animais" as any).select("id, brinco, categoria, sexo, pasto_id, peso_atual").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
       supabase.from("pastos" as any).select("id, nome").eq("user_id", user.id).order("nome"),
       supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", user.id).single(),
     ]);
@@ -302,7 +302,7 @@ export default function MovimentacoesPage() {
               <div className="space-y-2"><Label>Animal</Label>
                 <Select value={form.animal_id || "__none__"} onValueChange={v => setForm({ ...form, animal_id: v === "__none__" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{animais.map(a => <SelectItem key={a.id} value={a.id}>{a.brinco} — {a.nome || ""}</SelectItem>)}</SelectContent>
+                  <SelectContent>{animais.map(a => <SelectItem key={a.id} value={a.id}>{a.brinco} — {a.categoria}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             )}
@@ -312,7 +312,7 @@ export default function MovimentacoesPage() {
                 <div className="space-y-2"><Label>Mãe</Label>
                   <Select value={form.animal_id || "__none__"} onValueChange={v => setForm({ ...form, animal_id: v === "__none__" ? "" : v })}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>{femeas.map(a => <SelectItem key={a.id} value={a.id}>{a.brinco} — {a.nome || ""}</SelectItem>)}</SelectContent>
+                    <SelectContent>{femeas.map(a => <SelectItem key={a.id} value={a.id}>{a.brinco} — {a.categoria}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2"><Label>Sexo do Bezerro</Label>
