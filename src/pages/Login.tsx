@@ -27,7 +27,7 @@ export default function LoginPage() {
       <div className="w-full max-w-[440px]">
         <div className="bg-card rounded-xl shadow-lg p-10 space-y-6">
           <div className="text-center space-y-2">
-            <img src="/logo-agrohub.png" alt="AgroHub" className="mx-auto mb-4" style={{ maxWidth: 280 }} />
+            <img src="/logo-agrohub.png" alt="AgroHub" className="mx-auto mb-4 mix-blend-multiply" style={{ maxWidth: 280 }} />
             <p className="text-sm text-muted-foreground">Faça login para acessar sua conta</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
