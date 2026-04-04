@@ -17,6 +17,10 @@ const CAT_BADGE: Record<string, string> = {
   vaca: "bg-pink-100 text-pink-700", touro: "bg-blue-100 text-blue-700",
   bezerro: "bg-green-100 text-green-700", bezerra: "bg-emerald-100 text-emerald-700",
   novilha: "bg-yellow-100 text-yellow-700", boi: "bg-gray-200 text-gray-700",
+  garrote: "bg-purple-100 text-purple-700",
+};
+const CAT_LABEL: Record<string, string> = {
+  vaca: "Vaca", touro: "Touro", bezerro: "Bezerro", bezerra: "Bezerra", novilha: "Novilha", boi: "Boi", garrote: "Garrote",
 };
 const STATUS_BADGE: Record<string, string> = {
   ativo: "bg-green-100 text-green-700", vendido: "bg-blue-100 text-blue-700",
@@ -119,8 +123,7 @@ export default function AnimalFichaPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-[28px] font-bold font-mono">{animal.brinco}</h1>
-          {animal.nome && <span className="text-xl text-muted-foreground">{animal.nome}</span>}
-          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${CAT_BADGE[animal.categoria] || ""}`}>{animal.categoria}</span>
+          <span className={`px-3 py-1.5 rounded-full text-sm font-semibold ${CAT_BADGE[animal.categoria] || ""}`}>{CAT_LABEL[animal.categoria] || animal.categoria}</span>
           <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[animal.status] || ""}`}>{animal.status}</span>
         </div>
         <Button onClick={() => setOpenPesagem(true)} className="gap-2"><Scale className="h-4 w-4" /> Registrar Pesagem</Button>

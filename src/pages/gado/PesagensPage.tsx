@@ -55,8 +55,8 @@ export default function PesagensPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [p, a, l, ex] = await Promise.all([
-      supabase.from("pesagens" as any).select("*, animal:animais!animal_id(brinco, nome)").eq("user_id", user.id).order("data", { ascending: false }).limit(50),
-      supabase.from("animais" as any).select("id, brinco, nome").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
+      supabase.from("pesagens" as any).select("*, animal:animais!animal_id(brinco, categoria)").eq("user_id", user.id).order("data", { ascending: false }).limit(50),
+      supabase.from("animais" as any).select("id, brinco, categoria").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
       supabase.from("lotes" as any).select("id, nome").eq("user_id", user.id).order("nome"),
       supabase.from("pesagens" as any).select("id").eq("user_id", user.id).eq("observacao", "Dado de exemplo").limit(1),
     ]);
@@ -213,15 +213,15 @@ export default function PesagensPage() {
       <Card className="border-[#E5E7EB]"><CardContent className="p-0">
         <table className="w-full text-sm">
           <thead><tr className="bg-[#F9FAFB] text-left text-[11px] uppercase tracking-wider text-muted-foreground">
-            <th className="px-4 py-3">Data</th><th className="px-4 py-3">Brinco</th><th className="px-4 py-3">Nome</th>
-            <th className="px-4 py-3">Peso KG</th><th className="px-4 py-3">Peso @</th><th className="px-4 py-3">GMD</th>
+             <th className="px-4 py-3">Data</th><th className="px-4 py-3">Brinco</th><th className="px-4 py-3">Categoria</th>
+             <th className="px-4 py-3">Peso KG</th><th className="px-4 py-3">Peso @</th><th className="px-4 py-3">GMD</th>
           </tr></thead>
           <tbody>
             {filtered.map((p: any) => (
               <tr key={p.id} className="border-b hover:bg-[#F8FAFC]">
                 <td className="px-4 py-2">{new Date(p.data + "T12:00:00").toLocaleDateString("pt-BR")}</td>
                 <td className="px-4 py-2 font-mono font-bold">{p.animal?.brinco || "—"}</td>
-                <td className="px-4 py-2">{p.animal?.nome || "—"}</td>
+                <td className="px-4 py-2"><span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">{p.animal?.categoria || "—"}</span></td>
                 <td className="px-4 py-2">{Number(p.peso_kg).toFixed(1)}</td>
                 <td className="px-4 py-2">{toArroba(Number(p.peso_kg))}</td>
                 <td className={`px-4 py-2 font-bold ${p.gmd != null ? gmdColor(Number(p.gmd)) : ""}`}>{p.gmd != null ? Number(p.gmd).toFixed(2) : "—"}</td>
@@ -272,7 +272,7 @@ export default function PesagensPage() {
             <div className="space-y-2"><Label>Animal</Label>
               <Select value={form.animal_id || "__none__"} onValueChange={v => setForm({ ...form, animal_id: v === "__none__" ? "" : v })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{animais.map(a => <SelectItem key={a.id} value={a.id}>{a.brinco} — {a.nome || "Sem nome"}</SelectItem>)}</SelectContent>
+                <SelectContent>{animais.map(a => <SelectItem key={a.id} value={a.id}>{a.brinco} — {a.categoria}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2"><Label>Data</Label><Input type="date" value={form.data} onChange={e => setForm({ ...form, data: e.target.value })} /></div>

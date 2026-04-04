@@ -44,8 +44,8 @@ export default function SanidadePage() {
     if (!user) return;
     const [m, a, an, l, p] = await Promise.all([
       supabase.from("medicamentos" as any).select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("aplicacoes_sanitarias" as any).select("*, animal:animais!animal_id(brinco, nome), medicamento:medicamentos!medicamento_id(nome, tipo)").eq("user_id", user.id).order("data_aplicacao", { ascending: false }),
-      supabase.from("animais" as any).select("id, brinco, nome, categoria, pasto_id, peso_atual, status").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
+      supabase.from("aplicacoes_sanitarias" as any).select("*, animal:animais!animal_id(brinco, categoria), medicamento:medicamentos!medicamento_id(nome, tipo)").eq("user_id", user.id).order("data_aplicacao", { ascending: false }),
+      supabase.from("animais" as any).select("id, brinco, categoria, pasto_id, peso_atual, status").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
       supabase.from("lotes" as any).select("id, nome").eq("user_id", user.id).order("nome"),
       supabase.from("pastos" as any).select("id, nome").eq("user_id", user.id).order("nome"),
     ]);
@@ -61,7 +61,7 @@ export default function SanidadePage() {
   // Fetch lote animals for preview
   useEffect(() => {
     if (formApp.modo !== "lote" || !formApp.lote_id || !user) { setLoteAnimais([]); return; }
-    supabase.from("animais" as any).select("id, brinco, nome").eq("lote_id", formApp.lote_id).eq("status", "ativo").eq("user_id", user.id).order("brinco")
+    supabase.from("animais" as any).select("id, brinco, categoria").eq("lote_id", formApp.lote_id).eq("status", "ativo").eq("user_id", user.id).order("brinco")
       .then(({ data }) => setLoteAnimais((data as any) || []));
   }, [formApp.modo, formApp.lote_id, user]);
 
@@ -245,7 +245,7 @@ export default function SanidadePage() {
                   return (
                     <tr key={a.id} className={`border-b ${vencida ? "bg-red-50" : proximo ? "bg-yellow-50" : ""}`}>
                       <td className="px-4 py-2">{new Date(a.data_aplicacao + "T12:00:00").toLocaleDateString("pt-BR")}</td>
-                      <td className="px-4 py-2 font-mono">{a.animal?.brinco || "—"}</td>
+                      <td className="px-4 py-2 font-mono">{a.animal?.brinco || "—"} <span className="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600 ml-1">{a.animal?.categoria || ""}</span></td>
                       <td className="px-4 py-2">{a.medicamento?.nome || "—"}</td>
                       <td className="px-4 py-2"><span className={`px-2 py-0.5 rounded-full text-xs ${MED_BADGE[a.medicamento?.tipo] || ""}`}>{a.medicamento?.tipo}</span></td>
                       <td className="px-4 py-2">{a.dose || "—"}</td>
@@ -296,7 +296,7 @@ export default function SanidadePage() {
               <div className="space-y-2"><Label>Animal</Label>
                 <Select value={formApp.animal_id || "__none__"} onValueChange={v => setFormApp({ ...formApp, animal_id: v === "__none__" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{animais.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.brinco} — {a.nome || ""}</SelectItem>)}</SelectContent>
+                  <SelectContent>{animais.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.brinco} — {a.categoria}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             )}
@@ -363,7 +363,7 @@ export default function SanidadePage() {
                       <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground">
                         <th className="px-3 py-2 w-8"></th>
                         <th className="px-3 py-2">Brinco</th>
-                        <th className="px-3 py-2">Nome</th>
+                        <th className="px-3 py-2">Categoria</th>
                         <th className="px-3 py-2">Categoria</th>
                         <th className="px-3 py-2">Pasto</th>
                         <th className="px-3 py-2 text-right">Peso</th>
@@ -387,8 +387,11 @@ export default function SanidadePage() {
                               />
                             </td>
                             <td className="px-3 py-1.5 font-mono font-bold">{a.brinco}</td>
-                            <td className="px-3 py-1.5">{a.nome || "—"}</td>
                             <td className="px-3 py-1.5">
+                              <span className={`px-2 py-0.5 rounded-full text-xs ${CAT_BADGE[a.categoria?.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>
+                                {a.categoria}
+                              </span>
+                            </td>
                               <span className={`px-2 py-0.5 rounded-full text-xs ${CAT_BADGE[a.categoria?.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>
                                 {a.categoria}
                               </span>

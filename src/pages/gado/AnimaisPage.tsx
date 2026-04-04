@@ -232,8 +232,8 @@ export default function AnimaisPage() {
               <thead>
                 <tr className="bg-[#F9FAFB] text-left text-[11px] uppercase tracking-wider text-muted-foreground">
                   <th className="px-4 py-3 font-semibold">Brinco</th>
-                  <th className="px-4 py-3 font-semibold">Nome</th>
                   <th className="px-4 py-3 font-semibold">Categoria</th>
+                  <th className="px-4 py-3 font-semibold">Sexo</th>
                   <th className="px-4 py-3 font-semibold">Raça</th>
                   <th className="px-4 py-3 font-semibold">Pasto</th>
                   <th className="px-4 py-3 font-semibold">Peso KG</th>
@@ -247,13 +247,13 @@ export default function AnimaisPage() {
                 {paged.map((a: any) => (
                   <tr key={a.id} className="border-b hover:bg-[#F8FAFC] transition-colors">
                     <td className="px-4 py-3 font-mono font-bold">{a.brinco}</td>
-                    <td className="px-4 py-3">{a.nome || "—"}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${CAT_BADGE[a.categoria] || ""}`}>{CAT_LABEL[a.categoria] || a.categoria}</span>
                       {a.categoria_atualizada_em && (Date.now() - new Date(a.categoria_atualizada_em).getTime()) < 7 * 86400000 && (
                         <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">Atualizado</span>
                       )}
                     </td>
+                    <td className="px-4 py-3">{a.sexo === "macho" ? "Macho" : "Fêmea"}</td>
                     <td className="px-4 py-3">{a.raca?.nome || "—"}</td>
                     <td className="px-4 py-3">{a.pasto?.nome || "—"}</td>
                     <td className="px-4 py-3">{a.peso_atual ? Number(a.peso_atual).toFixed(1) : "—"}</td>
@@ -289,7 +289,6 @@ export default function AnimaisPage() {
           <DialogHeader><DialogTitle>Novo Animal</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Brinco *</Label><Input value={form.brinco} onChange={e => setForm({ ...form, brinco: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Nome</Label><Input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} /></div>
             <div className="space-y-2"><Label>Sexo *</Label>
               <Select value={form.sexo} onValueChange={v => setForm({ ...form, sexo: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
