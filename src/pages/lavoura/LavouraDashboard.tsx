@@ -165,13 +165,37 @@ export default function LavouraDashboard() {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-foreground">Dashboard da Lavoura</h1>
-        <Select value={selectedSafra} onValueChange={setSelectedSafra}>
-          <SelectTrigger className="w-[220px]"><SelectValue placeholder="Safra" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Safras</SelectItem>
-            {safras.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-end gap-3">
+          <Select value={selectedSafra} onValueChange={setSelectedSafra}>
+            <SelectTrigger className="w-[220px]"><SelectValue placeholder="Safra" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as Safras</SelectItem>
+              {safras.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={periodo} onValueChange={setPeriodo}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mes">Este Mês</SelectItem>
+              <SelectItem value="3meses">Últimos 3 Meses</SelectItem>
+              <SelectItem value="6meses">Últimos 6 Meses</SelectItem>
+              <SelectItem value="ano">Este Ano</SelectItem>
+              <SelectItem value="personalizado">Personalizado</SelectItem>
+            </SelectContent>
+          </Select>
+          {periodo === "personalizado" && (
+            <div className="flex items-center gap-2 animate-fade-in">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">De</span>
+                <Input type="date" className="w-[150px] h-9" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Até</span>
+                <Input type="date" className="w-[150px] h-9" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* KPIs */}
