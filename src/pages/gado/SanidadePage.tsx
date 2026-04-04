@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 
 const MED_BADGE: Record<string, string> = { vacina: "bg-green-100 text-green-700", medicamento: "bg-blue-100 text-blue-700", vermifugo: "bg-yellow-100 text-yellow-700" };
 
@@ -48,7 +49,6 @@ export default function SanidadePage() {
 
   const handleSaveApp = async () => {
     if (!user || !formApp.medicamento_id) { toast.error("Selecione um medicamento."); return; }
-
     if (formApp.modo === "individual") {
       if (!formApp.animal_id) { toast.error("Selecione um animal."); return; }
       await supabase.from("aplicacoes_sanitarias" as any).insert({
@@ -79,6 +79,52 @@ export default function SanidadePage() {
     toast.success("Removido."); fetchAll();
   };
 
+  const hasExampleMeds = meds.length === 0;
+  const hasExampleApps = apps.some(a => a.observacao === "Dado de exemplo");
+
+  const handleLoadMedExamples = async () => {
+    if (!user) return;
+    const medsData = [
+      { nome: "Vacina Aftosa", tipo: "vacina", fabricante: "Vallée", carencia_dias: 0, user_id: user.id },
+      { nome: "Vacina Brucelose B19", tipo: "vacina", fabricante: "MSD", carencia_dias: 0, user_id: user.id },
+      { nome: "Ivermectina 1%", tipo: "vermifugo", fabricante: "Ouro Fino", carencia_dias: 35, user_id: user.id },
+      { nome: "Oxitetraciclina LA", tipo: "medicamento", fabricante: "Bayer", carencia_dias: 28, user_id: user.id },
+    ];
+    await supabase.from("medicamentos" as any).insert(medsData as any);
+
+    // Now load apps
+    await fetchAll();
+    const { data: freshMeds } = await supabase.from("medicamentos" as any).select("id, nome").eq("user_id", user.id);
+    const { data: freshAnimais } = await supabase.from("animais" as any).select("id, brinco").eq("user_id", user.id);
+    if (!freshMeds || !freshAnimais) { toast.success("4 medicamentos inseridos!"); fetchAll(); return; }
+
+    const findAnimal = (brinco: string) => (freshAnimais as any[]).find(a => a.brinco === brinco)?.id;
+    const findMed = (nome: string) => (freshMeds as any[]).find(m => m.nome.includes(nome))?.id;
+
+    const a001 = findAnimal("001"); const a002 = findAnimal("002");
+    const a004 = findAnimal("004"); const a006 = findAnimal("006");
+    const mAftosa = findMed("Aftosa"); const mIvermectina = findMed("Ivermectina");
+    const mBrucelose = findMed("Brucelose");
+
+    const appsData: any[] = [];
+    if (a001 && mAftosa) appsData.push({ animal_id: a001, medicamento_id: mAftosa, data_aplicacao: "2026-03-15", dose: "5ml", proxima_dose: "2026-09-15", observacao: "Dado de exemplo", user_id: user.id });
+    if (a002 && mAftosa) appsData.push({ animal_id: a002, medicamento_id: mAftosa, data_aplicacao: "2026-03-15", dose: "5ml", proxima_dose: "2026-09-15", observacao: "Dado de exemplo", user_id: user.id });
+    if (a004 && mIvermectina) appsData.push({ animal_id: a004, medicamento_id: mIvermectina, data_aplicacao: "2026-03-10", dose: "10ml", proxima_dose: "2026-04-10", observacao: "Dado de exemplo", user_id: user.id });
+    if (a006 && mBrucelose) appsData.push({ animal_id: a006, medicamento_id: mBrucelose, data_aplicacao: "2026-02-01", dose: "2ml", proxima_dose: "2026-05-01", observacao: "Dado de exemplo", user_id: user.id });
+
+    if (appsData.length > 0) await supabase.from("aplicacoes_sanitarias" as any).insert(appsData as any);
+    toast.success(`4 medicamentos e ${appsData.length} aplicações inseridos!`);
+    fetchAll();
+  };
+
+  const handleCleanExamples = async () => {
+    if (!user) return;
+    await supabase.from("aplicacoes_sanitarias" as any).delete().eq("observacao", "Dado de exemplo").eq("user_id", user.id);
+    // Medicamentos don't have observacao column, so we keep them
+    toast.success("Aplicações de exemplo removidas.");
+    fetchAll();
+  };
+
   const today = new Date().toISOString().split("T")[0];
 
   return (
@@ -89,7 +135,17 @@ export default function SanidadePage() {
         <TabsList><TabsTrigger value="aplicacoes">Aplicações</TabsTrigger><TabsTrigger value="catalogo">Catálogo de Medicamentos</TabsTrigger></TabsList>
 
         <TabsContent value="catalogo" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => setOpenMed(true)} className="gap-2"><Plus className="h-4 w-4" /> Novo Medicamento</Button></div>
+          <div className="flex justify-between flex-wrap gap-2">
+            <ExampleDataButtons
+              showLoad={meds.length === 0}
+              showClean={false}
+              loadLabel="Carregar Dados de Exemplo"
+              loadConfirmMsg="Isso vai inserir 4 medicamentos e 4 aplicações de exemplo. Deseja continuar?"
+              onLoad={handleLoadMedExamples}
+              onClean={async () => {}}
+            />
+            <Button onClick={() => setOpenMed(true)} className="gap-2"><Plus className="h-4 w-4" /> Novo Medicamento</Button>
+          </div>
           <Card className="border-[#E5E7EB]"><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead><tr className="bg-[#F9FAFB] text-left text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -112,7 +168,17 @@ export default function SanidadePage() {
         </TabsContent>
 
         <TabsContent value="aplicacoes" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => setOpenApp(true)} className="gap-2"><Plus className="h-4 w-4" /> Nova Aplicação</Button></div>
+          <div className="flex justify-between flex-wrap gap-2">
+            <ExampleDataButtons
+              showLoad={false}
+              showClean={hasExampleApps}
+              loadLabel=""
+              loadConfirmMsg=""
+              onLoad={async () => {}}
+              onClean={handleCleanExamples}
+            />
+            <Button onClick={() => setOpenApp(true)} className="gap-2"><Plus className="h-4 w-4" /> Nova Aplicação</Button>
+          </div>
           <Card className="border-[#E5E7EB]"><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead><tr className="bg-[#F9FAFB] text-left text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -140,7 +206,6 @@ export default function SanidadePage() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal Medicamento */}
       <Dialog open={openMed} onOpenChange={setOpenMed}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Novo Medicamento</DialogTitle></DialogHeader>
@@ -159,7 +224,6 @@ export default function SanidadePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Aplicação */}
       <Dialog open={openApp} onOpenChange={setOpenApp}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Nova Aplicação</DialogTitle></DialogHeader>

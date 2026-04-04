@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { criarLancamentoReceita } from "@/lib/financeiro-integration";
+import { criarLancamentoReceita, buscarCentroCusto } from "@/lib/financeiro-integration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 const TIPO_BADGE: Record<string, string> = {
   compra: "bg-blue-100 text-blue-700", venda: "bg-green-100 text-green-700",
   nascimento: "bg-cyan-100 text-cyan-700", morte: "bg-red-100 text-red-700",
