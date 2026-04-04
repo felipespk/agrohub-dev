@@ -131,6 +131,23 @@ export default function GadoConfiguracoesPage() {
     }
   };
 
+  const handleSaveFases = async () => {
+    if (!user) return;
+    setSavingFases(true);
+    try {
+      await supabase.from("profiles").update({
+        idade_bezerro_meses: parseInt(idadeBezerro) || 8,
+        idade_jovem_meses: parseInt(idadeJovem) || 24,
+        reclassificacao_automatica: reclassAuto,
+      } as any).eq("user_id", user.id);
+      toast.success("Fases de vida salvas!");
+    } catch {
+      toast.error("Erro ao salvar.");
+    } finally {
+      setSavingFases(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
