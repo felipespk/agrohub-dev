@@ -48,7 +48,7 @@ export default function GadoDashboard() {
     if (!user) return;
     const { start, end } = getDateRange();
 
-    supabase.from("animais" as any).select("*").eq("user_id", user.id).eq("status", "ativo").then(({ data }) => setAnimais((data as any) || []));
+    supabase.from("animais" as any).select("*").eq("user_id", user.id).then(({ data }) => setAnimais((data as any) || []));
     supabase.from("movimentacoes_gado" as any).select("*").eq("user_id", user.id).gte("data", start).lte("data", end).order("data", { ascending: false }).then(({ data }) => setMovs((data as any) || []));
 
     // Próximas vacinas (15 dias)
@@ -61,18 +61,22 @@ export default function GadoDashboard() {
       .then(({ data }) => { if (data?.rendimento_carcaca) setRendimento(Number(data.rendimento_carcaca)); });
   }, [user, getDateRange]);
 
-  const totalCabecas = animais.length;
-  const pesoMedio = totalCabecas > 0 ? animais.reduce((s, a) => s + (Number(a.peso_atual) || 0), 0) / totalCabecas : 0;
-  const nascimentos = movs.filter(m => m.tipo === "nascimento").length;
+  const animaisAtivos = animais.filter(a => a.status === "ativo");
+  const totalCabecas = animaisAtivos.length;
+  const pesoMedio = totalCabecas > 0 ? animaisAtivos.reduce((s, a) => s + (Number(a.peso_atual) || 0), 0) / totalCabecas : 0;
+
+  // Nascimentos: contar animais com origem='nascido' e data_nascimento no período
+  const { start: pStart, end: pEnd } = getDateRange();
+  const nascimentos = animais.filter(a => a.origem === "nascido" && a.data_nascimento && a.data_nascimento >= pStart && a.data_nascimento <= pEnd).length;
   const mortes = movs.filter(m => m.tipo === "morte").length;
 
-  // Composição
+  // Composição (apenas ativos)
   const composicao = Object.entries(
-    animais.reduce((acc, a) => { acc[a.categoria] = (acc[a.categoria] || 0) + 1; return acc; }, {} as Record<string, number>)
+    animaisAtivos.reduce((acc, a) => { acc[a.categoria] = (acc[a.categoria] || 0) + 1; return acc; }, {} as Record<string, number>)
   ).map(([name, value]) => ({ name: CATEGORY_LABELS[name] || name, value, color: CATEGORY_COLORS[name] || "#999" }));
 
   // Valor estimado
-  const totalArrobas = animais.reduce((s, a) => s + ((Number(a.peso_atual) || 0) * rendimento / 100 / 15), 0);
+  const totalArrobas = animaisAtivos.reduce((s, a) => s + ((Number(a.peso_atual) || 0) * rendimento / 100 / 15), 0);
   const valorArroba = 300;
   const valorEstimado = totalArrobas * valorArroba;
 

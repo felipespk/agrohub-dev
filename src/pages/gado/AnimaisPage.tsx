@@ -93,8 +93,22 @@ export default function AnimaisPage() {
       raca_id: form.raca_id || null, pasto_id: form.pasto_id || null, lote_id: form.lote_id || null,
       data_nascimento: form.data_nascimento || null,
     };
-    const { error } = await supabase.from("animais" as any).insert(payload);
+    const { data: inserted, error } = await (supabase.from("animais" as any).insert(payload).select("id").single() as any);
     if (error) { toast.error(error.message); return; }
+
+    // Auto-criar movimentação de nascimento se origem = nascido
+    if (form.origem === "nascido" && inserted?.id) {
+      await supabase.from("movimentacoes_gado" as any).insert({
+        animal_id: inserted.id,
+        tipo: "nascimento",
+        data: form.data_nascimento || form.data_entrada,
+        quantidade: 1,
+        peso_kg: form.peso_atual ? parseFloat(form.peso_atual) : null,
+        user_id: user.id,
+        observacao: "Nascimento registrado automaticamente",
+      });
+    }
+
     toast.success("Animal cadastrado!");
     setOpen(false);
     setForm({ brinco: "", nome: "", sexo: "macho", raca_id: "", cor: "", data_nascimento: "", data_entrada: new Date().toISOString().split("T")[0], categoria: "bezerro", origem: "nascido", pai_brinco: "", mae_brinco: "", pasto_id: "", lote_id: "", peso_atual: "" });
