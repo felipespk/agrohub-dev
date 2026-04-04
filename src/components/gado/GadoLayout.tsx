@@ -1,8 +1,11 @@
+import { useEffect, useRef } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { GadoSidebar } from "./GadoSidebar";
 import { Bell, Leaf } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
+import { reclassificarAnimais } from "@/lib/reclassificar-animais";
+import { toast } from "sonner";
 
 const pageTitles: Record<string, string> = {
   "/gado": "Dashboard Pecuário",
@@ -21,6 +24,17 @@ export function GadoLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const title = pageTitles[location.pathname] || "Pecuária";
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "U";
+  const didReclassify = useRef(false);
+
+  useEffect(() => {
+    if (!user || didReclassify.current) return;
+    didReclassify.current = true;
+    reclassificarAnimais(user.id).then(count => {
+      if (count > 0) {
+        toast.info(`Reclassificação automática: ${count} ${count === 1 ? "animal atualizado" : "animais atualizados"} (bezerros que cresceram).`);
+      }
+    });
+  }, [user]);
 
   return (
     <SidebarProvider>
