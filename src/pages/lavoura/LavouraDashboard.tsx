@@ -55,6 +55,7 @@ export default function LavouraDashboard() {
 
   const loadDashboard = async () => {
     if (!user) return;
+    const { start: firstDay, end: lastDay } = getDateRange();
 
     // KPIs
     let stQuery = supabase.from("safra_talhoes" as any).select("*, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome)").eq("user_id", user.id);
@@ -64,10 +65,7 @@ export default function LavouraDashboard() {
 
     const totalArea = safraTalhoes.reduce((s, st) => s + (Number((st as any).talhoes?.area_hectares) || 0), 0);
 
-    // Atividades no mês
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+    // Atividades no período
     const { count: atividadesCount } = await supabase.from("atividades_campo" as any).select("*", { count: "exact", head: true }).eq("user_id", user.id).gte("data", firstDay).lte("data", lastDay);
 
     // Produtividade
