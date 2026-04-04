@@ -129,6 +129,7 @@ export default function MapaFazendaPage() {
   const [bindTarget, setBindTarget] = useState<string>("new");
   const [newName, setNewName] = useState("");
   const [newExtra, setNewExtra] = useState("");
+  const [newArea, setNewArea] = useState("");
   const [showBindModal, setShowBindModal] = useState(false);
 
   // Data
@@ -379,6 +380,7 @@ export default function MapaFazendaPage() {
       setBindTarget("new");
       setNewName("");
       setNewExtra("");
+      setNewArea(calcAreaHaSimple([...points]).toFixed(2));
     };
 
     map.on("click", onClick);
@@ -638,29 +640,29 @@ export default function MapaFazendaPage() {
 
     if (bindTarget === "new") {
       if (!newName.trim()) { toast({ title: "Informe o nome", variant: "destructive" }); return; }
+      const areaFinal = newArea ? parseFloat(newArea.replace(",", ".")) : Math.round(areaHa * 100) / 100;
       const insertData: any = {
         nome: newName.trim(),
         coordenadas: coordsJson,
         centro_lat: centerLat,
         centro_lng: centerLng,
-        area_hectares: Math.round(areaHa * 100) / 100,
+        area_hectares: Math.round((areaFinal || areaHa) * 100) / 100,
         user_id: user.id,
       };
       if (bindType === "talhao" && newExtra) insertData.tipo_solo = newExtra;
       if (bindType === "pasto" && newExtra) insertData.capacidade_cabecas = Number(newExtra) || null;
       await supabase.from(table).insert(insertData as any);
-      toast({ title: `${newName} mapeado!`, description: `Área: ${areaHa.toFixed(2)} ha` });
+      toast({ title: `${newName} mapeado!`, description: `Área: ${insertData.area_hectares} ha` });
     } else {
       await supabase.from(table).update({
         coordenadas: coordsJson,
         centro_lat: centerLat,
         centro_lng: centerLng,
-        area_hectares: Math.round(areaHa * 100) / 100,
       } as any).eq("id", bindTarget);
       const item = bindType === "talhao"
         ? talhoes.find((t) => t.id === bindTarget)
         : pastos.find((p) => p.id === bindTarget);
-      toast({ title: `${item?.nome || ""} mapeado!`, description: `Área: ${areaHa.toFixed(2)} ha` });
+      toast({ title: `${item?.nome || ""} mapeado!`, description: `Área cadastrada mantida.` });
     }
 
     setShowBindModal(false);
@@ -1108,6 +1110,7 @@ export default function MapaFazendaPage() {
                 setBindTarget("new");
                 setNewName("");
                 setNewExtra("");
+                setNewArea(calcAreaHaSimple([...drawPoints]).toFixed(2));
               }}
               className="bg-[#16A34A] text-white rounded-lg px-6 py-2.5 text-sm font-medium shadow-lg hover:bg-[#15803D] flex items-center gap-1.5"
             >
@@ -1153,6 +1156,13 @@ export default function MapaFazendaPage() {
                   <input value={newName} onChange={(e) => setNewName(e.target.value)}
                     className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-sm mt-1"
                     placeholder={bindType === "talhao" ? "Ex: Talhão 1" : "Ex: Pasto Norte"} />
+                </div>
+                <div className="mb-3">
+                  <label className="text-sm font-medium">Área (ha)</label>
+                  <input value={newArea} onChange={(e) => setNewArea(e.target.value)}
+                    type="number" step="0.01" min="0"
+                    className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-sm mt-1" />
+                  <p className="text-[11px] text-gray-400 mt-1">Calculada pelo desenho. Ajuste se necessário.</p>
                 </div>
                 <div className="mb-3">
                   <label className="text-sm font-medium">{bindType === "talhao" ? "Tipo de Solo" : "Capacidade (cabeças)"}</label>
