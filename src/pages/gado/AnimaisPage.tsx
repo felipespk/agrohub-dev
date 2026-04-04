@@ -16,9 +16,10 @@ const CAT_BADGE: Record<string, string> = {
   vaca: "bg-pink-100 text-pink-700", touro: "bg-blue-100 text-blue-700",
   bezerro: "bg-green-100 text-green-700", bezerra: "bg-emerald-100 text-emerald-700",
   novilha: "bg-yellow-100 text-yellow-700", boi: "bg-gray-200 text-gray-700",
+  garrote: "bg-purple-100 text-purple-700",
 };
 const CAT_LABEL: Record<string, string> = {
-  vaca: "Vaca", touro: "Touro", bezerro: "Bezerro", bezerra: "Bezerra", novilha: "Novilha", boi: "Boi",
+  vaca: "Vaca", touro: "Touro", bezerro: "Bezerro", bezerra: "Bezerra", novilha: "Novilha", boi: "Boi", garrote: "Garrote",
 };
 const STATUS_BADGE: Record<string, string> = {
   ativo: "bg-green-100 text-green-700", vendido: "bg-blue-100 text-blue-700",
@@ -247,7 +248,12 @@ export default function AnimaisPage() {
                   <tr key={a.id} className="border-b hover:bg-[#F8FAFC] transition-colors">
                     <td className="px-4 py-3 font-mono font-bold">{a.brinco}</td>
                     <td className="px-4 py-3">{a.nome || "—"}</td>
-                    <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${CAT_BADGE[a.categoria] || ""}`}>{CAT_LABEL[a.categoria]}</span></td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${CAT_BADGE[a.categoria] || ""}`}>{CAT_LABEL[a.categoria] || a.categoria}</span>
+                      {a.categoria_atualizada_em && (Date.now() - new Date(a.categoria_atualizada_em).getTime()) < 7 * 86400000 && (
+                        <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">Atualizado</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">{a.raca?.nome || "—"}</td>
                     <td className="px-4 py-3">{a.pasto?.nome || "—"}</td>
                     <td className="px-4 py-3">{a.peso_atual ? Number(a.peso_atual).toFixed(1) : "—"}</td>

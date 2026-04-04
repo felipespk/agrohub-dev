@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Tag, Scale, Weight, Save, Plus, Pencil, Trash2, X, Check, DollarSign } from "lucide-react";
+import { Settings, Tag, Scale, Weight, Save, Plus, Pencil, Trash2, X, Check, DollarSign, Timer } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,12 @@ export default function GadoConfiguracoesPage() {
   const [lastCotacaoDate, setLastCotacaoDate] = useState<string | null>(null);
   const [savingCotacao, setSavingCotacao] = useState(false);
 
+  // Fases de vida
+  const [idadeBezerro, setIdadeBezerro] = useState("8");
+  const [idadeJovem, setIdadeJovem] = useState("24");
+  const [reclassAuto, setReclassAuto] = useState(true);
+  const [savingFases, setSavingFases] = useState(false);
+
   const fetchRacas = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase.from("racas" as any).select("id, nome").eq("user_id", user.id).order("nome");
@@ -51,7 +57,7 @@ export default function GadoConfiguracoesPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba").eq("user_id", user.id).single()
+    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba, idade_bezerro_meses, idade_jovem_meses, reclassificacao_automatica").eq("user_id", user.id).single()
       .then(({ data }) => {
         if (data) {
           if (data.rendimento_carcaca != null) setRendimento(String(data.rendimento_carcaca));
@@ -62,6 +68,9 @@ export default function GadoConfiguracoesPage() {
             setDataCotacao((data as any).data_cotacao_arroba);
             setLastCotacaoDate((data as any).data_cotacao_arroba);
           }
+          if ((data as any).idade_bezerro_meses != null) setIdadeBezerro(String((data as any).idade_bezerro_meses));
+          if ((data as any).idade_jovem_meses != null) setIdadeJovem(String((data as any).idade_jovem_meses));
+          if ((data as any).reclassificacao_automatica != null) setReclassAuto((data as any).reclassificacao_automatica);
         }
       });
   }, [user]);
@@ -119,6 +128,23 @@ export default function GadoConfiguracoesPage() {
       toast.error("Erro ao salvar cotação.");
     } finally {
       setSavingCotacao(false);
+    }
+  };
+
+  const handleSaveFases = async () => {
+    if (!user) return;
+    setSavingFases(true);
+    try {
+      await supabase.from("profiles").update({
+        idade_bezerro_meses: parseInt(idadeBezerro) || 8,
+        idade_jovem_meses: parseInt(idadeJovem) || 24,
+        reclassificacao_automatica: reclassAuto,
+      } as any).eq("user_id", user.id);
+      toast.success("Fases de vida salvas!");
+    } catch {
+      toast.error("Erro ao salvar.");
+    } finally {
+      setSavingFases(false);
     }
   };
 
@@ -212,6 +238,37 @@ export default function GadoConfiguracoesPage() {
                   <br />Fórmula: Peso Vivo × Rendimento / 15 = Arrobas.
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Fases de Vida */}
+          <Card className="border-[#E5E7EB]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[16px]">
+                <Timer className="h-5 w-5 text-primary" />
+                Fases de Vida do Rebanho
+              </CardTitle>
+              <CardDescription>Configure as idades de transição entre as categorias. O sistema reclassifica os animais automaticamente.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Bezerro(a) até (meses)</Label>
+                <Input type="number" value={idadeBezerro} onChange={e => setIdadeBezerro(e.target.value)} min={1} max={24} />
+                <p className="text-xs text-muted-foreground">Após essa idade, bezerros viram Garrote e bezerras viram Novilha.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Jovem até (meses)</Label>
+                <Input type="number" value={idadeJovem} onChange={e => setIdadeJovem(e.target.value)} min={6} max={60} />
+                <p className="text-xs text-muted-foreground">Após essa idade, garrotes viram Boi e novilhas viram Vaca.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch checked={reclassAuto} onCheckedChange={setReclassAuto} />
+                <Label className="cursor-pointer">Reclassificação automática</Label>
+              </div>
+              <p className="text-xs text-muted-foreground">Quando ativado, o sistema atualiza a categoria dos animais automaticamente ao abrir o módulo Gado.</p>
+              <Button onClick={handleSaveFases} disabled={savingFases} className="gap-2 w-full">
+                <Save className="h-4 w-4" /> {savingFases ? "Salvando..." : "Salvar Fases de Vida"}
+              </Button>
             </CardContent>
           </Card>
 

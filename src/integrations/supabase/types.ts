@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           brinco: string
           categoria: string
+          categoria_atualizada_em: string | null
           cor: string | null
           created_at: string | null
           data_entrada: string | null
@@ -40,6 +41,7 @@ export type Database = {
         Insert: {
           brinco: string
           categoria: string
+          categoria_atualizada_em?: string | null
           cor?: string | null
           created_at?: string | null
           data_entrada?: string | null
@@ -62,6 +64,7 @@ export type Database = {
         Update: {
           brinco?: string
           categoria?: string
+          categoria_atualizada_em?: string | null
           cor?: string | null
           created_at?: string | null
           data_entrada?: string | null
@@ -1238,8 +1241,11 @@ export type Database = {
           fazenda_zoom: number | null
           formato_numero: string | null
           id: string
+          idade_bezerro_meses: number | null
+          idade_jovem_meses: number | null
           master_password_hash: string | null
           moeda: string | null
+          reclassificacao_automatica: boolean | null
           rendimento_carcaca: number | null
           unidade_peso: string | null
           updated_at: string
@@ -1267,8 +1273,11 @@ export type Database = {
           fazenda_zoom?: number | null
           formato_numero?: string | null
           id?: string
+          idade_bezerro_meses?: number | null
+          idade_jovem_meses?: number | null
           master_password_hash?: string | null
           moeda?: string | null
+          reclassificacao_automatica?: boolean | null
           rendimento_carcaca?: number | null
           unidade_peso?: string | null
           updated_at?: string
@@ -1296,8 +1305,11 @@ export type Database = {
           fazenda_zoom?: number | null
           formato_numero?: string | null
           id?: string
+          idade_bezerro_meses?: number | null
+          idade_jovem_meses?: number | null
           master_password_hash?: string | null
           moeda?: string | null
+          reclassificacao_automatica?: boolean | null
           rendimento_carcaca?: number | null
           unidade_peso?: string | null
           updated_at?: string

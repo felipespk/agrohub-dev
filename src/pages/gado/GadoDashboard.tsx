@@ -9,11 +9,11 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 const CATEGORY_COLORS: Record<string, string> = {
   vaca: "#EC4899", touro: "#3B82F6", bezerro: "#34D399", bezerra: "#6EE7B7",
-  novilha: "#FBBF24", boi: "#6B7280",
+  novilha: "#FBBF24", boi: "#6B7280", garrote: "#7C3AED",
 };
 const CATEGORY_LABELS: Record<string, string> = {
   vaca: "Vacas", touro: "Touros", bezerro: "Bezerros", bezerra: "Bezerras",
-  novilha: "Novilhas", boi: "Bois",
+  novilha: "Novilhas", boi: "Bois", garrote: "Garrotes",
 };
 
 function fmt(v: number) {
