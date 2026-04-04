@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Map, Calendar, BookOpen, Package, Cog, Wheat,
-  Bug, ShoppingCart, Sprout, LogOut, ArrowLeft, Leaf, Settings, FileBarChart,
+  Bug, ShoppingCart, Sprout, LogOut, ArrowLeft, Settings, FileBarChart,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";

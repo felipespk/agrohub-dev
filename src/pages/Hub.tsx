@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wheat, DollarSign, Beef, Sprout, ArrowRight, LogOut, Leaf, MapPin } from "lucide-react";
+import { Wheat, DollarSign, Beef, Sprout, ArrowRight, LogOut, MapPin } from "lucide-react";
 
 const modules = [
   {

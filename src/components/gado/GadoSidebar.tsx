@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, List, MapPin, Scale, Heart, ArrowLeftRight,
-  Baby, Tag, LogOut, ArrowLeft, Leaf, Settings, Map,
+  Baby, Tag, LogOut, ArrowLeft, Settings, Map,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
