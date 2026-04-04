@@ -42,24 +42,49 @@ export function FinanceiroProvider({ children }: { children: ReactNode }) {
       supabase.from("contas_bancarias").select("*").eq("user_id", user.id).order("created_at"),
       supabase.from("categorias_financeiras").select("*").eq("user_id", user.id).order("nome"),
       supabase.from("contatos_financeiros").select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("contas_pr").select("*, contato:contatos_financeiros(nome), categoria:categorias_financeiras(nome), centro:centros_custo(nome), conta:contas_bancarias(nome)").eq("user_id", user.id).order("data_vencimento", { ascending: true }),
-      supabase.from("lancamentos").select("*, categoria:categorias_financeiras(nome), centro:centros_custo(nome), conta:contas_bancarias(nome), conta_dest:contas_bancarias!lancamentos_conta_destino_id_fkey(nome), contato:contatos_financeiros(nome)").eq("user_id", user.id).order("data", { ascending: false }),
+      supabase.from("contas_pr").select("*").eq("user_id", user.id).order("data_vencimento", { ascending: true }),
+      supabase.from("lancamentos").select("*").eq("user_id", user.id).order("data", { ascending: false }),
     ]);
 
     // Seed default cost centers if empty
+    let centrosData: Row[];
     if (cc.data && cc.data.length === 0) {
       const inserts = DEFAULT_CENTROS.map(c => ({ ...c, user_id: user.id }));
       const { data: seeded } = await supabase.from("centros_custo").insert(inserts).select();
-      setCentrosCusto(seeded || []);
+      centrosData = seeded || [];
     } else {
-      setCentrosCusto(cc.data || []);
+      centrosData = cc.data || [];
     }
 
-    setContasBancarias(cb.data || []);
-    setCategorias(cat.data || []);
-    setContatos(con.data || []);
-    setContasPR(cpr.data || []);
-    setLancamentos(lan.data || []);
+    const contasBData = cb.data || [];
+    const catsData = cat.data || [];
+    const contData = con.data || [];
+
+    // Enrich contas_pr with relation names
+    const cprEnriched = (cpr.data || []).map(r => ({
+      ...r,
+      contato: contData.find(c => c.id === r.contato_id),
+      categoria: catsData.find(c => c.id === r.categoria_id),
+      centro: centrosData.find(c => c.id === r.centro_custo_id),
+      conta: contasBData.find(c => c.id === r.conta_bancaria_id),
+    }));
+
+    // Enrich lancamentos with relation names
+    const lanEnriched = (lan.data || []).map(l => ({
+      ...l,
+      categoria: catsData.find(c => c.id === l.categoria_id),
+      centro: centrosData.find(c => c.id === l.centro_custo_id),
+      conta: contasBData.find(c => c.id === l.conta_bancaria_id),
+      conta_dest: contasBData.find(c => c.id === l.conta_destino_id),
+      contato: contData.find(c => c.id === l.contato_id),
+    }));
+
+    setCentrosCusto(centrosData);
+    setContasBancarias(contasBData);
+    setCategorias(catsData);
+    setContatos(contData);
+    setContasPR(cprEnriched);
+    setLancamentos(lanEnriched);
     setLoading(false);
   }, [user]);
 
