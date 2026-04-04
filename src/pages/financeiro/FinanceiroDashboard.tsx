@@ -87,11 +87,14 @@ export default function FinanceiroDashboard() {
 
   const chartData = useMemo(() => {
     const months: { mes: string; receitas: number; despesas: number }[] = [];
-    const numMonths = periodo === "ano" ? 12 : periodo === "6meses" ? 6 : periodo === "3meses" ? 3 : 1;
-    for (let i = numMonths - 1; i >= 0; i--) {
-      const d = new Date(); d.setMonth(d.getMonth() - i);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      const label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+    const startD = new Date(periodoStart + "T12:00:00");
+    const endD = new Date(periodoEnd + "T12:00:00");
+    // Build month list from start to end
+    const cur = new Date(startD.getFullYear(), startD.getMonth(), 1);
+    const endMonth = new Date(endD.getFullYear(), endD.getMonth(), 1);
+    while (cur <= endMonth) {
+      const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
+      const label = cur.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
       let lans = lancamentos.filter(l => l.data?.startsWith(key));
       if (ccFiltro !== "todos") lans = lans.filter(l => l.centro_custo_id === ccFiltro);
       months.push({
@@ -99,9 +102,10 @@ export default function FinanceiroDashboard() {
         receitas: lans.filter(l => l.tipo === "receita").reduce((s, l) => s + Number(l.valor), 0),
         despesas: lans.filter(l => l.tipo === "despesa").reduce((s, l) => s + Number(l.valor), 0),
       });
+      cur.setMonth(cur.getMonth() + 1);
     }
     return months;
-  }, [lancamentos, ccFiltro, periodo]);
+  }, [lancamentos, ccFiltro, periodoStart, periodoEnd]);
 
   // Result by cost center
   const resultadoPorCentro = useMemo(() => {
