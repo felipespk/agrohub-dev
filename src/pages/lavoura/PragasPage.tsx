@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Bug, Leaf, CheckCircle, AlertTriangle, SprayCan } from "lucide-react";
 import { toast } from "sonner";
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 
 const nivelConfig: Record<string, { label: string; cls: string }> = {
   baixo: { label: "Baixo", cls: "bg-green-100 text-green-800" },
