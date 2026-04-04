@@ -178,10 +178,11 @@ export default function RelatoriosPage() {
         {/* Custo Report */}
         {active === "custo" && (
           <>
-            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(
-              ["Talhão","Cultura","Área ha","Custo Insumos","Custo Máquinas","Custo Total","Custo/ha","Produção","Custo/saca"],
-              custoData.map(r => [r.talhao, r.cultura, r.area, fmt(r.custoInsumos), fmt(r.custoMaq), fmt(r.custoTotal), fmt(r.custoHa), r.producao, r.custoSaca > 0 ? fmt(r.custoSaca) : "—"])
-            )}><Download className="h-4 w-4" />CSV</Button></div>
+            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportRelatorio(
+              "custo-producao", "Custo de Produção por Talhão",
+              [{ header: "Talhão", key: "talhao", width: 20, tipo: "texto" }, { header: "Cultura", key: "cultura", width: 20, tipo: "texto" }, { header: "Área ha", key: "area", width: 12, tipo: "numero" }, { header: "Custo Insumos", key: "custoInsumos", width: 18, tipo: "moeda" }, { header: "Custo Máquinas", key: "custoMaq", width: 18, tipo: "moeda" }, { header: "Custo Total", key: "custoTotal", width: 18, tipo: "moeda" }, { header: "Custo/ha", key: "custoHa", width: 15, tipo: "moeda" }, { header: "Produção", key: "producao", width: 15, tipo: "numero" }, { header: "Custo/saca", key: "custoSaca", width: 15, tipo: "moeda" }],
+              custoData
+            )}><Download className="h-4 w-4" />Excel</Button></div>
             <Table>
               <TableHeader><TableRow className="bg-[#F9FAFB]">
                 <TableHead className="text-[11px] uppercase">Talhão</TableHead><TableHead className="text-[11px] uppercase">Cultura</TableHead>
