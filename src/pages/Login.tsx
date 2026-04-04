@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Leaf } from "lucide-react";
+
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
@@ -27,10 +27,7 @@ export default function LoginPage() {
       <div className="w-full max-w-[440px]">
         <div className="bg-card rounded-xl shadow-lg p-10 space-y-6">
           <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              <Leaf className="h-7 w-7 text-primary" />
-              <span className="text-[22px] font-bold text-foreground tracking-tight">AgroHub</span>
-            </div>
+            <img src="/logo-agrohub.png" alt="AgroHub" className="mx-auto mb-4" style={{ maxWidth: 280 }} />
             <p className="text-sm text-muted-foreground">Faça login para acessar sua conta</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
