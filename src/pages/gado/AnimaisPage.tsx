@@ -252,6 +252,7 @@ export default function AnimaisPage() {
                     <td className="px-4 py-3">{a.pasto?.nome || "—"}</td>
                     <td className="px-4 py-3">{a.peso_atual ? Number(a.peso_atual).toFixed(1) : "—"}</td>
                     <td className="px-4 py-3">{a.peso_atual ? toArroba(Number(a.peso_atual)) : "—"}</td>
+                    <td className="px-4 py-3 text-green-700 font-medium">{a.peso_atual ? fmtBRL(toValorEst(Number(a.peso_atual))) : "—"}</td>
                     <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[a.status] || ""}`}>{a.status}</span></td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
