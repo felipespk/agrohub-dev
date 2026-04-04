@@ -129,6 +129,7 @@ export default function MapaFazendaPage() {
   const [bindTarget, setBindTarget] = useState<string>("new");
   const [newName, setNewName] = useState("");
   const [newExtra, setNewExtra] = useState("");
+  const [newArea, setNewArea] = useState("");
   const [showBindModal, setShowBindModal] = useState(false);
 
   // Data
