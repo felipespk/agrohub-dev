@@ -77,12 +77,45 @@ export default function MaquinasPage() {
 
   const today = new Date().toISOString().split("T")[0];
 
+  const hasExamples = maquinas.some((m: any) => m.nome.includes("John Deere 6110J") || m.nome.includes("New Holland TC 5090"));
+
+  const handleLoadExamples = async () => {
+    if (!user) return;
+    const data = [
+      { nome: "Trator John Deere 6110J", tipo: "trator", modelo: "6110J", ano: 2020, custo_hora: 85, user_id: user.id },
+      { nome: "Colheitadeira New Holland TC 5090", tipo: "colheitadeira", modelo: "TC 5090", ano: 2019, custo_hora: 150, user_id: user.id },
+      { nome: "Pulverizador Jacto Uniport", tipo: "pulverizador", modelo: "Uniport 2530", ano: 2021, custo_hora: 95, user_id: user.id },
+    ];
+    await supabase.from("maquinas" as any).insert(data as any);
+    toast.success("3 máquinas inseridas!");
+    load();
+  };
+
+  const handleCleanExamples = async () => {
+    if (!user) return;
+    const nomes = ["Trator John Deere 6110J", "Colheitadeira New Holland TC 5090", "Pulverizador Jacto Uniport"];
+    for (const n of nomes) {
+      await supabase.from("maquinas" as any).delete().eq("nome", n).eq("user_id", user.id);
+    }
+    toast.success("Máquinas de exemplo removidas.");
+    load();
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-foreground">Máquinas e Equipamentos</h1>
         <Button onClick={() => { setEditItem(null); setForm({ nome: "", tipo: "trator", modelo: "", ano: "", placa_chassi: "", valor_aquisicao: "", custo_hora: "" }); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Máquina</Button>
       </div>
+
+      <ExampleDataButtons
+        showLoad={maquinas.length === 0}
+        showClean={hasExamples}
+        loadLabel="Carregar Máquinas de Exemplo"
+        loadConfirmMsg="Isso vai inserir 3 máquinas de exemplo. Deseja continuar?"
+        onLoad={handleLoadExamples}
+        onClean={handleCleanExamples}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {maquinas.map((m: any) => {
