@@ -1157,6 +1157,13 @@ export default function MapaFazendaPage() {
                     placeholder={bindType === "talhao" ? "Ex: Talhão 1" : "Ex: Pasto Norte"} />
                 </div>
                 <div className="mb-3">
+                  <label className="text-sm font-medium">Área (ha)</label>
+                  <input value={newArea} onChange={(e) => setNewArea(e.target.value)}
+                    type="number" step="0.01" min="0"
+                    className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-sm mt-1" />
+                  <p className="text-[11px] text-gray-400 mt-1">Calculada pelo desenho. Ajuste se necessário.</p>
+                </div>
+                <div className="mb-3">
                   <label className="text-sm font-medium">{bindType === "talhao" ? "Tipo de Solo" : "Capacidade (cabeças)"}</label>
                   <input value={newExtra} onChange={(e) => setNewExtra(e.target.value)}
                     className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-sm mt-1"
