@@ -76,7 +76,7 @@ export default function GadoDashboard() {
   ).map(([name, value]) => ({ name: CATEGORY_LABELS[name] || name, value, color: CATEGORY_COLORS[name] || "#999" }));
 
   // Valor estimado
-  const totalArrobas = animais.reduce((s, a) => s + ((Number(a.peso_atual) || 0) * rendimento / 100 / 15), 0);
+  const totalArrobas = animaisAtivos.reduce((s, a) => s + ((Number(a.peso_atual) || 0) * rendimento / 100 / 15), 0);
   const valorArroba = 300;
   const valorEstimado = totalArrobas * valorArroba;
 
