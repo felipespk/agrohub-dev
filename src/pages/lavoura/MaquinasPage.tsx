@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Cog, Wrench } from "lucide-react";
 import { toast } from "sonner";
-
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 const tipoBadgeMaq: Record<string, string> = {
   trator: "bg-green-100 text-green-800", colheitadeira: "bg-blue-100 text-blue-800",
   pulverizador: "bg-red-100 text-red-800", plantadeira: "bg-orange-100 text-orange-800",
