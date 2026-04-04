@@ -28,6 +28,8 @@ export default function MovimentacoesPage() {
   const [movs, setMovs] = useState<any[]>([]);
   const [animais, setAnimais] = useState<any[]>([]);
   const [pastos, setPastos] = useState<any[]>([]);
+  const [rendimento, setRendimento] = useState(52);
+  const [valorArrobaConfig, setValorArrobaConfig] = useState(300);
   const [open, setOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [fTipo, setFTipo] = useState("__all__");
