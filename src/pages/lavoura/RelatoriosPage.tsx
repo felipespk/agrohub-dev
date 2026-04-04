@@ -270,10 +270,11 @@ export default function RelatoriosPage() {
                 ))}
               </TableBody>
             </Table>
-            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(
-              ["Insumo","Categoria","Qtd Total","Valor Total","Talhão"],
-              insumoData.map(r => [r.nome, r.categoria, String(r.qty), fmt(r.valor), r.talhaoMax])
-            )}><Download className="h-4 w-4" />CSV</Button></div>
+            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportRelatorio(
+              "consumo-insumos", "Consumo de Insumos",
+              [{ header: "Insumo", key: "nome", width: 25, tipo: "texto" }, { header: "Categoria", key: "categoria", width: 20, tipo: "texto" }, { header: "Qtd Total", key: "qty", width: 15, tipo: "numero" }, { header: "Valor Total", key: "valor", width: 18, tipo: "moeda" }, { header: "Talhão", key: "talhaoMax", width: 20, tipo: "texto" }],
+              insumoData
+            )}><Download className="h-4 w-4" />Excel</Button></div>
           </>
         )}
 
