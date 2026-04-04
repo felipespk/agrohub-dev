@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Pencil, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { exportarExcel } from "@/lib/export-excel";
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 
 const tipoBadge: Record<string, string> = {
   plantio: "bg-green-800 text-white", adubacao: "bg-blue-100 text-blue-800",
