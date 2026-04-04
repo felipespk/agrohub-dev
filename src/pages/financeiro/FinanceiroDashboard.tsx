@@ -165,8 +165,21 @@ export default function FinanceiroDashboard() {
               <SelectItem value="3meses">Últimos 3 Meses</SelectItem>
               <SelectItem value="6meses">Últimos 6 Meses</SelectItem>
               <SelectItem value="ano">Este Ano</SelectItem>
+              <SelectItem value="personalizado">Personalizado</SelectItem>
             </SelectContent>
           </Select>
+          {periodo === "personalizado" && (
+            <div className="flex items-center gap-2 animate-fade-in">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">De</span>
+                <Input type="date" className="w-[150px] h-9" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Até</span>
+                <Input type="date" className="w-[150px] h-9" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

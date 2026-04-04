@@ -14,12 +14,29 @@ export default function LavouraDashboard() {
   const { user } = useAuth();
   const [safras, setSafras] = useState<any[]>([]);
   const [selectedSafra, setSelectedSafra] = useState<string>("all");
+  const [periodo, setPeriodo] = useState("mes");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
   const [kpis, setKpis] = useState({ area: 0, talhoes: 0, atividades: 0, produtividade: 0 });
   const [prodByTalhao, setProdByTalhao] = useState<any[]>([]);
   const [culturasDist, setCulturasDist] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [custoData, setCustoData] = useState<any[]>([]);
+
+  const getDateRange = useCallback(() => {
+    const now = new Date();
+    const fmtD = (d: Date) => d.toISOString().split("T")[0];
+    if (periodo === "personalizado") {
+      return { start: customStart || fmtD(new Date(now.getFullYear(), 0, 1)), end: customEnd || fmtD(now) };
+    }
+    let start: Date;
+    if (periodo === "mes") { start = new Date(now.getFullYear(), now.getMonth(), 1); }
+    else if (periodo === "3meses") { start = new Date(now.getFullYear(), now.getMonth() - 2, 1); }
+    else if (periodo === "6meses") { start = new Date(now.getFullYear(), now.getMonth() - 5, 1); }
+    else { start = new Date(now.getFullYear(), 0, 1); }
+    return { start: fmtD(start), end: fmtD(now) };
+  }, [periodo, customStart, customEnd]);
 
   useEffect(() => {
     if (!user) return;
