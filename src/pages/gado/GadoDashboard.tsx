@@ -4,8 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { List, Scale, Baby, Skull, CheckCircle, TrendingUp, TrendingDown } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { List, Scale, Baby, Skull, CheckCircle, AlertTriangle } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 const CATEGORY_COLORS: Record<string, string> = {
   vaca: "#EC4899", touro: "#3B82F6", bezerro: "#34D399", bezerra: "#6EE7B7",
@@ -29,6 +29,8 @@ export default function GadoDashboard() {
   const [movs, setMovs] = useState<any[]>([]);
   const [vacinas, setVacinas] = useState<any[]>([]);
   const [rendimento, setRendimento] = useState(52);
+  const [valorArroba, setValorArroba] = useState(300);
+  const [dataCotacao, setDataCotacao] = useState<string | null>(null);
 
   const getDateRange = useCallback(() => {
     const now = new Date();
@@ -51,36 +53,39 @@ export default function GadoDashboard() {
     supabase.from("animais" as any).select("*").eq("user_id", user.id).then(({ data }) => setAnimais((data as any) || []));
     supabase.from("movimentacoes_gado" as any).select("*").eq("user_id", user.id).gte("data", start).lte("data", end).order("data", { ascending: false }).then(({ data }) => setMovs((data as any) || []));
 
-    // Próximas vacinas (15 dias)
     const in15 = new Date(); in15.setDate(in15.getDate() + 15);
     supabase.from("aplicacoes_sanitarias" as any).select("*, animal:animais!animal_id(brinco,nome), medicamento:medicamentos!medicamento_id(nome)")
       .eq("user_id", user.id).not("proxima_dose", "is", null).lte("proxima_dose", in15.toISOString().split("T")[0]).order("proxima_dose")
       .limit(5).then(({ data }) => setVacinas((data as any) || []));
 
-    supabase.from("profiles").select("rendimento_carcaca").eq("user_id", user.id).single()
-      .then(({ data }) => { if (data?.rendimento_carcaca) setRendimento(Number(data.rendimento_carcaca)); });
+    supabase.from("profiles").select("rendimento_carcaca, valor_arroba, data_cotacao_arroba").eq("user_id", user.id).single()
+      .then(({ data }) => {
+        if (data) {
+          if (data.rendimento_carcaca) setRendimento(Number(data.rendimento_carcaca));
+          if ((data as any).valor_arroba) setValorArroba(Number((data as any).valor_arroba));
+          if ((data as any).data_cotacao_arroba) setDataCotacao((data as any).data_cotacao_arroba);
+        }
+      });
   }, [user, getDateRange]);
 
   const animaisAtivos = animais.filter(a => a.status === "ativo");
   const totalCabecas = animaisAtivos.length;
   const pesoMedio = totalCabecas > 0 ? animaisAtivos.reduce((s, a) => s + (Number(a.peso_atual) || 0), 0) / totalCabecas : 0;
 
-  // Nascimentos: contar animais com origem='nascido' e data_nascimento no período
   const { start: pStart, end: pEnd } = getDateRange();
   const nascimentos = animais.filter(a => a.origem === "nascido" && a.data_nascimento && a.data_nascimento >= pStart && a.data_nascimento <= pEnd).length;
   const mortes = movs.filter(m => m.tipo === "morte").length;
 
-  // Composição (apenas ativos)
   const composicao = Object.entries(
     animaisAtivos.reduce((acc, a) => { acc[a.categoria] = (acc[a.categoria] || 0) + 1; return acc; }, {} as Record<string, number>)
   ).map(([name, value]) => ({ name: CATEGORY_LABELS[name] || name, value, color: CATEGORY_COLORS[name] || "#999" }));
 
-  // Valor estimado
   const totalArrobas = animaisAtivos.reduce((s, a) => s + ((Number(a.peso_atual) || 0) * rendimento / 100 / 15), 0);
-  const valorArroba = 300;
   const valorEstimado = totalArrobas * valorArroba;
 
-  const today = new Date().toISOString().split("T")[0];
+  // Cotação desatualizada?
+  const cotacaoDesatualizada = dataCotacao ? (Date.now() - new Date(dataCotacao + "T12:00:00").getTime()) > 7 * 86400000 : true;
+
   const recentMovs = movs.slice(0, 5);
 
   const kpis = [
@@ -200,7 +205,18 @@ export default function GadoDashboard() {
               <p className="text-sm text-muted-foreground">Valor Estimado</p>
               <p className="text-2xl font-bold text-green-600">{fmt(valorEstimado)}</p>
             </div>
-            <p className="text-xs text-muted-foreground">Base: rendimento {rendimento}% | @ R$ {valorArroba.toFixed(2)}</p>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>Base: rendimento {rendimento}% | @ {fmt(valorArroba)}</p>
+              {dataCotacao && (
+                <p>Cotação da @: <strong>{fmt(valorArroba)}</strong> (atualizado em {new Date(dataCotacao + "T12:00:00").toLocaleDateString("pt-BR")})</p>
+              )}
+            </div>
+            {cotacaoDesatualizada && (
+              <div className="flex items-center gap-2 text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-md px-3 py-2">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span>Cotação desatualizada — atualize nas Configurações.</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

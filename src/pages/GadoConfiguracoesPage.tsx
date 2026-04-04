@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Tag, Scale, Weight, Save, Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { Settings, Tag, Scale, Weight, Save, Plus, Pencil, Trash2, X, Check, DollarSign } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,12 @@ export default function GadoConfiguracoesPage() {
   const [exibirConversao, setExibirConversao] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // Cotação da arroba
+  const [valorArroba, setValorArroba] = useState("300.00");
+  const [dataCotacao, setDataCotacao] = useState(new Date().toISOString().split("T")[0]);
+  const [lastCotacaoDate, setLastCotacaoDate] = useState<string | null>(null);
+  const [savingCotacao, setSavingCotacao] = useState(false);
+
   const fetchRacas = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase.from("racas" as any).select("id, nome").eq("user_id", user.id).order("nome");
@@ -45,12 +51,17 @@ export default function GadoConfiguracoesPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao").eq("user_id", user.id).single()
+    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba").eq("user_id", user.id).single()
       .then(({ data }) => {
         if (data) {
           if (data.rendimento_carcaca != null) setRendimento(String(data.rendimento_carcaca));
           if (data.unidade_peso) setUnidadePeso(data.unidade_peso as string);
           if (data.exibir_conversao != null) setExibirConversao(data.exibir_conversao as boolean);
+          if ((data as any).valor_arroba != null) setValorArroba(String((data as any).valor_arroba));
+          if ((data as any).data_cotacao_arroba) {
+            setDataCotacao((data as any).data_cotacao_arroba);
+            setLastCotacaoDate((data as any).data_cotacao_arroba);
+          }
         }
       });
   }, [user]);
@@ -94,6 +105,23 @@ export default function GadoConfiguracoesPage() {
     }
   };
 
+  const handleSaveCotacao = async () => {
+    if (!user) return;
+    setSavingCotacao(true);
+    try {
+      await supabase.from("profiles").update({
+        valor_arroba: parseFloat(valorArroba) || 300,
+        data_cotacao_arroba: dataCotacao,
+      } as any).eq("user_id", user.id);
+      setLastCotacaoDate(dataCotacao);
+      toast.success("Cotação da arroba salva!");
+    } catch {
+      toast.error("Erro ao salvar cotação.");
+    } finally {
+      setSavingCotacao(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
@@ -114,7 +142,7 @@ export default function GadoConfiguracoesPage() {
 
         <h2 className="text-lg font-semibold text-foreground pt-2">Configurações do Gado</h2>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           {/* Raças */}
           <Card className="border-[#E5E7EB]">
             <CardHeader>
@@ -184,6 +212,40 @@ export default function GadoConfiguracoesPage() {
                   <br />Fórmula: Peso Vivo × Rendimento / 15 = Arrobas.
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Cotação da Arroba */}
+          <Card className="border-[#E5E7EB]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[16px]">
+                <DollarSign className="h-5 w-5 text-primary" />
+                Cotação da Arroba (@)
+              </CardTitle>
+              <CardDescription>Informe o valor atual da arroba na sua região. Esse valor é usado para calcular o valor estimado do rebanho.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Valor da @ (R$)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                  <Input type="number" value={valorArroba} onChange={e => setValorArroba(e.target.value)}
+                    step={0.01} min={0} className="pl-10" placeholder="Ex: 300.00" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Data da cotação</Label>
+                <Input type="date" value={dataCotacao} onChange={e => setDataCotacao(e.target.value)} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Atualize sempre que o preço mudar na sua região.
+                {lastCotacaoDate && (
+                  <> Última atualização: <strong>{new Date(lastCotacaoDate + "T12:00:00").toLocaleDateString("pt-BR")}</strong>.</>
+                )}
+              </p>
+              <Button onClick={handleSaveCotacao} disabled={savingCotacao} className="gap-2 w-full">
+                <Save className="h-4 w-4" /> {savingCotacao ? "Salvando..." : "Salvar Cotação"}
+              </Button>
             </CardContent>
           </Card>
 
