@@ -1110,6 +1110,7 @@ export default function MapaFazendaPage() {
                 setBindTarget("new");
                 setNewName("");
                 setNewExtra("");
+                setNewArea(calcAreaHaSimple([...drawPoints]).toFixed(2));
               }}
               className="bg-[#16A34A] text-white rounded-lg px-6 py-2.5 text-sm font-medium shadow-lg hover:bg-[#15803D] flex items-center gap-1.5"
             >
