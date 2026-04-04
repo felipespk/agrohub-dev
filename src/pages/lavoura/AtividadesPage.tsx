@@ -111,15 +111,31 @@ export default function AtividadesPage() {
     return true;
   });
 
-  const exportCSV = () => {
-    const rows = [["Data", "Safra", "Talhão", "Tipo", "Insumo", "Máquina", "Área (ha)", "Custo (R$)"]];
-    filtered.forEach((a: any) => {
-      rows.push([a.data, a.safra_talhoes?.safras?.nome || "", a.safra_talhoes?.talhoes?.nome || "", a.tipo, a.insumos?.nome || "", a.maquinas?.nome || "", a.area_coberta_ha || "", a.custo_total || ""]);
+  const exportExcel = () => {
+    exportarExcel({
+      nomeArquivo: "caderno-de-campo",
+      titulo: "Caderno de Campo",
+      colunas: [
+        { header: "Data", key: "data_fmt", width: 15, tipo: "texto" },
+        { header: "Safra", key: "safra", width: 20, tipo: "texto" },
+        { header: "Talhão", key: "talhao", width: 20, tipo: "texto" },
+        { header: "Tipo", key: "tipo", width: 15, tipo: "texto" },
+        { header: "Insumo", key: "insumo", width: 25, tipo: "texto" },
+        { header: "Máquina", key: "maquina", width: 25, tipo: "texto" },
+        { header: "Área (ha)", key: "area", width: 12, tipo: "numero" },
+        { header: "Custo (R$)", key: "custo", width: 18, tipo: "moeda" },
+      ],
+      dados: filtered.map((a: any) => ({
+        data_fmt: new Date(a.data).toLocaleDateString("pt-BR"),
+        safra: a.safra_talhoes?.safras?.nome || "",
+        talhao: a.safra_talhoes?.talhoes?.nome || "",
+        tipo: a.tipo,
+        insumo: a.insumos?.nome || "",
+        maquina: a.maquinas?.nome || "",
+        area: a.area_coberta_ha || null,
+        custo: a.custo_total || null,
+      })),
     });
-    const csv = rows.map(r => r.join(";")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "atividades.csv"; a.click();
   };
 
   return (
