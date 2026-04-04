@@ -104,7 +104,7 @@ export default function LancamentosPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div><h1 className="text-2xl font-bold text-foreground">Lançamentos</h1><p className="text-sm text-muted-foreground mt-1">Registro de receitas, despesas e transferências</p></div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={exportCSV} className="gap-2"><Download className="h-4 w-4" /> Exportar CSV</Button>
+          <Button variant="secondary" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel</Button>
           <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Novo Lançamento</Button>
         </div>
       </div>

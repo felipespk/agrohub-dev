@@ -169,7 +169,7 @@ export default function ComercializacaoPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-foreground">Comercialização</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCSV} className="gap-2"><Download className="h-4 w-4" /> Exportar CSV</Button>
+          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel</Button>
           <Button onClick={openModal} className="gap-2"><Plus className="h-4 w-4" /> Nova Venda</Button>
         </div>
       </div>
