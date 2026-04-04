@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Calendar, Plus } from "lucide-react";
 import { toast } from "sonner";
-
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 const statusBadge: Record<string, string> = {
   planejamento: "bg-yellow-100 text-yellow-800", andamento: "bg-green-100 text-green-800", finalizada: "bg-gray-200 text-gray-700",
 };
