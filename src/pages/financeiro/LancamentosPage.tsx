@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Plus, Download, ArrowUp, ArrowDown, ArrowLeftRight, Search } from "lucide-react";
+import { exportarExcel } from "@/lib/export-excel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

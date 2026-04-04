@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, ShoppingCart, DollarSign, TrendingUp, Download } from "lucide-react";
 import { toast } from "sonner";
+import { exportarExcel } from "@/lib/export-excel";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const contratoBadge: Record<string, { label: string; cls: string }> = {

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Pencil, Wheat, TrendingUp, TrendingDown, Droplets, Download } from "lucide-react";
 import { toast } from "sonner";
+import { exportarExcel } from "@/lib/export-excel";
 
 const destinoBadge: Record<string, { label: string; cls: string }> = {
   silo: { label: "Silo", cls: "bg-blue-100 text-blue-800" },
