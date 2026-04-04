@@ -639,29 +639,29 @@ export default function MapaFazendaPage() {
 
     if (bindTarget === "new") {
       if (!newName.trim()) { toast({ title: "Informe o nome", variant: "destructive" }); return; }
+      const areaFinal = newArea ? parseFloat(newArea.replace(",", ".")) : Math.round(areaHa * 100) / 100;
       const insertData: any = {
         nome: newName.trim(),
         coordenadas: coordsJson,
         centro_lat: centerLat,
         centro_lng: centerLng,
-        area_hectares: Math.round(areaHa * 100) / 100,
+        area_hectares: Math.round((areaFinal || areaHa) * 100) / 100,
         user_id: user.id,
       };
       if (bindType === "talhao" && newExtra) insertData.tipo_solo = newExtra;
       if (bindType === "pasto" && newExtra) insertData.capacidade_cabecas = Number(newExtra) || null;
       await supabase.from(table).insert(insertData as any);
-      toast({ title: `${newName} mapeado!`, description: `Área: ${areaHa.toFixed(2)} ha` });
+      toast({ title: `${newName} mapeado!`, description: `Área: ${insertData.area_hectares} ha` });
     } else {
       await supabase.from(table).update({
         coordenadas: coordsJson,
         centro_lat: centerLat,
         centro_lng: centerLng,
-        area_hectares: Math.round(areaHa * 100) / 100,
       } as any).eq("id", bindTarget);
       const item = bindType === "talhao"
         ? talhoes.find((t) => t.id === bindTarget)
         : pastos.find((p) => p.id === bindTarget);
-      toast({ title: `${item?.nome || ""} mapeado!`, description: `Área: ${areaHa.toFixed(2)} ha` });
+      toast({ title: `${item?.nome || ""} mapeado!`, description: `Área cadastrada mantida.` });
     }
 
     setShowBindModal(false);
