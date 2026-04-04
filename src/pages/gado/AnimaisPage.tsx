@@ -237,6 +237,7 @@ export default function AnimaisPage() {
                   <th className="px-4 py-3 font-semibold">Pasto</th>
                   <th className="px-4 py-3 font-semibold">Peso KG</th>
                   <th className="px-4 py-3 font-semibold">Peso @</th>
+                  <th className="px-4 py-3 font-semibold">Valor Est.</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 font-semibold">Ações</th>
                 </tr>
