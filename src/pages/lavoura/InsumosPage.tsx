@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, AlertTriangle, Package } from "lucide-react";
 import { toast } from "sonner";
-
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 const catBadge: Record<string, string> = {
   semente: "bg-green-100 text-green-800", fertilizante: "bg-blue-100 text-blue-800",
   defensivo: "bg-red-100 text-red-800", combustivel: "bg-yellow-100 text-yellow-800",
