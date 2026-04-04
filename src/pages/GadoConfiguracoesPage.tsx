@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Tag, Scale, Weight, Save, Plus, Pencil, Trash2, X, Check, DollarSign } from "lucide-react";
+import { Settings, Tag, Scale, Weight, Save, Plus, Pencil, Trash2, X, Check, DollarSign, Timer } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,12 @@ export default function GadoConfiguracoesPage() {
   const [lastCotacaoDate, setLastCotacaoDate] = useState<string | null>(null);
   const [savingCotacao, setSavingCotacao] = useState(false);
 
+  // Fases de vida
+  const [idadeBezerro, setIdadeBezerro] = useState("8");
+  const [idadeJovem, setIdadeJovem] = useState("24");
+  const [reclassAuto, setReclassAuto] = useState(true);
+  const [savingFases, setSavingFases] = useState(false);
+
   const fetchRacas = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase.from("racas" as any).select("id, nome").eq("user_id", user.id).order("nome");
@@ -51,7 +57,7 @@ export default function GadoConfiguracoesPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba").eq("user_id", user.id).single()
+    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba, idade_bezerro_meses, idade_jovem_meses, reclassificacao_automatica").eq("user_id", user.id).single()
       .then(({ data }) => {
         if (data) {
           if (data.rendimento_carcaca != null) setRendimento(String(data.rendimento_carcaca));
@@ -62,6 +68,9 @@ export default function GadoConfiguracoesPage() {
             setDataCotacao((data as any).data_cotacao_arroba);
             setLastCotacaoDate((data as any).data_cotacao_arroba);
           }
+          if ((data as any).idade_bezerro_meses != null) setIdadeBezerro(String((data as any).idade_bezerro_meses));
+          if ((data as any).idade_jovem_meses != null) setIdadeJovem(String((data as any).idade_jovem_meses));
+          if ((data as any).reclassificacao_automatica != null) setReclassAuto((data as any).reclassificacao_automatica);
         }
       });
   }, [user]);
