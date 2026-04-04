@@ -566,6 +566,10 @@ export default function MapaFazendaPage() {
             ${lot.cap > 0 ? `<div style="width:100%;background:#E5E7EB;border-radius:9999px;height:8px;margin-top:4px"><div style="height:8px;border-radius:9999px;background:${color};width:${pctWidth}%"></div></div>` : ''}
           </div>`;
         if (lot.pesoMedio > 0) popupHtml += `<p style="font-size:14px;color:#4B5563">Peso médio: ${fmtNum(lot.pesoMedio)} KG</p>`;
+        const valorArrobaMap = profile?.valor_arroba ? Number(profile.valor_arroba) : 300;
+        const rendMap = profile?.rendimento_carcaca ? Number(profile.rendimento_carcaca) : 52;
+        const valorPasto = pastoAnimais.reduce((s: number, a: any) => s + ((Number(a.peso_atual) || 0) * rendMap / 100 / 15) * valorArrobaMap, 0);
+        if (valorPasto > 0) popupHtml += `<p style="font-size:14px;color:#15803D;font-weight:600">Valor estimado: ${fmtBRL(valorPasto)}</p>`;
         if (vacinaCount > 0) {
           popupHtml += `<div style="background:#FEFCE8;border:1px solid #FDE68A;border-radius:4px;padding:6px;margin-top:4px;font-size:12px;color:#A16207;display:flex;align-items:center;gap:4px">⚠ ${vacinaCount} animais com vacina atrasada</div>`;
         }
