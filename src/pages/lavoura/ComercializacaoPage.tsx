@@ -132,13 +132,31 @@ export default function ComercializacaoPage() {
     toast.success("Removida."); load();
   };
 
-  const exportCSV = () => {
-    const header = "Data,Safra,Cultura,Comprador,Quantidade,Preço Unit.,Valor Total,Contrato\n";
-    const rows = filtered.map(v =>
-      `${new Date(v.data_venda).toLocaleDateString("pt-BR")},${v.safras?.nome || ""},${v.culturas?.nome || ""},${v.contatos_financeiros?.nome || ""},${v.quantidade},${v.preco_unitario},${v.valor_total},${v.tipo_contrato}`
-    ).join("\n");
-    const blob = new Blob([header + rows], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "comercializacao.csv"; a.click();
+  const exportExcel = () => {
+    exportarExcel({
+      nomeArquivo: "comercializacao",
+      titulo: "Relatório de Comercialização",
+      colunas: [
+        { header: "Data", key: "data_fmt", width: 15, tipo: "texto" },
+        { header: "Safra", key: "safra", width: 20, tipo: "texto" },
+        { header: "Cultura", key: "cultura", width: 20, tipo: "texto" },
+        { header: "Comprador", key: "comprador", width: 25, tipo: "texto" },
+        { header: "Quantidade", key: "quantidade", width: 15, tipo: "numero" },
+        { header: "Preço Unit.", key: "preco", width: 15, tipo: "moeda" },
+        { header: "Valor Total", key: "total", width: 18, tipo: "moeda" },
+        { header: "Contrato", key: "contrato", width: 15, tipo: "texto" },
+      ],
+      dados: filtered.map((v: any) => ({
+        data_fmt: new Date(v.data_venda).toLocaleDateString("pt-BR"),
+        safra: v.safras?.nome || "",
+        cultura: v.culturas?.nome || "",
+        comprador: v.contatos_financeiros?.nome || "",
+        quantidade: v.quantidade,
+        preco: v.preco_unitario,
+        total: v.valor_total,
+        contrato: v.tipo_contrato || "",
+      })),
+    });
   };
 
   const openModal = () => {
