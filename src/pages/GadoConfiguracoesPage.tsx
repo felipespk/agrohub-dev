@@ -241,6 +241,37 @@ export default function GadoConfiguracoesPage() {
             </CardContent>
           </Card>
 
+          {/* Fases de Vida */}
+          <Card className="border-[#E5E7EB]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[16px]">
+                <Timer className="h-5 w-5 text-primary" />
+                Fases de Vida do Rebanho
+              </CardTitle>
+              <CardDescription>Configure as idades de transição entre as categorias. O sistema reclassifica os animais automaticamente.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Bezerro(a) até (meses)</Label>
+                <Input type="number" value={idadeBezerro} onChange={e => setIdadeBezerro(e.target.value)} min={1} max={24} />
+                <p className="text-xs text-muted-foreground">Após essa idade, bezerros viram Garrote e bezerras viram Novilha.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Jovem até (meses)</Label>
+                <Input type="number" value={idadeJovem} onChange={e => setIdadeJovem(e.target.value)} min={6} max={60} />
+                <p className="text-xs text-muted-foreground">Após essa idade, garrotes viram Boi e novilhas viram Vaca.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch checked={reclassAuto} onCheckedChange={setReclassAuto} />
+                <Label className="cursor-pointer">Reclassificação automática</Label>
+              </div>
+              <p className="text-xs text-muted-foreground">Quando ativado, o sistema atualiza a categoria dos animais automaticamente ao abrir o módulo Gado.</p>
+              <Button onClick={handleSaveFases} disabled={savingFases} className="gap-2 w-full">
+                <Save className="h-4 w-4" /> {savingFases ? "Salvando..." : "Salvar Fases de Vida"}
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Cotação da Arroba */}
           <Card className="border-[#E5E7EB]">
             <CardHeader>
