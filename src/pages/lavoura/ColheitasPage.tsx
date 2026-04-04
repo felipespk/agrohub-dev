@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2, Pencil, Wheat, TrendingUp, TrendingDown, Droplets, Download } from "lucide-react";
 import { toast } from "sonner";
 import { exportarExcel } from "@/lib/export-excel";
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 
 const destinoBadge: Record<string, { label: string; cls: string }> = {
   silo: { label: "Silo", cls: "bg-blue-100 text-blue-800" },
@@ -169,6 +170,57 @@ export default function ColheitasPage() {
     });
   };
 
+  const hasExampleColheitas = colheitas.some((c: any) => c.observacao === "Dado de exemplo");
+
+  const handleLoadColheitaExamples = async () => {
+    if (!user) return;
+    const { data: sfs } = await supabase.from("safras" as any).select("id").eq("nome", "Safra 2025/2026").eq("user_id", user.id).limit(1);
+    if (!sfs || sfs.length === 0) { toast.warning("Cadastre a Safra 2025/2026 primeiro."); return; }
+    const { data: sts } = await supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome)").eq("safra_id", (sfs as any[])[0].id).eq("user_id", user.id);
+    const st1 = (sts as any[])?.find(s => s.talhoes?.nome === "Talhão 1");
+    const st4 = (sts as any[])?.find(s => s.talhoes?.nome === "Talhão 4");
+
+    const inserts: any[] = [];
+    if (st1) inserts.push({ safra_talhao_id: st1.id, data: "2026-03-15", quantidade: 9750, umidade_percentual: 13.5, produtividade_calculada: 65, destino: "cooperativa", observacao: "Dado de exemplo", user_id: user.id });
+    if (st4) inserts.push({ safra_talhao_id: st4.id, data: "2026-04-01", quantidade: 7200, umidade_percentual: 14.0, produtividade_calculada: 75.79, destino: "venda_direta", observacao: "Dado de exemplo", user_id: user.id });
+
+    if (inserts.length === 0) { toast.warning("Vincule talhões à safra primeiro."); return; }
+    await supabase.from("colheitas" as any).insert(inserts as any);
+
+    // Venda direta for Talhão 4
+    if (st4) {
+      const vt = 7200 * 70;
+      await supabase.from("comercializacao" as any).insert({
+        safra_id: (sfs as any[])[0].id, quantidade: 7200, preco_unitario: 70, valor_total: vt,
+        data_venda: "2026-04-01", tipo_contrato: "avista", observacao: "Dado de exemplo", user_id: user.id,
+      } as any);
+      try {
+        const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%lavoura%").limit(1);
+        if (cc && cc.length > 0) {
+          const cultName = st4.culturas?.nome || "Grãos";
+          const { data: cpr } = await supabase.from("contas_pr").insert({
+            tipo: "receber", descricao: `Venda colheita ${cultName} — Talhão 4`,
+            valor_total: vt, valor_pago: vt, centro_custo_id: cc[0].id,
+            data_vencimento: "2026-04-01", data_pagamento: "2026-04-01",
+            status: "pago", user_id: user.id,
+          } as any).select("id").single();
+          const { criarLancamentoReceita } = await import("@/lib/financeiro-integration");
+          await criarLancamentoReceita(user.id, vt, "2026-04-01", `Venda colheita ${cultName} — Talhão 4`, cc[0].id, (cpr as any)?.id);
+        }
+      } catch {}
+    }
+    toast.success(`${inserts.length} colheitas inseridas!${st4 ? " Talhão 4 vendido por R$ 504.000." : ""}`);
+    load();
+  };
+
+  const handleCleanColheitaExamples = async () => {
+    if (!user) return;
+    await supabase.from("colheitas" as any).delete().eq("observacao", "Dado de exemplo").eq("user_id", user.id);
+    await supabase.from("comercializacao" as any).delete().eq("observacao", "Dado de exemplo").eq("user_id", user.id);
+    toast.success("Colheitas de exemplo removidas.");
+    load();
+  };
+
   const openModal = () => {
     setForm({ safra_id: "", safra_talhao_id: "", data: new Date().toISOString().split("T")[0], quantidade: "", umidade_percentual: "", destino: "silo", observacao: "", comprador_id: "", preco_unitario: "" });
     setFormSafraTalhoes([]); setAreaTalhao(0); setOpen(true);
@@ -187,6 +239,15 @@ export default function ColheitasPage() {
           <Button onClick={openModal} className="gap-2"><Plus className="h-4 w-4" /> Registrar Colheita</Button>
         </div>
       </div>
+
+      <ExampleDataButtons
+        showLoad={colheitas.length === 0}
+        showClean={hasExampleColheitas}
+        loadLabel="Carregar Colheitas de Exemplo"
+        loadConfirmMsg="Isso vai inserir 2 colheitas de exemplo com venda direta integrada ao financeiro. Deseja continuar?"
+        onLoad={handleLoadColheitaExamples}
+        onClean={handleCleanColheitaExamples}
+      />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">

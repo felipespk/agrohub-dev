@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Calendar, Plus } from "lucide-react";
 import { toast } from "sonner";
-
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 const statusBadge: Record<string, string> = {
   planejamento: "bg-yellow-100 text-yellow-800", andamento: "bg-green-100 text-green-800", finalizada: "bg-gray-200 text-gray-700",
 };
@@ -42,12 +42,64 @@ export default function SafrasPage() {
     toast.success("Safra criada!"); setOpen(false); load();
   };
 
+  const handleLoadSafraExample = async () => {
+    if (!user) return;
+    // Insert safra
+    const { data: safraData, error } = await supabase.from("safras" as any).insert({
+      nome: "Safra 2025/2026", data_inicio: "2025-10-01", data_fim: "2026-04-30", status: "andamento", user_id: user.id,
+    } as any).select("id").single();
+    if (error || !safraData) { toast.error("Erro ao criar safra."); return; }
+    const safraId = (safraData as any).id;
+
+    // Get talhoes and culturas
+    const { data: talhoes } = await supabase.from("talhoes" as any).select("id, nome").eq("user_id", user.id);
+    const { data: culturas } = await supabase.from("culturas" as any).select("id, nome").eq("user_id", user.id);
+    if (!talhoes || !culturas) { toast.success("Safra criada! Cadastre talhões e culturas para vincular."); load(); return; }
+
+    const findTalhao = (nome: string) => (talhoes as any[]).find(t => t.nome.includes(nome))?.id;
+    const findCultura = (nome: string) => (culturas as any[]).find(c => c.nome.toLowerCase().includes(nome.toLowerCase()))?.id;
+
+    const vinculos = [
+      { safra_id: safraId, talhao_id: findTalhao("Talhão 1"), cultura_id: findCultura("Soja"), data_plantio_prevista: "2025-10-15", data_colheita_prevista: "2026-03-15", meta_produtividade: 65, user_id: user.id },
+      { safra_id: safraId, talhao_id: findTalhao("Talhão 2"), cultura_id: findCultura("Soja"), data_plantio_prevista: "2025-10-20", data_colheita_prevista: "2026-03-20", meta_produtividade: 60, user_id: user.id },
+      { safra_id: safraId, talhao_id: findTalhao("Talhão 3"), cultura_id: findCultura("Milho"), data_plantio_prevista: "2025-11-01", data_colheita_prevista: "2026-04-15", meta_produtividade: 120, user_id: user.id },
+      { safra_id: safraId, talhao_id: findTalhao("Talhão 4"), cultura_id: findCultura("Arroz"), data_plantio_prevista: "2025-10-15", data_colheita_prevista: "2026-04-01", meta_produtividade: 80, user_id: user.id },
+    ].filter(v => v.talhao_id && v.cultura_id);
+
+    if (vinculos.length > 0) await supabase.from("safra_talhoes" as any).insert(vinculos as any);
+    toast.success(`Safra com ${vinculos.length} talhões vinculados!`);
+    load();
+  };
+
+  const handleCleanSafraExamples = async () => {
+    if (!user) return;
+    // Find safras named "Safra 2025/2026"
+    const { data: sfs } = await supabase.from("safras" as any).select("id").eq("nome", "Safra 2025/2026").eq("user_id", user.id);
+    if (sfs) {
+      for (const s of sfs as any[]) {
+        await supabase.from("safra_talhoes" as any).delete().eq("safra_id", s.id).eq("user_id", user.id);
+        await supabase.from("safras" as any).delete().eq("id", s.id);
+      }
+    }
+    toast.success("Safra de exemplo removida.");
+    load();
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-foreground">Safras</h1>
         <Button onClick={() => { setForm({ nome: `Safra ${currentYear}/${currentYear + 1}`, data_inicio: "", data_fim: "", status: "planejamento" }); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Safra</Button>
       </div>
+
+      <ExampleDataButtons
+        showLoad={safras.length === 0}
+        showClean={safras.some(s => s.nome === "Safra 2025/2026")}
+        loadLabel="Carregar Safra de Exemplo"
+        loadConfirmMsg="Isso vai inserir a Safra 2025/2026 com 4 talhões vinculados. Deseja continuar?"
+        onLoad={handleLoadSafraExample}
+        onClean={handleCleanSafraExamples}
+      />
 
       <div className="space-y-4">
         {safras.map((s: any) => (

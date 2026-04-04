@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-
+import ExampleDataButtons from "@/components/ExampleDataButtons";
 const TIPO_BADGE: Record<string, string> = {
   compra: "bg-blue-100 text-blue-700", venda: "bg-green-100 text-green-700",
   nascimento: "bg-cyan-100 text-cyan-700", morte: "bg-red-100 text-red-700",
@@ -163,6 +163,50 @@ export default function MovimentacoesPage() {
     setOpen(false); fetchAll();
   };
 
+  const hasExampleMovs = movs.some(m => m.observacao === "Dado de exemplo");
+
+  const handleLoadExampleMov = async () => {
+    if (!user) return;
+    const { data: a010 } = await supabase.from("animais" as any).select("id, brinco, nome, peso_atual").eq("brinco", "010").eq("user_id", user.id).limit(1);
+    if (!a010 || a010.length === 0) { toast.warning("Cadastre o animal 010 (Guerreiro) antes."); return; }
+    const animal = (a010 as any[])[0];
+    await supabase.from("movimentacoes_gado" as any).insert({
+      tipo: "venda", animal_id: animal.id, data: "2026-04-04",
+      quantidade: 1, peso_kg: 535, valor_unitario: 8500, valor_total: 8500,
+      user_id: user.id, observacao: "Dado de exemplo",
+    } as any);
+    await supabase.from("animais" as any).update({ status: "vendido" } as any).eq("id", animal.id);
+    try {
+      const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%pecuária%").limit(1);
+      if (cc && cc.length > 0) {
+        const { data: cpr } = await supabase.from("contas_pr").insert({
+          tipo: "receber", descricao: "Venda de gado — Guerreiro", data_vencimento: "2026-04-04",
+          valor_total: 8500, valor_pago: 8500, data_pagamento: "2026-04-04",
+          centro_custo_id: cc[0].id, user_id: user.id, status: "pago",
+        } as any).select("id").single();
+        await criarLancamentoReceita(user.id, 8500, "2026-04-04", "Venda de gado — Guerreiro", cc[0].id, (cpr as any)?.id);
+      }
+    } catch {}
+    toast.success("Venda de exemplo registrada! Guerreiro vendido por R$ 8.500.");
+    fetchAll();
+  };
+
+  const handleCleanExampleMovs = async () => {
+    if (!user) return;
+    // Restore sold animal
+    const { data: exMovs } = await supabase.from("movimentacoes_gado" as any).select("animal_id, tipo").eq("observacao", "Dado de exemplo").eq("user_id", user.id);
+    if (exMovs) {
+      for (const m of exMovs as any[]) {
+        if (m.tipo === "venda" && m.animal_id) {
+          await supabase.from("animais" as any).update({ status: "ativo" } as any).eq("id", m.animal_id);
+        }
+      }
+    }
+    await supabase.from("movimentacoes_gado" as any).delete().eq("observacao", "Dado de exemplo").eq("user_id", user.id);
+    toast.success("Movimentações de exemplo removidas.");
+    fetchAll();
+  };
+
   const femeas = animais.filter(a => a.sexo === "femea");
 
   return (
@@ -171,6 +215,15 @@ export default function MovimentacoesPage() {
         <h1 className="text-2xl font-bold text-foreground">Movimentações</h1>
         <Button onClick={() => setOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Nova Movimentação</Button>
       </div>
+
+      <ExampleDataButtons
+        showLoad={movs.length === 0}
+        showClean={hasExampleMovs}
+        loadLabel="Carregar Movimentação de Exemplo"
+        loadConfirmMsg="Isso vai registrar a venda do animal 010 (Guerreiro) por R$ 8.500 com integração financeira. Deseja continuar?"
+        onLoad={handleLoadExampleMov}
+        onClean={handleCleanExampleMovs}
+      />
 
       {/* Mini cards */}
       <div className="grid grid-cols-3 gap-4">
