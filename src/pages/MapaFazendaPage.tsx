@@ -579,19 +579,30 @@ export default function MapaFazendaPage() {
               <thead><tr style="border-bottom:1px solid #E5E7EB">
                 <th style="text-align:left;padding:2px 0">Brinco</th>
                 <th style="text-align:left;padding:2px 0">Categoria</th>
+                <th style="text-align:left;padding:2px 0">Idade</th>
                 <th style="text-align:right;padding:2px 0">Peso</th>
               </tr></thead><tbody>`;
           pastoAnimais.slice(0, 10).forEach((a) => {
             const catColors: Record<string, string> = {
               "vaca": "background:#FCE7F3;color:#BE185D", "touro": "background:#DBEAFE;color:#1D4ED8",
-              "bezerro": "background:#DCFCE7;color:#15803D", "bezerra": "background:#DCFCE7;color:#15803D",
+              "bezerro": "background:#DCFCE7;color:#15803D", "bezerra": "background:#BBF7D0;color:#166534",
               "novilha": "background:#FEF9C3;color:#A16207", "boi": "background:#F3F4F6;color:#374151",
               "garrote": "background:#EDE9FE;color:#6D28D9",
             };
             const catStyle = catColors[a.categoria] || "background:#F3F4F6;color:#374151";
+            let idadeStr = "—";
+            if (a.data_nascimento) {
+              const nasc = new Date(a.data_nascimento);
+              const agora = new Date();
+              let meses = (agora.getFullYear() - nasc.getFullYear()) * 12 + (agora.getMonth() - nasc.getMonth());
+              if (meses < 0) meses = 0;
+              if (meses < 12) { idadeStr = meses + "m"; }
+              else { const anos = Math.floor(meses / 12); const mr = meses % 12; idadeStr = anos >= 2 ? anos + "a" : anos + "a " + mr + "m"; }
+            }
             popupHtml += `<tr style="border-bottom:1px solid #F3F4F6">
               <td style="padding:2px 0;font-family:monospace;font-weight:700">${a.brinco}</td>
-              <td style="padding:2px 0"><span style="padding:1px 4px;border-radius:4px;font-size:9px;${catStyle}">${a.categoria}</span></td>
+              <td style="padding:2px 0"><span style="padding:1px 6px;border-radius:9999px;font-size:10px;${catStyle}">${a.categoria}</span></td>
+              <td style="padding:2px 0;color:#6B7280">${idadeStr}</td>
               <td style="padding:2px 0;text-align:right">${a.peso_atual ? fmtNum(Number(a.peso_atual)) : "—"}</td>
             </tr>`;
           });
