@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
+import { exportarExcel } from "@/lib/export-excel";
 
 const tipoBadge: Record<string, string> = {
   plantio: "bg-green-800 text-white", adubacao: "bg-blue-100 text-blue-800",
@@ -110,15 +111,31 @@ export default function AtividadesPage() {
     return true;
   });
 
-  const exportCSV = () => {
-    const rows = [["Data", "Safra", "Talhão", "Tipo", "Insumo", "Máquina", "Área (ha)", "Custo (R$)"]];
-    filtered.forEach((a: any) => {
-      rows.push([a.data, a.safra_talhoes?.safras?.nome || "", a.safra_talhoes?.talhoes?.nome || "", a.tipo, a.insumos?.nome || "", a.maquinas?.nome || "", a.area_coberta_ha || "", a.custo_total || ""]);
+  const exportExcel = () => {
+    exportarExcel({
+      nomeArquivo: "caderno-de-campo",
+      titulo: "Caderno de Campo",
+      colunas: [
+        { header: "Data", key: "data_fmt", width: 15, tipo: "texto" },
+        { header: "Safra", key: "safra", width: 20, tipo: "texto" },
+        { header: "Talhão", key: "talhao", width: 20, tipo: "texto" },
+        { header: "Tipo", key: "tipo", width: 15, tipo: "texto" },
+        { header: "Insumo", key: "insumo", width: 25, tipo: "texto" },
+        { header: "Máquina", key: "maquina", width: 25, tipo: "texto" },
+        { header: "Área (ha)", key: "area", width: 12, tipo: "numero" },
+        { header: "Custo (R$)", key: "custo", width: 18, tipo: "moeda" },
+      ],
+      dados: filtered.map((a: any) => ({
+        data_fmt: new Date(a.data).toLocaleDateString("pt-BR"),
+        safra: a.safra_talhoes?.safras?.nome || "",
+        talhao: a.safra_talhoes?.talhoes?.nome || "",
+        tipo: a.tipo,
+        insumo: a.insumos?.nome || "",
+        maquina: a.maquinas?.nome || "",
+        area: a.area_coberta_ha || null,
+        custo: a.custo_total || null,
+      })),
     });
-    const csv = rows.map(r => r.join(";")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "atividades.csv"; a.click();
   };
 
   return (
@@ -126,7 +143,7 @@ export default function AtividadesPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-foreground">Caderno de Campo</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCSV}>Exportar CSV</Button>
+          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel</Button>
           <Button onClick={() => { setForm({ safra_id: "", safra_talhao_id: "", tipo: "plantio", data: new Date().toISOString().split("T")[0], area_coberta_ha: "", insumo_id: "", quantidade_insumo: "", maquina_id: "", horas_maquina: "", operador: "", condicao_climatica: "", observacao: "" }); setSafraTalhoes([]); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Atividade</Button>
         </div>
       </div>

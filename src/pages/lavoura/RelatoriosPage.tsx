@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { FileBarChart, Calculator, BarChart3, Package, Cog, ArrowLeft, Download } from "lucide-react";
+import { exportarExcel } from "@/lib/export-excel";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 const COLORS = ["#16A34A", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6"];
@@ -139,10 +140,8 @@ export default function RelatoriosPage() {
     setMaqData(Object.values(byMaq));
   };
 
-  const exportCSV = (headers: string[], rows: string[][]) => {
-    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `relatorio-${active}.csv`; a.click();
+  const exportRelatorio = (nomeArquivo: string, titulo: string, colunas: { header: string; key: string; width: number; tipo?: "texto" | "moeda" | "numero" }[], dados: Record<string, any>[]) => {
+    exportarExcel({ nomeArquivo, titulo, colunas, dados });
   };
 
   const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
@@ -179,10 +178,11 @@ export default function RelatoriosPage() {
         {/* Custo Report */}
         {active === "custo" && (
           <>
-            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(
-              ["Talhão","Cultura","Área ha","Custo Insumos","Custo Máquinas","Custo Total","Custo/ha","Produção","Custo/saca"],
-              custoData.map(r => [r.talhao, r.cultura, r.area, fmt(r.custoInsumos), fmt(r.custoMaq), fmt(r.custoTotal), fmt(r.custoHa), r.producao, r.custoSaca > 0 ? fmt(r.custoSaca) : "—"])
-            )}><Download className="h-4 w-4" />CSV</Button></div>
+            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportRelatorio(
+              "custo-producao", "Custo de Produção por Talhão",
+              [{ header: "Talhão", key: "talhao", width: 20, tipo: "texto" }, { header: "Cultura", key: "cultura", width: 20, tipo: "texto" }, { header: "Área ha", key: "area", width: 12, tipo: "numero" }, { header: "Custo Insumos", key: "custoInsumos", width: 18, tipo: "moeda" }, { header: "Custo Máquinas", key: "custoMaq", width: 18, tipo: "moeda" }, { header: "Custo Total", key: "custoTotal", width: 18, tipo: "moeda" }, { header: "Custo/ha", key: "custoHa", width: 15, tipo: "moeda" }, { header: "Produção", key: "producao", width: 15, tipo: "numero" }, { header: "Custo/saca", key: "custoSaca", width: 15, tipo: "moeda" }],
+              custoData
+            )}><Download className="h-4 w-4" />Excel</Button></div>
             <Table>
               <TableHeader><TableRow className="bg-[#F9FAFB]">
                 <TableHead className="text-[11px] uppercase">Talhão</TableHead><TableHead className="text-[11px] uppercase">Cultura</TableHead>
@@ -231,10 +231,11 @@ export default function RelatoriosPage() {
                 </ResponsiveContainer>
               </CardContent></Card>
             ) : <p className="text-center text-muted-foreground py-8">Registre colheitas para ver o comparativo.</p>}
-            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(
-              ["Talhão","Safra","Produtividade","Meta"],
-              prodData.map(r => [r.talhao, r.safra, r.produtividade.toFixed(1), r.meta.toFixed(1)])
-            )}><Download className="h-4 w-4" />CSV</Button></div>
+            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportRelatorio(
+              "produtividade", "Comparativo de Produtividade",
+              [{ header: "Talhão", key: "talhao", width: 20, tipo: "texto" }, { header: "Safra", key: "safra", width: 20, tipo: "texto" }, { header: "Produtividade", key: "produtividade", width: 15, tipo: "numero" }, { header: "Meta", key: "meta", width: 15, tipo: "numero" }],
+              prodData
+            )}><Download className="h-4 w-4" />Excel</Button></div>
           </>
         )}
 
@@ -269,10 +270,11 @@ export default function RelatoriosPage() {
                 ))}
               </TableBody>
             </Table>
-            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(
-              ["Insumo","Categoria","Qtd Total","Valor Total","Talhão"],
-              insumoData.map(r => [r.nome, r.categoria, String(r.qty), fmt(r.valor), r.talhaoMax])
-            )}><Download className="h-4 w-4" />CSV</Button></div>
+            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportRelatorio(
+              "consumo-insumos", "Consumo de Insumos",
+              [{ header: "Insumo", key: "nome", width: 25, tipo: "texto" }, { header: "Categoria", key: "categoria", width: 20, tipo: "texto" }, { header: "Qtd Total", key: "qty", width: 15, tipo: "numero" }, { header: "Valor Total", key: "valor", width: 18, tipo: "moeda" }, { header: "Talhão", key: "talhaoMax", width: 20, tipo: "texto" }],
+              insumoData
+            )}><Download className="h-4 w-4" />Excel</Button></div>
           </>
         )}
 
@@ -297,10 +299,11 @@ export default function RelatoriosPage() {
                 ))}
               </TableBody>
             </Table>
-            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(
-              ["Máquina","Horas","Custo Operacional","Manutenções","Custo Manutenções","Custo Total"],
-              maqData.map(r => [r.nome, String(r.horas), fmt(r.custoOp), String(r.manuCount), fmt(r.custoManu), fmt(r.custoOp + r.custoManu)])
-            )}><Download className="h-4 w-4" />CSV</Button></div>
+            <div className="flex justify-end"><Button variant="outline" size="sm" className="gap-2" onClick={() => exportRelatorio(
+              "historico-maquinas", "Histórico de Máquinas",
+              [{ header: "Máquina", key: "nome", width: 25, tipo: "texto" }, { header: "Horas", key: "horas", width: 12, tipo: "numero" }, { header: "Custo Operacional", key: "custoOp", width: 18, tipo: "moeda" }, { header: "Manutenções", key: "manuCount", width: 15, tipo: "numero" }, { header: "Custo Manutenções", key: "custoManu", width: 18, tipo: "moeda" }, { header: "Custo Total", key: "custoTotal", width: 18, tipo: "moeda" }],
+              maqData.map(r => ({ ...r, custoTotal: r.custoOp + r.custoManu }))
+            )}><Download className="h-4 w-4" />Excel</Button></div>
           </>
         )}
       </div>

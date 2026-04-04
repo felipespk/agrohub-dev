@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Plus, Check, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Check, Pencil, Trash2, Search, Download } from "lucide-react";
+import { exportarExcel } from "@/lib/export-excel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -114,7 +115,35 @@ export default function ContasPRPage({ tipo }: ContasPRPageProps) {
           <h1 className="text-2xl font-bold text-foreground">{title}</h1>
           <p className="text-sm text-muted-foreground mt-1">Gerencie suas contas a {isPagar ? "pagar" : "receber"}</p>
         </div>
-        <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Nova Conta</Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => exportarExcel({
+            nomeArquivo: isPagar ? "contas-a-pagar" : "contas-a-receber",
+            titulo: title,
+            colunas: [
+              { header: "Descrição", key: "descricao", width: 35, tipo: "texto" },
+              { header: contatoLabel, key: "contato_nome", width: 25, tipo: "texto" },
+              { header: "Categoria", key: "categoria_nome", width: 20, tipo: "texto" },
+              { header: "Centro de Custo", key: "centro_nome", width: 20, tipo: "texto" },
+              { header: "Valor (R$)", key: "valor_total", width: 18, tipo: "moeda" },
+              { header: "Vencimento", key: "vencimento_fmt", width: 15, tipo: "texto" },
+              { header: "Status", key: "status", width: 12, tipo: "texto" },
+            ],
+            dados: contas.map(c => ({
+              descricao: c.descricao,
+              contato_nome: c.contato?.nome || "",
+              categoria_nome: c.categoria?.nome || "",
+              centro_nome: centrosCusto.find(cc => cc.id === c.centro_custo_id)?.nome || "",
+              valor_total: Number(c.valor_total),
+              vencimento_fmt: formatarData(c.data_vencimento),
+              status: (statusConfig[c.status] || statusConfig.aberto).label,
+            })),
+            totalizadores: [
+              { label: isPagar ? "Total em Aberto:" : "Total a Receber:", valor: `R$ ${totalAberto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, positivo: !isPagar },
+              { label: "Total Vencido:", valor: `R$ ${totalVencido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, positivo: false },
+            ],
+          })} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel</Button>
+          <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Nova Conta</Button>
+        </div>
       </div>
 
       {/* Summary Cards */}

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Plus, Download, ArrowUp, ArrowDown, ArrowLeftRight, Search } from "lucide-react";
+import { exportarExcel } from "@/lib/export-excel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,12 +67,35 @@ export default function LancamentosPage() {
     setSaving(false); setModalOpen(false); toast.success("Lançamento criado!"); reload();
   };
 
-  const exportCSV = () => {
-    const header = "Data;Descrição;Tipo;Categoria;Centro de Custo;Conta;Valor\n";
-    const rows = filtered.map(l => { const sign = l.tipo === "receita" ? "" : l.tipo === "despesa" ? "-" : ""; return `${formatarData(l.data)};${l.descricao || ""};${l.tipo};${l.categoria?.nome || ""};${l.centro?.nome || ""};${l.conta?.nome || ""};${sign}${formatarMoeda(Number(l.valor))}`; }).join("\n");
-    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "lancamentos.csv"; a.click(); URL.revokeObjectURL(url);
+  const exportExcel = () => {
+    exportarExcel({
+      nomeArquivo: "lancamentos",
+      titulo: "Relatório de Lançamentos",
+      subtitulo: `Gerado em ${new Date().toLocaleDateString("pt-BR")}`,
+      colunas: [
+        { header: "Data", key: "data_fmt", width: 15, tipo: "texto" },
+        { header: "Descrição", key: "descricao", width: 35, tipo: "texto" },
+        { header: "Tipo", key: "tipo", width: 15, tipo: "texto" },
+        { header: "Categoria", key: "categoria_nome", width: 20, tipo: "texto" },
+        { header: "Centro de Custo", key: "centro_nome", width: 20, tipo: "texto" },
+        { header: "Conta", key: "conta_nome", width: 20, tipo: "texto" },
+        { header: "Valor (R$)", key: "valor_num", width: 18, tipo: "moeda" },
+      ],
+      dados: filtered.map(l => ({
+        data_fmt: formatarData(l.data),
+        descricao: l.descricao || "",
+        tipo: l.tipo,
+        categoria_nome: l.categoria?.nome || "",
+        centro_nome: l.centro?.nome || "",
+        conta_nome: l.conta?.nome || "",
+        valor_num: l.tipo === "despesa" ? -Number(l.valor) : Number(l.valor),
+      })),
+      totalizadores: [
+        { label: "Receitas:", valor: `+R$ ${totalReceitas.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, positivo: true },
+        { label: "Despesas:", valor: `-R$ ${totalDespesas.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, positivo: false },
+        { label: "Saldo:", valor: `R$ ${saldo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, positivo: saldo >= 0 },
+      ],
+    });
   };
 
   const catsFiltradas = form.tipo === "receita" ? categorias.filter(c => c.tipo === "receita") : form.tipo === "despesa" ? categorias.filter(c => c.tipo === "despesa") : [];
@@ -81,7 +105,7 @@ export default function LancamentosPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div><h1 className="text-2xl font-bold text-foreground">Lançamentos</h1><p className="text-sm text-muted-foreground mt-1">Registro de receitas, despesas e transferências</p></div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={exportCSV} className="gap-2"><Download className="h-4 w-4" /> Exportar CSV</Button>
+          <Button variant="secondary" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel</Button>
           <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Novo Lançamento</Button>
         </div>
       </div>

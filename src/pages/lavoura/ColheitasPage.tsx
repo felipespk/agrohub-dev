@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Pencil, Wheat, TrendingUp, TrendingDown, Droplets, Download } from "lucide-react";
 import { toast } from "sonner";
+import { exportarExcel } from "@/lib/export-excel";
 
 const destinoBadge: Record<string, { label: string; cls: string }> = {
   silo: { label: "Silo", cls: "bg-blue-100 text-blue-800" },
@@ -141,13 +142,31 @@ export default function ColheitasPage() {
     toast.success("Removida."); load();
   };
 
-  const exportCSV = () => {
-    const header = "Data,Safra,Talhão,Cultura,Quantidade,Umidade %,Produtividade,Destino\n";
-    const rows = filtered.map(c =>
-      `${new Date(c.data).toLocaleDateString("pt-BR")},${c.safra_talhoes?.safras?.nome || ""},${c.safra_talhoes?.talhoes?.nome || ""},${c.safra_talhoes?.culturas?.nome || ""},${c.quantidade},${c.umidade_percentual || ""},${c.produtividade_calculada || ""},${c.destino}`
-    ).join("\n");
-    const blob = new Blob([header + rows], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "colheitas.csv"; a.click();
+  const exportExcel = () => {
+    exportarExcel({
+      nomeArquivo: "colheitas",
+      titulo: "Relatório de Colheitas",
+      colunas: [
+        { header: "Data", key: "data_fmt", width: 15, tipo: "texto" },
+        { header: "Safra", key: "safra", width: 20, tipo: "texto" },
+        { header: "Talhão", key: "talhao", width: 20, tipo: "texto" },
+        { header: "Cultura", key: "cultura", width: 20, tipo: "texto" },
+        { header: "Quantidade", key: "quantidade", width: 15, tipo: "numero" },
+        { header: "Umidade %", key: "umidade", width: 12, tipo: "numero" },
+        { header: "Produtividade", key: "produtividade", width: 15, tipo: "numero" },
+        { header: "Destino", key: "destino", width: 18, tipo: "texto" },
+      ],
+      dados: filtered.map((c: any) => ({
+        data_fmt: new Date(c.data).toLocaleDateString("pt-BR"),
+        safra: c.safra_talhoes?.safras?.nome || "",
+        talhao: c.safra_talhoes?.talhoes?.nome || "",
+        cultura: c.safra_talhoes?.culturas?.nome || "",
+        quantidade: c.quantidade,
+        umidade: c.umidade_percentual || null,
+        produtividade: c.produtividade_calculada || null,
+        destino: c.destino || "",
+      })),
+    });
   };
 
   const openModal = () => {
@@ -164,7 +183,7 @@ export default function ColheitasPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-foreground">Colheitas</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCSV} className="gap-2"><Download className="h-4 w-4" /> Exportar CSV</Button>
+          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel</Button>
           <Button onClick={openModal} className="gap-2"><Plus className="h-4 w-4" /> Registrar Colheita</Button>
         </div>
       </div>
