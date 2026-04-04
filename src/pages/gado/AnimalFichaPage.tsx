@@ -44,9 +44,12 @@ export default function AnimalFichaPage() {
   const [openPesagem, setOpenPesagem] = useState(false);
   const [pesoNovo, setPesoNovo] = useState("");
   const [dataPesagem, setDataPesagem] = useState(new Date().toISOString().split("T")[0]);
+  const [rendimento, setRendimento] = useState(52);
+  const [valorArrobaConfig, setValorArrobaConfig] = useState(300);
 
-  const rendimento = 52;
   const toArroba = (p: number) => (p * rendimento / 100 / 15).toFixed(2);
+  const toValorEst = (p: number) => (p * rendimento / 100 / 15) * valorArrobaConfig;
+  const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const fetchData = useCallback(async () => {
     if (!user || !id) return;
