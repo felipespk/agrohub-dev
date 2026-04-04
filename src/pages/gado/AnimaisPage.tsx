@@ -87,8 +87,9 @@ export default function AnimaisPage() {
   const paged = filtered.slice(page * perPage, (page + 1) * perPage);
   const totalPages = Math.ceil(filtered.length / perPage);
 
-  const rendimento = 52;
   const toArroba = (peso: number) => (peso * rendimento / 100 / 15).toFixed(2);
+  const toValorEst = (peso: number) => (peso * rendimento / 100 / 15) * valorArrobaConfig;
+  const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const handleSave = async () => {
     if (!user || !form.brinco.trim() || !form.sexo || !form.categoria) {
