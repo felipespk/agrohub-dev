@@ -141,13 +141,31 @@ export default function ColheitasPage() {
     toast.success("Removida."); load();
   };
 
-  const exportCSV = () => {
-    const header = "Data,Safra,Talhão,Cultura,Quantidade,Umidade %,Produtividade,Destino\n";
-    const rows = filtered.map(c =>
-      `${new Date(c.data).toLocaleDateString("pt-BR")},${c.safra_talhoes?.safras?.nome || ""},${c.safra_talhoes?.talhoes?.nome || ""},${c.safra_talhoes?.culturas?.nome || ""},${c.quantidade},${c.umidade_percentual || ""},${c.produtividade_calculada || ""},${c.destino}`
-    ).join("\n");
-    const blob = new Blob([header + rows], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "colheitas.csv"; a.click();
+  const exportExcel = () => {
+    exportarExcel({
+      nomeArquivo: "colheitas",
+      titulo: "Relatório de Colheitas",
+      colunas: [
+        { header: "Data", key: "data_fmt", width: 15, tipo: "texto" },
+        { header: "Safra", key: "safra", width: 20, tipo: "texto" },
+        { header: "Talhão", key: "talhao", width: 20, tipo: "texto" },
+        { header: "Cultura", key: "cultura", width: 20, tipo: "texto" },
+        { header: "Quantidade", key: "quantidade", width: 15, tipo: "numero" },
+        { header: "Umidade %", key: "umidade", width: 12, tipo: "numero" },
+        { header: "Produtividade", key: "produtividade", width: 15, tipo: "numero" },
+        { header: "Destino", key: "destino", width: 18, tipo: "texto" },
+      ],
+      dados: filtered.map((c: any) => ({
+        data_fmt: new Date(c.data).toLocaleDateString("pt-BR"),
+        safra: c.safra_talhoes?.safras?.nome || "",
+        talhao: c.safra_talhoes?.talhoes?.nome || "",
+        cultura: c.safra_talhoes?.culturas?.nome || "",
+        quantidade: c.quantidade,
+        umidade: c.umidade_percentual || null,
+        produtividade: c.produtividade_calculada || null,
+        destino: c.destino || "",
+      })),
+    });
   };
 
   const openModal = () => {
