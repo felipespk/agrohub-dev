@@ -51,7 +51,7 @@ export default function LavouraDashboard() {
   useEffect(() => {
     if (!user) return;
     loadDashboard();
-  }, [user, selectedSafra]);
+  }, [user, selectedSafra, periodo, customStart, customEnd]);
 
   const loadDashboard = async () => {
     if (!user) return;
