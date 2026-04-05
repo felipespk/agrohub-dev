@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Search, Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import ExampleDataButtons from "@/components/ExampleDataButtons";
+
 
 const CAT_BADGE: Record<string, string> = {
   vaca: "bg-pink-100 text-pink-700", touro: "bg-blue-100 text-blue-700",
@@ -131,62 +131,6 @@ export default function AnimaisPage() {
     fetchAll();
   };
 
-  const hasExamples = animais.some(a => a.observacoes === "Dado de exemplo");
-
-  const handleLoadExamples = async () => {
-    if (!user) return;
-    const findRaca = (nome: string) => racas.find(r => r.nome.toLowerCase().includes(nome.toLowerCase()))?.id || null;
-    const findPasto = (nome: string) => pastos.find(p => p.nome.toLowerCase().includes(nome.toLowerCase()))?.id || null;
-
-    const neloreId = findRaca("Nelore");
-    const meioSangueId = findRaca("Meio");
-    const brahmanId = findRaca("Brahman");
-    const angusId = findRaca("Angus");
-    const retiroNorte = findPasto("Retiro Norte");
-    const piqueteMaternidade = findPasto("Piquete Maternidade");
-    const pastoRepresa = findPasto("Represa");
-
-    const exemplos = [
-      { brinco: "006", nome: null, sexo: "macho", categoria: "bezerro", raca_id: neloreId, data_nascimento: "2026-01-15", data_entrada: "2026-01-15", pasto_id: piqueteMaternidade, peso_atual: 95, origem: "nascido", mae_brinco: "001", status: "ativo", observacoes: "Dado de exemplo", user_id: user.id },
-      { brinco: "007", nome: null, sexo: "femea", categoria: "bezerra", raca_id: meioSangueId, data_nascimento: "2026-01-20", data_entrada: "2026-01-20", pasto_id: piqueteMaternidade, peso_atual: 88, origem: "nascido", mae_brinco: "003", status: "ativo", observacoes: "Dado de exemplo", user_id: user.id },
-      { brinco: "008", nome: "Pintado", sexo: "macho", categoria: "boi", raca_id: brahmanId, data_nascimento: "2022-05-10", data_entrada: "2022-05-10", pasto_id: retiroNorte, peso_atual: 490, origem: "comprado", status: "ativo", observacoes: "Dado de exemplo", user_id: user.id },
-      { brinco: "009", nome: "Formosa", sexo: "femea", categoria: "vaca", raca_id: neloreId, data_nascimento: "2020-07-30", data_entrada: "2020-07-30", pasto_id: pastoRepresa, peso_atual: 460, origem: "nascido", status: "ativo", observacoes: "Dado de exemplo", user_id: user.id },
-      { brinco: "010", nome: "Guerreiro", sexo: "macho", categoria: "boi", raca_id: angusId, data_nascimento: "2022-09-18", data_entrada: "2022-09-18", pasto_id: retiroNorte, peso_atual: 535, origem: "nascido", status: "ativo", observacoes: "Dado de exemplo", user_id: user.id },
-    ];
-
-    const { error } = await supabase.from("animais" as any).insert(exemplos as any);
-    if (error) { toast.error(error.message); return; }
-    toast.success("5 animais de exemplo inseridos!");
-    fetchAll();
-  };
-
-  const handleCleanExamples = async () => {
-    if (!user) return;
-    await supabase.from("animais" as any).delete().eq("observacoes", "Dado de exemplo").eq("user_id", user.id);
-    toast.success("Animais de exemplo removidos.");
-    fetchAll();
-  };
-
-  const lotesFiltered = form.pasto_id ? lotes.filter(l => l.pasto_id === form.pasto_id) : lotes;
-
-  return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Animais</h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} animais encontrados</p>
-        </div>
-        <Button onClick={() => setOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Novo Animal</Button>
-      </div>
-
-      <ExampleDataButtons
-        showLoad={animais.length < 10 && !hasExamples}
-        showClean={hasExamples}
-        loadLabel="Carregar Animais de Exemplo"
-        loadConfirmMsg="Isso vai inserir 5 animais de exemplo (006 a 010). Deseja continuar?"
-        onLoad={handleLoadExamples}
-        onClean={handleCleanExamples}
-      />
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">

@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Pencil, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { exportarExcel } from "@/lib/export-excel";
-import ExampleDataButtons from "@/components/ExampleDataButtons";
+
 
 const tipoBadge: Record<string, string> = {
   plantio: "bg-green-800 text-white", adubacao: "bg-blue-100 text-blue-800",
@@ -139,81 +139,6 @@ export default function AtividadesPage() {
     });
   };
 
-  const hasExampleAtiv = atividades.some((a: any) => a.observacao === "Dado de exemplo");
-
-  const handleLoadAtivExamples = async () => {
-    if (!user) return;
-    // Find safra_talhao for Talhão 1 in Safra 2025/2026
-    const { data: sfs } = await supabase.from("safras" as any).select("id").eq("nome", "Safra 2025/2026").eq("user_id", user.id).limit(1);
-    if (!sfs || sfs.length === 0) { toast.warning("Cadastre a Safra 2025/2026 primeiro."); return; }
-    const { data: sts } = await supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome)").eq("safra_id", (sfs as any[])[0].id).eq("user_id", user.id);
-    const st1 = (sts as any[])?.find(s => s.talhoes?.nome === "Talhão 1");
-    if (!st1) { toast.warning("Vincule Talhão 1 à safra primeiro."); return; }
-
-    const findInsumo = (nome: string) => insumos.find(i => i.nome.includes(nome));
-    const findMaquina = (nome: string) => maquinas.find(m => m.nome.includes(nome));
-
-    const semente = findInsumo("Semente de Soja"); const npk = findInsumo("NPK"); const glifosato = findInsumo("Glifosato");
-    const trator = findMaquina("John Deere"); const pulv = findMaquina("Jacto");
-
-    const ativs: any[] = [];
-    if (semente && trator) {
-      const custo = 75 * Number(semente.preco_unitario) + 12 * Number(trator.custo_hora);
-      ativs.push({ safra_talhao_id: st1.id, tipo: "plantio", data: "2025-10-15", area_coberta_ha: 150, insumo_id: semente.id, quantidade_insumo: 75, maquina_id: trator.id, horas_maquina: 12, operador: "João", observacao: "Dado de exemplo", custo_total: custo, user_id: user.id });
-    }
-    if (npk && trator) {
-      const custo = 4 * Number(npk.preco_unitario) + 8 * Number(trator.custo_hora);
-      ativs.push({ safra_talhao_id: st1.id, tipo: "adubacao", data: "2025-10-14", area_coberta_ha: 150, insumo_id: npk.id, quantidade_insumo: 4, maquina_id: trator.id, horas_maquina: 8, operador: "João", observacao: "Dado de exemplo", custo_total: custo, user_id: user.id });
-    }
-    if (glifosato && pulv) {
-      const custo = 300 * Number(glifosato.preco_unitario) + 6 * Number(pulv.custo_hora);
-      ativs.push({ safra_talhao_id: st1.id, tipo: "pulverizacao", data: "2025-12-20", area_coberta_ha: 150, insumo_id: glifosato.id, quantidade_insumo: 300, maquina_id: pulv.id, horas_maquina: 6, operador: "Carlos", observacao: "Dado de exemplo", custo_total: custo, user_id: user.id });
-    }
-
-    if (ativs.length === 0) { toast.warning("Cadastre insumos e máquinas primeiro."); return; }
-    await supabase.from("atividades_campo" as any).insert(ativs as any);
-
-    // Stock deduction
-    for (const a of ativs) {
-      if (a.insumo_id && a.quantidade_insumo) {
-        const ins = insumos.find(i => i.id === a.insumo_id);
-        if (ins) {
-          const newStock = Math.max(0, Number(ins.estoque_atual) - a.quantidade_insumo);
-          await supabase.from("insumos" as any).update({ estoque_atual: newStock } as any).eq("id", a.insumo_id);
-          await supabase.from("movimentacoes_insumo" as any).insert({ insumo_id: a.insumo_id, tipo: "saida", quantidade: a.quantidade_insumo, data: a.data, observacao: "Dado de exemplo", user_id: user.id } as any);
-        }
-      }
-    }
-    toast.success(`${ativs.length} atividades inseridas com baixa no estoque!`);
-    load();
-  };
-
-  const handleCleanAtivExamples = async () => {
-    if (!user) return;
-    await supabase.from("atividades_campo" as any).delete().eq("observacao", "Dado de exemplo").eq("user_id", user.id);
-    await supabase.from("movimentacoes_insumo" as any).delete().eq("observacao", "Dado de exemplo").eq("user_id", user.id);
-    toast.success("Atividades de exemplo removidas.");
-    load();
-  };
-
-  return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-bold text-foreground">Caderno de Campo</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel</Button>
-          <Button onClick={() => { setForm({ safra_id: "", safra_talhao_id: "", tipo: "plantio", data: new Date().toISOString().split("T")[0], area_coberta_ha: "", insumo_id: "", quantidade_insumo: "", maquina_id: "", horas_maquina: "", operador: "", condicao_climatica: "", observacao: "" }); setSafraTalhoes([]); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Atividade</Button>
-        </div>
-      </div>
-
-      <ExampleDataButtons
-        showLoad={atividades.length === 0}
-        showClean={hasExampleAtiv}
-        loadLabel="Carregar Atividades de Exemplo"
-        loadConfirmMsg="Isso vai inserir 3 atividades de exemplo com baixa de estoque. Deseja continuar?"
-        onLoad={handleLoadAtivExamples}
-        onClean={handleCleanAtivExamples}
-      />
 
       <div className="flex gap-3 flex-wrap">
         <Select value={filterSafra} onValueChange={setFilterSafra}>
