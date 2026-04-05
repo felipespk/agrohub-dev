@@ -45,7 +45,7 @@ export default function HubPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
         <img src="/logo-agrohub.png" alt="AgroHub" className="mb-2" style={{ maxWidth: 220 }} />
-        <p className="text-muted-foreground text-base mb-12">Selecione o módulo</p>
+        
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-5xl">
           {modules.map((mod) => (
