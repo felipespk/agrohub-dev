@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wheat, DollarSign, Beef, Sprout, ArrowRight, LogOut, MapPin } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Wheat, DollarSign, Beef, Sprout, ArrowRight, LogOut, MapPin, Shield } from "lucide-react";
 
 const modules = [
   {
@@ -40,6 +42,19 @@ const modules = [
 export default function HubPage() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.is_admin) setIsAdmin(true);
+      });
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -72,6 +87,27 @@ export default function HubPage() {
             </button>
           ))}
         </div>
+
+        {isAdmin && (
+          <button
+            onClick={() => navigate("/admin")}
+            className="group relative bg-card border border-border rounded-xl p-8 text-left transition-all duration-200 cursor-pointer hover:shadow-md min-h-[180px] flex flex-col w-full max-w-5xl mt-6"
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "#DC2626"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = ''; }}
+          >
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center mb-5"
+              style={{ backgroundColor: "#FEE2E2" }}
+            >
+              <Shield className="h-7 w-7" style={{ color: "#DC2626" }} />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">Painel Admin</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+              Gerenciar usuários, visualizar contas e dar suporte.
+            </p>
+            <ArrowRight className="absolute bottom-6 right-6 h-[18px] w-[18px] text-[#94A3B8] group-hover:text-foreground/60 transition-colors" />
+          </button>
+        )}
 
         <button
           onClick={() => navigate("/mapa")}

@@ -1,9 +1,9 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { FinanceiroLayout } from "@/components/financeiro/FinanceiroLayout";
 import { LavouraLayout } from "@/components/lavoura/LavouraLayout";
@@ -12,6 +12,9 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { FarmProvider } from "@/contexts/FarmContext";
 import { FinanceiroProvider } from "@/contexts/FinanceiroContext";
+import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
+import { supabase } from "@/integrations/supabase/client";
 import Dashboard from "@/pages/Dashboard";
 import Recebimento from "@/pages/Recebimento";
 import SaidaVenda from "@/pages/SaidaVenda";
@@ -39,6 +42,8 @@ import CategoriasPage from "@/pages/financeiro/CategoriasPage";
 import ContatosPage from "@/pages/financeiro/ContatosPage";
 import FinanceiroConfiguracoesPage from "@/pages/financeiro/FinanceiroConfiguracoesPage";
 import NotFound from "./pages/NotFound";
+
+const AdminPage = lazy(() => import("@/pages/AdminPage"));
 
 const queryClient = new QueryClient();
 
@@ -174,6 +179,38 @@ function ProtectedMapa() {
   return <FarmProvider><MapaFazendaPage /></FarmProvider>;
 }
 
+function ProtectedAdmin() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        setIsAdmin(!!data?.is_admin);
+        setChecking(false);
+      });
+  }, [user, loading]);
+
+  if (loading || checking) {
+    return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
+  }
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/hub" replace />;
+
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>}>
+      <AdminPage />
+    </Suspense>
+  );
+}
+
 function ProtectedLavoura() {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>;
@@ -218,20 +255,24 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-            <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/hub" element={<ProtectedHub />} />
-            <Route path="/mapa" element={<ProtectedMapa />} />
-            <Route path="/financeiro/*" element={<ProtectedFinanceiro />} />
-            <Route path="/gado/*" element={<ProtectedGado />} />
-            <Route path="/lavoura/*" element={<ProtectedLavoura />} />
-            <Route path="/*" element={<ProtectedRoutes />} />
-          </Routes>
-        </BrowserRouter>
+        <ImpersonationProvider>
+          <BrowserRouter>
+            <ImpersonationBanner />
+            <Routes>
+              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+              <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+              <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/hub" element={<ProtectedHub />} />
+              <Route path="/mapa" element={<ProtectedMapa />} />
+              <Route path="/admin" element={<ProtectedAdmin />} />
+              <Route path="/financeiro/*" element={<ProtectedFinanceiro />} />
+              <Route path="/gado/*" element={<ProtectedGado />} />
+              <Route path="/lavoura/*" element={<ProtectedLavoura />} />
+              <Route path="/*" element={<ProtectedRoutes />} />
+            </Routes>
+          </BrowserRouter>
+        </ImpersonationProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
