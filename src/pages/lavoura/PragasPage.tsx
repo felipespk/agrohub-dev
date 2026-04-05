@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Bug, Leaf, CheckCircle, AlertTriangle, SprayCan } from "lucide-react";
 import { toast } from "sonner";
-import ExampleDataButtons from "@/components/ExampleDataButtons";
+
 
 const nivelConfig: Record<string, { label: string; cls: string }> = {
   baixo: { label: "Baixo", cls: "bg-green-100 text-green-800" },
@@ -121,45 +121,12 @@ export default function PragasPage() {
     setFormSafraTalhoes([]); setOpen(true);
   };
 
-  const hasExampleOcorr = ocorrencias.some((o: any) => o.observacao === "Dado de exemplo");
-
-  const handleLoadOcorrExample = async () => {
-    if (!user) return;
-    const { data: sfs } = await supabase.from("safras" as any).select("id").eq("nome", "Safra 2025/2026").eq("user_id", user.id).limit(1);
-    if (!sfs || sfs.length === 0) { toast.warning("Cadastre a Safra 2025/2026 primeiro."); return; }
-    const { data: sts } = await supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome)").eq("safra_id", (sfs as any[])[0].id).eq("user_id", user.id);
-    const st3 = (sts as any[])?.find(s => s.talhoes?.nome === "Talhão 3");
-    if (!st3) { toast.warning("Vincule Talhão 3 à safra primeiro."); return; }
-    await supabase.from("ocorrencias_mip" as any).insert({
-      safra_talhao_id: st3.id, data: "2026-03-25", tipo: "praga", nome_ocorrencia: "Lagarta-do-cartucho",
-      nivel: "critico", decisao: "aplicar", observacao: "Dado de exemplo", user_id: user.id,
-    } as any);
-    toast.success("Ocorrência registrada!");
-    load();
-  };
-
-  const handleCleanOcorrExamples = async () => {
-    if (!user) return;
-    await supabase.from("ocorrencias_mip" as any).delete().eq("observacao", "Dado de exemplo").eq("user_id", user.id);
-    toast.success("Ocorrências de exemplo removidas.");
-    load();
-  };
-
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-foreground">Monitoramento de Pragas (MIP)</h1>
         <Button onClick={openModal} className="gap-2"><Plus className="h-4 w-4" /> Nova Ocorrência</Button>
       </div>
-
-      <ExampleDataButtons
-        showLoad={ocorrencias.length === 0}
-        showClean={hasExampleOcorr}
-        loadLabel="Carregar Ocorrência de Exemplo"
-        loadConfirmMsg="Isso vai inserir uma ocorrência crítica de Lagarta-do-cartucho no Talhão 3. Deseja continuar?"
-        onLoad={handleLoadOcorrExample}
-        onClean={handleCleanOcorrExamples}
-      />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">

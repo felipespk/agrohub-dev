@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, AlertTriangle, Package } from "lucide-react";
 import { toast } from "sonner";
-import ExampleDataButtons from "@/components/ExampleDataButtons";
+
 const catBadge: Record<string, string> = {
   semente: "bg-green-100 text-green-800", fertilizante: "bg-blue-100 text-blue-800",
   defensivo: "bg-red-100 text-red-800", combustivel: "bg-yellow-100 text-yellow-800",
@@ -93,32 +93,6 @@ export default function InsumosPage() {
   const lowStock = insumos.filter(i => Number(i.estoque_atual) < Number(i.estoque_minimo)).length;
   const totalValue = insumos.reduce((s, i) => s + Number(i.estoque_atual) * Number(i.preco_unitario), 0);
 
-  const hasExamples = insumos.some((i: any) => i.nome === "Semente de Soja Intacta" || i.nome === "Diesel S10");
-
-  const handleLoadExamples = async () => {
-    if (!user) return;
-    const data = [
-      { nome: "Semente de Soja Intacta", categoria: "semente", unidade_medida: "sacas", preco_unitario: 180, estoque_atual: 150, estoque_minimo: 20, user_id: user.id },
-      { nome: "Fertilizante NPK 04-14-08", categoria: "fertilizante", unidade_medida: "tonelada", preco_unitario: 2800, estoque_atual: 12, estoque_minimo: 3, user_id: user.id },
-      { nome: "Glifosato", categoria: "defensivo", unidade_medida: "litros", preco_unitario: 22, estoque_atual: 500, estoque_minimo: 50, user_id: user.id },
-      { nome: "Diesel S10", categoria: "combustivel", unidade_medida: "litros", preco_unitario: 6.5, estoque_atual: 2000, estoque_minimo: 500, user_id: user.id },
-      { nome: "Inseticida Lambda-Cialotrina", categoria: "defensivo", unidade_medida: "litros", preco_unitario: 85, estoque_atual: 80, estoque_minimo: 10, user_id: user.id },
-    ];
-    await supabase.from("insumos" as any).insert(data as any);
-    toast.success("5 insumos inseridos!");
-    load();
-  };
-
-  const handleCleanExamples = async () => {
-    if (!user) return;
-    const nomes = ["Semente de Soja Intacta", "Fertilizante NPK 04-14-08", "Glifosato", "Diesel S10", "Inseticida Lambda-Cialotrina"];
-    for (const n of nomes) {
-      await supabase.from("insumos" as any).delete().eq("nome", n).eq("user_id", user.id);
-    }
-    toast.success("Insumos de exemplo removidos.");
-    load();
-  };
-
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -128,15 +102,6 @@ export default function InsumosPage() {
           <Button onClick={() => { setEditItem(null); setForm({ nome: "", categoria: "semente", unidade_medida: "kg", preco_unitario: "", estoque_atual: "0", estoque_minimo: "0" }); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Novo Insumo</Button>
         </div>
       </div>
-
-      <ExampleDataButtons
-        showLoad={insumos.length === 0}
-        showClean={hasExamples}
-        loadLabel="Carregar Insumos de Exemplo"
-        loadConfirmMsg="Isso vai inserir 5 insumos de exemplo. Deseja continuar?"
-        onLoad={handleLoadExamples}
-        onClean={handleCleanExamples}
-      />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-[#E5E7EB]"><CardContent className="p-4 flex items-center gap-3"><Package className="h-5 w-5 text-blue-600" /><div><p className="text-xs text-muted-foreground uppercase">Total de Itens</p><p className="text-xl font-bold">{totalItems}</p></div></CardContent></Card>

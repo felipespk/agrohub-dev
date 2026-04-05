@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Map, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import ExampleDataButtons from "@/components/ExampleDataButtons";
+
 
 const soloColors: Record<string, string> = {
   argiloso: "bg-amber-700 text-white", arenoso: "bg-yellow-200 text-yellow-800",
@@ -52,28 +52,6 @@ export default function TalhoesPage() {
     toast.success("Talhão removido."); load();
   };
 
-  const hasExamples = talhoes.some(t => t.observacoes === "Dado de exemplo");
-
-  const handleLoadExamples = async () => {
-    if (!user) return;
-    const data = [
-      { nome: "Talhão 1", area_hectares: 150, tipo_solo: "argiloso", observacoes: "Dado de exemplo", user_id: user.id },
-      { nome: "Talhão 2", area_hectares: 120, tipo_solo: "argiloso", observacoes: "Dado de exemplo", user_id: user.id },
-      { nome: "Talhão 3", area_hectares: 80, tipo_solo: "misto", observacoes: "Dado de exemplo", user_id: user.id },
-      { nome: "Talhão 4", area_hectares: 95, tipo_solo: "arenoso", observacoes: "Dado de exemplo", user_id: user.id },
-    ];
-    await supabase.from("talhoes" as any).insert(data as any);
-    toast.success("4 talhões inseridos!");
-    load();
-  };
-
-  const handleCleanExamples = async () => {
-    if (!user) return;
-    await supabase.from("talhoes" as any).delete().eq("observacoes", "Dado de exemplo").eq("user_id", user.id);
-    toast.success("Talhões de exemplo removidos.");
-    load();
-  };
-
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -83,15 +61,6 @@ export default function TalhoesPage() {
         </div>
         <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Novo Talhão</Button>
       </div>
-
-      <ExampleDataButtons
-        showLoad={talhoes.length === 0}
-        showClean={hasExamples}
-        loadLabel="Carregar Talhões de Exemplo"
-        loadConfirmMsg="Isso vai inserir 4 talhões de exemplo. Deseja continuar?"
-        onLoad={handleLoadExamples}
-        onClean={handleCleanExamples}
-      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {talhoes.map((t: any) => (
