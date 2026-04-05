@@ -66,7 +66,7 @@ export function GadoSidebar() {
           </div>
           {!collapsed && (
             <button onClick={() => navigate("/gado/configuracoes")}
-              className="text-[12px] text-[#8A99AF] hover:text-white/80 transition-colors pl-[34px] truncate mt-1 text-left block">
+              className="text-[12px] text-[#8A99AF] hover:text-white/80 transition-colors truncate mt-1 text-left block">
               {getFarmName("gado") || "Configurar Fazenda"}
             </button>
           )}

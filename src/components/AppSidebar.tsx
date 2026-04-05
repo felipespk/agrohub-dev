@@ -49,7 +49,7 @@ export function AppSidebar() {
           {!collapsed && (
             <button
               onClick={() => navigate("/conta")}
-              className="text-[12px] text-[#8A99AF] hover:text-white/80 transition-colors pl-[34px] truncate mt-1 text-left block"
+              className="text-[12px] text-[#8A99AF] hover:text-white/80 transition-colors truncate mt-1 text-left block"
             >
               {getFarmName("secador") || "Configurar Fazenda"}
             </button>
