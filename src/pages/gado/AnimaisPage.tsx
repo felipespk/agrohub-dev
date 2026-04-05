@@ -131,6 +131,17 @@ export default function AnimaisPage() {
     fetchAll();
   };
 
+  const lotesFiltered = form.pasto_id ? lotes.filter(l => l.pasto_id === form.pasto_id) : lotes;
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Animais</h1>
+          <p className="text-sm text-muted-foreground">{filtered.length} animais encontrados</p>
+        </div>
+        <Button onClick={() => setOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Novo Animal</Button>
+      </div>
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">

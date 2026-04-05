@@ -170,6 +170,24 @@ export default function ColheitasPage() {
     });
   };
 
+  const openModal = () => {
+    setForm({ safra_id: "", safra_talhao_id: "", data: new Date().toISOString().split("T")[0], quantidade: "", umidade_percentual: "", destino: "silo", observacao: "", comprador_id: "", preco_unitario: "" });
+    setFormSafraTalhoes([]); setAreaTalhao(0); setOpen(true);
+  };
+
+  const selectedST = formSafraTalhoes.find((s: any) => s.id === form.safra_talhao_id);
+  const unitLabel = selectedST?.culturas?.unidade_colheita || "sacas";
+  const calcProd = form.quantidade && areaTalhao > 0 ? (parseFloat(form.quantidade) / areaTalhao) : 0;
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Colheitas</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel</Button>
+          <Button onClick={openModal} className="gap-2"><Plus className="h-4 w-4" /> Registrar Colheita</Button>
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">

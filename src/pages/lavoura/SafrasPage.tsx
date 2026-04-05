@@ -42,6 +42,12 @@ export default function SafrasPage() {
     toast.success("Safra criada!"); setOpen(false); load();
   };
 
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Safras</h1>
+        <Button onClick={() => { setForm({ nome: `Safra ${currentYear}/${currentYear + 1}`, data_inicio: "", data_fim: "", status: "planejamento" }); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Safra</Button>
+      </div>
 
       <div className="space-y-4">
         {safras.map((s: any) => (

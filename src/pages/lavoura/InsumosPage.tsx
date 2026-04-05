@@ -93,6 +93,15 @@ export default function InsumosPage() {
   const lowStock = insumos.filter(i => Number(i.estoque_atual) < Number(i.estoque_minimo)).length;
   const totalValue = insumos.reduce((s, i) => s + Number(i.estoque_atual) * Number(i.preco_unitario), 0);
 
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Estoque de Insumos</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setEntradaForm({ insumo_id: "", quantidade: "", data: new Date().toISOString().split("T")[0], valor_total: "", fornecedor_id: "" }); setOpenEntrada(true); }}>Registrar Entrada</Button>
+          <Button onClick={() => { setEditItem(null); setForm({ nome: "", categoria: "semente", unidade_medida: "kg", preco_unitario: "", estoque_atual: "0", estoque_minimo: "0" }); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Novo Insumo</Button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-[#E5E7EB]"><CardContent className="p-4 flex items-center gap-3"><Package className="h-5 w-5 text-blue-600" /><div><p className="text-xs text-muted-foreground uppercase">Total de Itens</p><p className="text-xl font-bold">{totalItems}</p></div></CardContent></Card>

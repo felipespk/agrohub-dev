@@ -170,6 +170,14 @@ export default function MovimentacoesPage() {
     setOpen(false); fetchAll();
   };
 
+  const femeas = animais.filter(a => a.sexo === "femea");
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Movimentações</h1>
+        <Button onClick={() => setOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Nova Movimentação</Button>
+      </div>
 
       {/* Mini cards */}
       <div className="grid grid-cols-3 gap-4">

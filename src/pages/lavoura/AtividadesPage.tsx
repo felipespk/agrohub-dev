@@ -139,6 +139,15 @@ export default function AtividadesPage() {
     });
   };
 
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Caderno de Campo</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="h-4 w-4" /> Exportar Excel</Button>
+          <Button onClick={() => { setForm({ safra_id: "", safra_talhao_id: "", tipo: "plantio", data: new Date().toISOString().split("T")[0], area_coberta_ha: "", insumo_id: "", quantidade_insumo: "", maquina_id: "", horas_maquina: "", operador: "", condicao_climatica: "", observacao: "" }); setSafraTalhoes([]); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Atividade</Button>
+        </div>
+      </div>
 
       <div className="flex gap-3 flex-wrap">
         <Select value={filterSafra} onValueChange={setFilterSafra}>

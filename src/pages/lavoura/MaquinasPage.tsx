@@ -77,6 +77,12 @@ export default function MaquinasPage() {
 
   const today = new Date().toISOString().split("T")[0];
 
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Máquinas e Equipamentos</h1>
+        <Button onClick={() => { setEditItem(null); setForm({ nome: "", tipo: "trator", modelo: "", ano: "", placa_chassi: "", valor_aquisicao: "", custo_hora: "" }); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Máquina</Button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {maquinas.map((m: any) => {

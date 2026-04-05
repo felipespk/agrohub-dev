@@ -121,6 +121,12 @@ export default function PragasPage() {
     setFormSafraTalhoes([]); setOpen(true);
   };
 
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Monitoramento de Pragas (MIP)</h1>
+        <Button onClick={openModal} className="gap-2"><Plus className="h-4 w-4" /> Nova Ocorrência</Button>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
