@@ -42,7 +42,7 @@ export function FinanceiroSidebar() {
       <SidebarContent className="flex flex-col h-full bg-[hsl(var(--sidebar-background))]">
         <div className={`px-6 pt-6 pb-3 ${collapsed ? "items-center flex flex-col px-2" : ""}`}>
           <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : ""}`}>
-            <img src="/icon-agrohub.png" alt="AgroHub" width={28} height={28} className="shrink-0 rounded bg-white p-0.5" />
+            <img src="/icon-agrohub.png" alt="AgroHub" width={28} height={28} className="shrink-0 rounded" />
             {!collapsed && (
               <span className="text-[20px] font-bold text-white tracking-tight">AgroHub</span>
             )}
