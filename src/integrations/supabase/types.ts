@@ -1225,6 +1225,7 @@ export type Database = {
           created_at: string
           data_cotacao_arroba: string | null
           display_name: string | null
+          email: string | null
           exibir_conversao: boolean | null
           farm_name: string | null
           farm_name_financeiro: string | null
@@ -1243,6 +1244,7 @@ export type Database = {
           id: string
           idade_bezerro_meses: number | null
           idade_jovem_meses: number | null
+          is_admin: boolean | null
           master_password_hash: string | null
           moeda: string | null
           reclassificacao_automatica: boolean | null
@@ -1257,6 +1259,7 @@ export type Database = {
           created_at?: string
           data_cotacao_arroba?: string | null
           display_name?: string | null
+          email?: string | null
           exibir_conversao?: boolean | null
           farm_name?: string | null
           farm_name_financeiro?: string | null
@@ -1275,6 +1278,7 @@ export type Database = {
           id?: string
           idade_bezerro_meses?: number | null
           idade_jovem_meses?: number | null
+          is_admin?: boolean | null
           master_password_hash?: string | null
           moeda?: string | null
           reclassificacao_automatica?: boolean | null
@@ -1289,6 +1293,7 @@ export type Database = {
           created_at?: string
           data_cotacao_arroba?: string | null
           display_name?: string | null
+          email?: string | null
           exibir_conversao?: boolean | null
           farm_name?: string | null
           farm_name_financeiro?: string | null
@@ -1307,6 +1312,7 @@ export type Database = {
           id?: string
           idade_bezerro_meses?: number | null
           idade_jovem_meses?: number | null
+          is_admin?: boolean | null
           master_password_hash?: string | null
           moeda?: string | null
           reclassificacao_automatica?: boolean | null
