@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { FinanceiroSidebar } from "./FinanceiroSidebar";
-import { Bell } from "lucide-react";
+import { Bell, DollarSign } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 import { ProfileDropdown } from "@/components/ProfileDropdown";
@@ -21,7 +21,7 @@ export function FinanceiroLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   const title = pageTitles[location.pathname] || "Financeiro";
-  const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "U";
+  
 
   return (
     <SidebarProvider>
@@ -32,7 +32,7 @@ export function FinanceiroLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-muted-foreground" />
               <div className="flex items-center gap-2 md:hidden">
-                <Leaf className="h-5 w-5 text-primary" />
+                <DollarSign className="h-5 w-5 text-primary" />
                 <span className="font-bold text-foreground text-sm">AgroHub</span>
               </div>
               <span className="hidden md:block text-lg font-semibold text-foreground">{title}</span>
