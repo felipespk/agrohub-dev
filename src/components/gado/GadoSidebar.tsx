@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, List, MapPin, Scale, Heart, ArrowLeftRight,
-  Baby, Tag, LogOut, ArrowLeft, Settings, Map,
+  Baby, Tag, LogOut, ArrowLeft, Settings, Map, Beef,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,11 +58,8 @@ export function GadoSidebar() {
       <SidebarContent className="flex flex-col h-full bg-[hsl(var(--sidebar-background))]">
         <div className={`px-6 pt-6 pb-3 ${collapsed ? "items-center flex flex-col px-2" : ""}`}>
           <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : ""}`}>
-            {collapsed ? (
-              <span className="text-[18px] font-bold text-white">A</span>
-            ) : (
-              <span className="text-[20px] font-bold text-white tracking-tight">AgroHub</span>
-            )}
+            <Beef className="h-6 w-6 text-white shrink-0" />
+            {!collapsed && <span className="text-[20px] font-bold text-white tracking-tight">AgroHub</span>}
           </div>
           {!collapsed && (
             <button onClick={() => navigate("/gado/configuracoes")}
