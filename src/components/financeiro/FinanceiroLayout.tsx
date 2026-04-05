@@ -1,8 +1,9 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { FinanceiroSidebar } from "./FinanceiroSidebar";
-import { Bell, Leaf } from "lucide-react";
+import { Bell, DollarSign } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
+import { ProfileDropdown } from "@/components/ProfileDropdown";
 
 const pageTitles: Record<string, string> = {
   "/financeiro": "Dashboard Financeiro",
@@ -20,7 +21,7 @@ export function FinanceiroLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   const title = pageTitles[location.pathname] || "Financeiro";
-  const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "U";
+  
 
   return (
     <SidebarProvider>
@@ -31,7 +32,7 @@ export function FinanceiroLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-muted-foreground" />
               <div className="flex items-center gap-2 md:hidden">
-                <Leaf className="h-5 w-5 text-primary" />
+                <DollarSign className="h-5 w-5 text-primary" />
                 <span className="font-bold text-foreground text-sm">AgroHub</span>
               </div>
               <span className="hidden md:block text-lg font-semibold text-foreground">{title}</span>
@@ -40,9 +41,7 @@ export function FinanceiroLayout({ children }: { children: React.ReactNode }) {
               <button className="p-2 rounded-lg hover:bg-muted transition-colors">
                 <Bell className="h-5 w-5 text-muted-foreground" />
               </button>
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold">
-                {initials}
-              </div>
+              <ProfileDropdown />
             </div>
           </header>
           <main className="flex-1 p-6 md:p-8 overflow-auto bg-background">
