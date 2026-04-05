@@ -61,7 +61,7 @@ export function LavouraSidebar() {
       <SidebarContent className="flex flex-col h-full bg-[hsl(var(--sidebar-background))]">
         <div className={`px-6 pt-6 pb-3 ${collapsed ? "items-center flex flex-col px-2" : ""}`}>
           <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : ""}`}>
-            <img src="/icon-agrohub.png" alt="AgroHub" width={28} height={28} className="shrink-0 rounded" />
+            <img src="/icon-agrohub.png" alt="AgroHub" width={28} height={28} <img src="/icon-agrohub.png" alt="AgroHub" width={28} height={28} className="shrink-0" style={{ border: 'none', outline: 'none', boxShadow: 'none', background: 'none', padding: 0, borderRadius: 0 }} /> />
             {!collapsed && <span className="text-[20px] font-bold text-white tracking-tight">AgroHub</span>}
           </div>
           {!collapsed && (
