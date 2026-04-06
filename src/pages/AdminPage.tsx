@@ -18,9 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
 const ADMIN_PASSWORD_HASH = "1c8e7102b228cf26ed8e15e64ed2b1497d411ea88700995074a448d924ea922d";
-const SESSION_KEY = "admin_auth";
-const SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes
-const LOCKOUT_DURATION_MS = 30 * 1000; // 30 seconds
 
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -30,11 +27,6 @@ async function hashPassword(password: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function isSessionValid(): boolean {
-  const ts = sessionStorage.getItem(SESSION_KEY);
-  if (!ts) return false;
-  return Date.now() - parseInt(ts, 10) < SESSION_DURATION_MS;
-}
 
 interface UserRow {
   user_id: string;
