@@ -89,7 +89,7 @@ export function FinanceiroProvider({ children }: { children: ReactNode }) {
     setContasPR(cprEnriched);
     setLancamentos(lanEnriched);
     setLoading(false);
-  }, [user]);
+  }, [user, effectiveUserId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
