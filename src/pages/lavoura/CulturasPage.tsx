@@ -52,11 +52,12 @@ export default function CulturasPage() {
   useEffect(() => { load(); }, [user]);
 
   const loadVariedades = async (culturaId: string) => {
-    const { data } = await supabase.from("variedades_cultura" as any).select("*").eq("cultura_id", culturaId).eq("user_id", user!.id).order("nome");
+    const { data } = await supabase.from("variedades_cultura" as any).select("*").eq("cultura_id", culturaId).eq("user_id", effectiveUserId).order("nome");
     setVariedades(prev => ({ ...prev, [culturaId]: (data as any[]) || [] }));
   };
 
   const saveCultura = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formC.nome.trim()) return;
     const payload: any = { nome: formC.nome.trim(), unidade_colheita: formC.unidade_colheita, ciclo_medio_dias: formC.ciclo_medio_dias ? parseInt(formC.ciclo_medio_dias) : null, user_id: user.id };
     if (editCultura) {
@@ -70,17 +71,20 @@ export default function CulturasPage() {
   };
 
   const removeCultura = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("culturas" as any).delete().eq("id", id);
     toast.success("Cultura removida."); load();
   };
 
   const saveVariedade = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formV.cultura_id || !formV.nome.trim()) return;
     await supabase.from("variedades_cultura" as any).insert({ cultura_id: formV.cultura_id, nome: formV.nome.trim(), user_id: user.id } as any);
     toast.success("Variedade adicionada!"); setOpenVariedade(false); loadVariedades(formV.cultura_id);
   };
 
   const removeVariedade = async (id: string, culturaId: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("variedades_cultura" as any).delete().eq("id", id);
     toast.success("Variedade removida."); loadVariedades(culturaId);
   };
