@@ -45,7 +45,7 @@ export default function AdminPage() {
   const { startImpersonation } = useImpersonation();
 
   // Auth gate state
-  const [authenticated, setAuthenticated] = useState(isSessionValid());
+  const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
@@ -85,7 +85,6 @@ export default function AdminPage() {
     setVerifying(false);
 
     if (inputHash === ADMIN_PASSWORD_HASH) {
-      sessionStorage.setItem(SESSION_KEY, Date.now().toString());
       setAuthenticated(true);
       setPassword("");
       setAttempts(0);
@@ -94,7 +93,7 @@ export default function AdminPage() {
       setAttempts(newAttempts);
       setPassword("");
       if (newAttempts >= 3) {
-        setLockedUntil(Date.now() + LOCKOUT_DURATION_MS);
+        setLockedUntil(Date.now() + 30000);
         toast({ title: "Muitas tentativas", description: "Tente novamente em 30 segundos.", variant: "destructive" });
       } else {
         toast({ title: "Senha incorreta", description: "Tente novamente.", variant: "destructive" });
