@@ -36,13 +36,14 @@ function isSessionValid(): boolean {
   return Date.now() - parseInt(ts, 10) < SESSION_DURATION_MS;
 }
 
-interface ProfileRow {
+interface UserRow {
   user_id: string;
   display_name: string | null;
   email: string | null;
   farm_name: string | null;
   is_admin: boolean | null;
-  created_at: string;
+  account_created_at: string;
+  last_sign_in_at: string | null;
 }
 
 export default function AdminPage() {
