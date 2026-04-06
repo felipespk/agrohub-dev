@@ -27,6 +27,7 @@ const DEFAULT_CENTROS = [
 
 export function FinanceiroProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { effectiveUserId } = useEffectiveUser();
   const [centrosCusto, setCentrosCusto] = useState<Row[]>([]);
   const [contasBancarias, setContasBancarias] = useState<Row[]>([]);
   const [categorias, setCategorias] = useState<Row[]>([]);
@@ -38,13 +39,15 @@ export function FinanceiroProvider({ children }: { children: ReactNode }) {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
+    const uid = effectiveUserId || user.id;
     const [cc, cb, cat, con, cpr, lan] = await Promise.all([
-      supabase.from("centros_custo").select("*").eq("user_id", user.id).order("created_at"),
-      supabase.from("contas_bancarias").select("*").eq("user_id", user.id).order("created_at"),
-      supabase.from("categorias_financeiras").select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("contatos_financeiros").select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("contas_pr").select("*").eq("user_id", user.id).order("data_vencimento", { ascending: true }),
-      supabase.from("lancamentos").select("*").eq("user_id", user.id).order("data", { ascending: false }),
+      supabase.from("centros_custo").select("*").eq("user_id", uid).order("created_at"),
+      supabase.from("contas_bancarias").select("*").eq("user_id", uid).order("created_at"),
+      supabase.from("categorias_financeiras").select("*").eq("user_id", uid).order("nome"),
+      supabase.from("contatos_financeiros").select("*").eq("user_id", uid).order("nome"),
+      supabase.from("contas_pr").select("*").eq("user_id", uid).order("data_vencimento", { ascending: true }),
+      supabase.from("lancamentos").select("*").eq("user_id", uid).order("data", { ascending: false }),
+    ]);
     ]);
 
     // Seed default cost centers if empty
