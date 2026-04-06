@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { criarLancamentoReceita } from "@/lib/financeiro-integration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,7 @@ const destinoBadge: Record<string, { label: string; cls: string }> = {
 
 export default function ColheitasPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [colheitas, setColheitas] = useState<any[]>([]);
   const [safras, setSafras] = useState<any[]>([]);
   const [culturas, setCulturas] = useState<any[]>([]);
@@ -52,13 +55,13 @@ export default function ColheitasPage() {
     if (!user) return;
     const { data } = await supabase.from("colheitas" as any)
       .select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome, unidade_colheita), safras:safra_id(nome), meta_produtividade)")
-      .eq("user_id", user.id).order("data", { ascending: false });
+      .eq("user_id", effectiveUserId).order("data", { ascending: false });
     setColheitas((data as any[]) || []);
-    const { data: s } = await supabase.from("safras" as any).select("id, nome").eq("user_id", user.id);
+    const { data: s } = await supabase.from("safras" as any).select("id, nome").eq("user_id", effectiveUserId);
     setSafras((s as any[]) || []);
-    const { data: c } = await supabase.from("culturas" as any).select("id, nome").eq("user_id", user.id);
+    const { data: c } = await supabase.from("culturas" as any).select("id, nome").eq("user_id", effectiveUserId);
     setCulturas((c as any[]) || []);
-    const { data: ct } = await supabase.from("contatos_financeiros").select("id, nome").eq("user_id", user.id).in("tipo", ["cliente", "ambos"]);
+    const { data: ct } = await supabase.from("contatos_financeiros").select("id, nome").eq("user_id", effectiveUserId).in("tipo", ["cliente", "ambos"]);
     setContatos((ct as any[]) || []);
   };
   useEffect(() => { load(); }, [user]);
@@ -67,7 +70,7 @@ export default function ColheitasPage() {
   useEffect(() => {
     if (!user || fSafra === "all") { setSafraTalhoes([]); return; }
     supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome)")
-      .eq("safra_id", fSafra).eq("user_id", user.id).then(({ data }) => setSafraTalhoes((data as any[]) || []));
+      .eq("safra_id", fSafra).eq("user_id", effectiveUserId).then(({ data }) => setSafraTalhoes((data as any[]) || []));
   }, [fSafra, user]);
 
   const loadFormST = async (safraId: string) => {
@@ -121,7 +124,7 @@ export default function ColheitasPage() {
         data_venda: form.data, tipo_contrato: "avista", user_id: user.id,
       } as any);
       try {
-        const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%lavoura%").limit(1);
+        const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", effectiveUserId).ilike("nome", "%lavoura%").limit(1);
         if (cc && cc.length > 0) {
           const { data: cpr } = await supabase.from("contas_pr").insert({
             tipo: "receber", descricao: `Venda colheita ${cultName} — ${talhName}`,

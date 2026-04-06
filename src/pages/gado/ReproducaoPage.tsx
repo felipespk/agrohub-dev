@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +17,7 @@ const DIAG_BADGE: Record<string, string> = { prenha: "bg-green-100 text-green-70
 
 export default function ReproducaoPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [registros, setRegistros] = useState<any[]>([]);
   const [animais, setAnimais] = useState<any[]>([]);
   const [openCob, setOpenCob] = useState(false);
@@ -28,8 +31,8 @@ export default function ReproducaoPage() {
     if (!user) return;
     const [r, a] = await Promise.all([
       supabase.from("reproducao" as any).select("*, femea:animais!femea_id(brinco, categoria), macho:animais!macho_id(brinco, categoria), bezerro:animais!bezerro_id(brinco)")
-        .eq("user_id", user.id).order("data_cobertura", { ascending: false }),
-      supabase.from("animais" as any).select("id, brinco, categoria, sexo").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
+        .eq("user_id", effectiveUserId).order("data_cobertura", { ascending: false }),
+      supabase.from("animais" as any).select("id, brinco, categoria, sexo").eq("user_id", effectiveUserId).eq("status", "ativo").order("brinco"),
     ]);
     setRegistros((r.data as any) || []);
     setAnimais((a.data as any) || []);

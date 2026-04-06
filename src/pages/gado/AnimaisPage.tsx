@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +30,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function AnimaisPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const navigate = useNavigate();
   const [animais, setAnimais] = useState<any[]>([]);
   const [racas, setRacas] = useState<any[]>([]);
@@ -57,11 +60,11 @@ export default function AnimaisPage() {
     if (!user) return;
     setLoading(true);
     const [a, r, p, l, prof] = await Promise.all([
-      supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome)").eq("user_id", user.id).order("brinco"),
-      supabase.from("racas" as any).select("id, nome").eq("user_id", user.id).order("nome"),
-      supabase.from("pastos" as any).select("id, nome").eq("user_id", user.id).order("nome"),
-      supabase.from("lotes" as any).select("id, nome, pasto_id").eq("user_id", user.id).order("nome"),
-      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", user.id).single(),
+      supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome)").eq("user_id", effectiveUserId).order("brinco"),
+      supabase.from("racas" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("pastos" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("lotes" as any).select("id, nome, pasto_id").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", effectiveUserId).single(),
     ]);
     setAnimais((a.data as any) || []);
     setRacas((r.data as any) || []);

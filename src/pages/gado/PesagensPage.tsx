@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,7 @@ const EXEMPLO_005 = [
 
 export default function PesagensPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [pesagens, setPesagens] = useState<any[]>([]);
   const [animais, setAnimais] = useState<any[]>([]);
   const [lotes, setLotes] = useState<any[]>([]);
@@ -55,10 +58,10 @@ export default function PesagensPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [p, a, l, ex] = await Promise.all([
-      supabase.from("pesagens" as any).select("*, animal:animais!animal_id(brinco, categoria)").eq("user_id", user.id).order("data", { ascending: false }).limit(50),
-      supabase.from("animais" as any).select("id, brinco, categoria").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
-      supabase.from("lotes" as any).select("id, nome").eq("user_id", user.id).order("nome"),
-      supabase.from("pesagens" as any).select("id").eq("user_id", user.id).eq("observacao", "Dado de exemplo").limit(1),
+      supabase.from("pesagens" as any).select("*, animal:animais!animal_id(brinco, categoria)").eq("user_id", effectiveUserId).order("data", { ascending: false }).limit(50),
+      supabase.from("animais" as any).select("id, brinco, categoria").eq("user_id", effectiveUserId).eq("status", "ativo").order("brinco"),
+      supabase.from("lotes" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("pesagens" as any).select("id").eq("user_id", effectiveUserId).eq("observacao", "Dado de exemplo").limit(1),
     ]);
     setPesagens((p.data as any) || []);
     setAnimais((a.data as any) || []);
@@ -73,8 +76,8 @@ export default function PesagensPage() {
     setLoading(true);
     setConfirmCarregar(false);
 
-    const { data: a004 } = await supabase.from("animais" as any).select("id").eq("user_id", user.id).eq("brinco", "004").limit(1);
-    const { data: a005 } = await supabase.from("animais" as any).select("id").eq("user_id", user.id).eq("brinco", "005").limit(1);
+    const { data: a004 } = await supabase.from("animais" as any).select("id").eq("user_id", effectiveUserId).eq("brinco", "004").limit(1);
+    const { data: a005 } = await supabase.from("animais" as any).select("id").eq("user_id", effectiveUserId).eq("brinco", "005").limit(1);
 
     if (!a004?.length || !a005?.length) {
       toast.warning("Cadastre animais com brinco 004 e 005 antes de carregar exemplos.");
@@ -127,7 +130,7 @@ export default function PesagensPage() {
     if (!user) return;
     setLoading(true);
     setConfirmLimpar(false);
-    await supabase.from("pesagens" as any).delete().eq("user_id", user.id).eq("observacao", "Dado de exemplo");
+    await supabase.from("pesagens" as any).delete().eq("user_id", effectiveUserId).eq("observacao", "Dado de exemplo");
     toast.success("Dados de exemplo removidos.");
     setLoading(false);
     fetchAll();
@@ -156,7 +159,7 @@ export default function PesagensPage() {
   const handleSaveLote = async () => {
     if (!user || !formLote.lote_id || !formLote.peso_medio) { toast.error("Preencha lote e peso médio."); return; }
     const peso = parseFloat(formLote.peso_medio);
-    const { data: animaisLote } = await supabase.from("animais" as any).select("id").eq("lote_id", formLote.lote_id).eq("status", "ativo").eq("user_id", user.id);
+    const { data: animaisLote } = await supabase.from("animais" as any).select("id").eq("lote_id", formLote.lote_id).eq("status", "ativo").eq("user_id", effectiveUserId);
     if (!animaisLote || animaisLote.length === 0) { toast.error("Nenhum animal no lote."); return; }
 
     for (const a of animaisLote as any[]) {

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +15,7 @@ import { toast } from "sonner";
 
 export default function PastosPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [pastos, setPastos] = useState<any[]>([]);
   const [lotes, setLotes] = useState<any[]>([]);
   const [animais, setAnimais] = useState<any[]>([]);
@@ -45,10 +48,10 @@ export default function PastosPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [p, l, a, prof] = await Promise.all([
-      supabase.from("pastos" as any).select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("lotes" as any).select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("animais" as any).select("id, brinco, nome, categoria, peso_atual, pasto_id, lote_id").eq("user_id", user.id).eq("status", "ativo"),
-      supabase.from("profiles").select("valor_arroba, rendimento_carcaca").eq("user_id", user.id).maybeSingle(),
+      supabase.from("pastos" as any).select("*").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("lotes" as any).select("*").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("animais" as any).select("id, brinco, nome, categoria, peso_atual, pasto_id, lote_id").eq("user_id", effectiveUserId).eq("status", "ativo"),
+      supabase.from("profiles").select("valor_arroba, rendimento_carcaca").eq("user_id", effectiveUserId).maybeSingle(),
     ]);
     setPastos((p.data as any) || []);
     setLotes((l.data as any) || []);

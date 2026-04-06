@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FarmIdentitySection, AccountDataSection, SecuritySection } from "@/components/settings/GlobalSettingsSections";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -18,6 +20,7 @@ interface Raca {
 
 export default function GadoConfiguracoesPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
 
   // Raças state
   const [racas, setRacas] = useState<Raca[]>([]);
@@ -46,7 +49,7 @@ export default function GadoConfiguracoesPage() {
 
   const fetchRacas = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from("racas" as any).select("id, nome").eq("user_id", user.id).order("nome");
+    const { data } = await supabase.from("racas" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome");
     setRacas((data as any as Raca[]) || []);
     setLoadingRacas(false);
   }, [user]);
@@ -57,7 +60,7 @@ export default function GadoConfiguracoesPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba, idade_bezerro_meses, idade_jovem_meses, reclassificacao_automatica").eq("user_id", user.id).single()
+    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba, idade_bezerro_meses, idade_jovem_meses, reclassificacao_automatica").eq("user_id", effectiveUserId).single()
       .then(({ data }) => {
         if (data) {
           if (data.rendimento_carcaca != null) setRendimento(String(data.rendimento_carcaca));
@@ -105,7 +108,7 @@ export default function GadoConfiguracoesPage() {
         rendimento_carcaca: parseFloat(rendimento),
         unidade_peso: unidadePeso,
         exibir_conversao: exibirConversao,
-      } as any).eq("user_id", user.id);
+      } as any).eq("user_id", effectiveUserId);
       toast.success("Configurações do gado salvas!");
     } catch {
       toast.error("Erro ao salvar.");
@@ -121,7 +124,7 @@ export default function GadoConfiguracoesPage() {
       await supabase.from("profiles").update({
         valor_arroba: parseFloat(valorArroba) || 300,
         data_cotacao_arroba: dataCotacao,
-      } as any).eq("user_id", user.id);
+      } as any).eq("user_id", effectiveUserId);
       setLastCotacaoDate(dataCotacao);
       toast.success("Cotação da arroba salva!");
     } catch {
@@ -139,7 +142,7 @@ export default function GadoConfiguracoesPage() {
         idade_bezerro_meses: parseInt(idadeBezerro) || 8,
         idade_jovem_meses: parseInt(idadeJovem) || 24,
         reclassificacao_automatica: reclassAuto,
-      } as any).eq("user_id", user.id);
+      } as any).eq("user_id", effectiveUserId);
       toast.success("Fases de vida salvas!");
     } catch {
       toast.error("Erro ao salvar.");

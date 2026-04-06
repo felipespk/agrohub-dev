@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +41,7 @@ function calcAge(d: string) {
 export default function AnimalFichaPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const navigate = useNavigate();
   const [animal, setAnimal] = useState<any>(null);
   const [pesagens, setPesagens] = useState<any[]>([]);
@@ -64,7 +67,7 @@ export default function AnimalFichaPage() {
       supabase.from("movimentacoes_gado" as any).select("*").eq("animal_id", id).order("data", { ascending: false }),
       supabase.from("reproducao" as any).select("*, femea:animais!femea_id(brinco), macho:animais!macho_id(brinco), bezerro:animais!bezerro_id(brinco)")
         .or(`femea_id.eq.${id},macho_id.eq.${id}`).order("data_cobertura", { ascending: false }),
-      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", user.id).single(),
+      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", effectiveUserId).single(),
     ]);
     setAnimal((a.data as any));
     setPesagens((p.data as any) || []);

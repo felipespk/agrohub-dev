@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +19,7 @@ const statusBadge: Record<string, string> = {
 
 export default function SafrasPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const navigate = useNavigate();
   const [safras, setSafras] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
@@ -25,11 +28,11 @@ export default function SafrasPage() {
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase.from("safras" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+    const { data } = await supabase.from("safras" as any).select("*").eq("user_id", effectiveUserId).order("created_at", { ascending: false });
     const safrasList = (data as any[]) || [];
     // Load talhão counts
     for (const s of safrasList) {
-      const { count } = await supabase.from("safra_talhoes" as any).select("*, talhoes:talhao_id(area_hectares)", { count: "exact" }).eq("safra_id", s.id).eq("user_id", user.id);
+      const { count } = await supabase.from("safra_talhoes" as any).select("*, talhoes:talhao_id(area_hectares)", { count: "exact" }).eq("safra_id", s.id).eq("user_id", effectiveUserId);
       s._talhoes = count || 0;
     }
     setSafras(safrasList);

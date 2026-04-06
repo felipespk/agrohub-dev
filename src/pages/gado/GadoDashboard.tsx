@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -22,6 +24,7 @@ function fmt(v: number) {
 
 export default function GadoDashboard() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [periodo, setPeriodo] = useState("mes");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -50,15 +53,15 @@ export default function GadoDashboard() {
     if (!user) return;
     const { start, end } = getDateRange();
 
-    supabase.from("animais" as any).select("*").eq("user_id", user.id).then(({ data }) => setAnimais((data as any) || []));
-    supabase.from("movimentacoes_gado" as any).select("*").eq("user_id", user.id).gte("data", start).lte("data", end).order("data", { ascending: false }).then(({ data }) => setMovs((data as any) || []));
+    supabase.from("animais" as any).select("*").eq("user_id", effectiveUserId).then(({ data }) => setAnimais((data as any) || []));
+    supabase.from("movimentacoes_gado" as any).select("*").eq("user_id", effectiveUserId).gte("data", start).lte("data", end).order("data", { ascending: false }).then(({ data }) => setMovs((data as any) || []));
 
     const in15 = new Date(); in15.setDate(in15.getDate() + 15);
     supabase.from("aplicacoes_sanitarias" as any).select("*, animal:animais!animal_id(brinco,nome), medicamento:medicamentos!medicamento_id(nome)")
-      .eq("user_id", user.id).not("proxima_dose", "is", null).lte("proxima_dose", in15.toISOString().split("T")[0]).order("proxima_dose")
+      .eq("user_id", effectiveUserId).not("proxima_dose", "is", null).lte("proxima_dose", in15.toISOString().split("T")[0]).order("proxima_dose")
       .limit(5).then(({ data }) => setVacinas((data as any) || []));
 
-    supabase.from("profiles").select("rendimento_carcaca, valor_arroba, data_cotacao_arroba").eq("user_id", user.id).single()
+    supabase.from("profiles").select("rendimento_carcaca, valor_arroba, data_cotacao_arroba").eq("user_id", effectiveUserId).single()
       .then(({ data }) => {
         if (data) {
           if (data.rendimento_carcaca) setRendimento(Number(data.rendimento_carcaca));

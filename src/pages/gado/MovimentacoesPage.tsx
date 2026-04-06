@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { criarLancamentoReceita } from "@/lib/financeiro-integration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +27,7 @@ function fmt(v: number) { return v.toLocaleString("pt-BR", { style: "currency", 
 
 export default function MovimentacoesPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [movs, setMovs] = useState<any[]>([]);
   const [animais, setAnimais] = useState<any[]>([]);
   const [pastos, setPastos] = useState<any[]>([]);
@@ -46,10 +49,10 @@ export default function MovimentacoesPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [m, a, p, prof] = await Promise.all([
-      supabase.from("movimentacoes_gado" as any).select("*, animal:animais!animal_id(brinco, categoria)").eq("user_id", user.id).order("data", { ascending: false }),
-      supabase.from("animais" as any).select("id, brinco, categoria, sexo, pasto_id, peso_atual").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
-      supabase.from("pastos" as any).select("id, nome").eq("user_id", user.id).order("nome"),
-      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", user.id).single(),
+      supabase.from("movimentacoes_gado" as any).select("*, animal:animais!animal_id(brinco, categoria)").eq("user_id", effectiveUserId).order("data", { ascending: false }),
+      supabase.from("animais" as any).select("id, brinco, categoria, sexo, pasto_id, peso_atual").eq("user_id", effectiveUserId).eq("status", "ativo").order("brinco"),
+      supabase.from("pastos" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", effectiveUserId).single(),
     ]);
     setMovs((m.data as any) || []);
     setAnimais((a.data as any) || []);
@@ -88,7 +91,7 @@ export default function MovimentacoesPage() {
       if (error) { toast.error(error.message); return; }
       // Try to create contas_pr
       try {
-        const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%pecuária%").limit(1);
+        const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", effectiveUserId).ilike("nome", "%pecuária%").limit(1);
         if (cc && cc.length > 0) {
           await supabase.from("contas_pr").insert({
             tipo: "pagar", descricao: `Compra de gado`, data_vencimento: form.data,
@@ -108,7 +111,7 @@ export default function MovimentacoesPage() {
       } as any);
       await supabase.from("animais" as any).update({ status: "vendido" } as any).eq("id", form.animal_id);
       try {
-        const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%pecuária%").limit(1);
+        const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", effectiveUserId).ilike("nome", "%pecuária%").limit(1);
         if (cc && cc.length > 0) {
           const vtNum = form.valor_total ? parseFloat(form.valor_total) : 0;
           const isPago = form.tipo_pagamento === "avista";

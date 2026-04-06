@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -12,6 +14,7 @@ const COLORS = ["#16A34A", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"
 
 export default function LavouraDashboard() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [safras, setSafras] = useState<any[]>([]);
   const [selectedSafra, setSelectedSafra] = useState<string>("all");
   const [periodo, setPeriodo] = useState("mes");
@@ -40,7 +43,7 @@ export default function LavouraDashboard() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("safras" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false })
+    supabase.from("safras" as any).select("*").eq("user_id", effectiveUserId).order("created_at", { ascending: false })
       .then(({ data }: any) => {
         const list = (data as any[]) || [];
         setSafras(list);
@@ -58,7 +61,7 @@ export default function LavouraDashboard() {
     const { start: firstDay, end: lastDay } = getDateRange();
 
     // KPIs
-    let stQuery = supabase.from("safra_talhoes" as any).select("*, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome)").eq("user_id", user.id);
+    let stQuery = supabase.from("safra_talhoes" as any).select("*, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome)").eq("user_id", effectiveUserId);
     if (selectedSafra !== "all") stQuery = stQuery.eq("safra_id", selectedSafra);
     const { data: stData } = await stQuery;
     const safraTalhoes = (stData as any[]) || [];
@@ -66,14 +69,14 @@ export default function LavouraDashboard() {
     const totalArea = safraTalhoes.reduce((s, st) => s + (Number((st as any).talhoes?.area_hectares) || 0), 0);
 
     // Atividades no período
-    const { count: atividadesCount } = await supabase.from("atividades_campo" as any).select("*", { count: "exact", head: true }).eq("user_id", user.id).gte("data", firstDay).lte("data", lastDay);
+    const { count: atividadesCount } = await supabase.from("atividades_campo" as any).select("*", { count: "exact", head: true }).eq("user_id", effectiveUserId).gte("data", firstDay).lte("data", lastDay);
 
     // Produtividade
     const stIds = safraTalhoes.map((st: any) => st.id);
     let prodMedia = 0;
     let prodData: any[] = [];
     if (stIds.length > 0) {
-      const { data: colheitas } = await supabase.from("colheitas" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome), meta_produtividade)").eq("user_id", user.id).in("safra_talhao_id", stIds);
+      const { data: colheitas } = await supabase.from("colheitas" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome), meta_produtividade)").eq("user_id", effectiveUserId).in("safra_talhao_id", stIds);
       const cols = (colheitas as any[]) || [];
       if (cols.length > 0) {
         prodMedia = cols.reduce((s, c) => s + (Number(c.produtividade_calculada) || 0), 0) / cols.length;
@@ -101,22 +104,22 @@ export default function LavouraDashboard() {
     setKpis({ area: totalArea, talhoes: safraTalhoes.length, atividades: atividadesCount || 0, produtividade: prodMedia });
 
     // Recent activities
-    const { data: acts } = await supabase.from("atividades_campo" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome)), insumos:insumo_id(nome)").eq("user_id", user.id).order("data", { ascending: false }).limit(5);
+    const { data: acts } = await supabase.from("atividades_campo" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome)), insumos:insumo_id(nome)").eq("user_id", effectiveUserId).order("data", { ascending: false }).limit(5);
     setRecentActivities((acts as any[]) || []);
 
     // Alerts
     const alertsList: any[] = [];
-    const { data: lowStock } = await supabase.from("insumos" as any).select("nome, estoque_atual, estoque_minimo").eq("user_id", user.id);
+    const { data: lowStock } = await supabase.from("insumos" as any).select("nome, estoque_atual, estoque_minimo").eq("user_id", effectiveUserId);
     ((lowStock as any[]) || []).filter(i => Number(i.estoque_atual) < Number(i.estoque_minimo)).forEach(i => {
       alertsList.push({ icon: "package", text: `Estoque baixo: ${i.nome}`, color: "red" });
     });
     const today = new Date().toISOString().split("T")[0];
-    const { data: overdueMaint } = await supabase.from("manutencoes" as any).select("*, maquinas:maquina_id(nome)").eq("user_id", user.id).lt("proxima_manutencao", today).not("proxima_manutencao", "is", null);
+    const { data: overdueMaint } = await supabase.from("manutencoes" as any).select("*, maquinas:maquina_id(nome)").eq("user_id", effectiveUserId).lt("proxima_manutencao", today).not("proxima_manutencao", "is", null);
     ((overdueMaint as any[]) || []).forEach(m => {
       alertsList.push({ icon: "cog", text: `Manutenção atrasada: ${m.maquinas?.nome}`, color: "red" });
     });
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
-    const { data: critMip } = await supabase.from("ocorrencias_mip" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome))").eq("user_id", user.id).in("nivel", ["alto", "critico"]).gte("data", weekAgo);
+    const { data: critMip } = await supabase.from("ocorrencias_mip" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome))").eq("user_id", effectiveUserId).in("nivel", ["alto", "critico"]).gte("data", weekAgo);
     ((critMip as any[]) || []).forEach(o => {
       alertsList.push({ icon: "bug", text: `Praga crítica no ${o.safra_talhoes?.talhoes?.nome || "talhão"}`, color: "red" });
     });
@@ -127,9 +130,9 @@ export default function LavouraDashboard() {
       const stIds2 = safraTalhoes.map((st: any) => st.id);
       const { data: ativsCusto } = await supabase.from("atividades_campo" as any)
         .select("safra_talhao_id, quantidade_insumo, horas_maquina, insumos:insumo_id(preco_unitario), maquinas:maquina_id(custo_hora)")
-        .eq("user_id", user.id).in("safra_talhao_id", stIds2);
+        .eq("user_id", effectiveUserId).in("safra_talhao_id", stIds2);
       const { data: colsCusto } = await supabase.from("colheitas" as any)
-        .select("safra_talhao_id, quantidade").eq("user_id", user.id).in("safra_talhao_id", stIds2);
+        .select("safra_talhao_id, quantidade").eq("user_id", effectiveUserId).in("safra_talhao_id", stIds2);
 
       const custoRows = safraTalhoes.map((st: any) => {
         const area = Number(st.talhoes?.area_hectares) || 1;

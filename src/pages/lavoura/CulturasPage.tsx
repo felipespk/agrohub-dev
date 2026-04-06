@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,7 @@ const DEFAULT_CULTURES = [
 
 export default function CulturasPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [culturas, setCulturas] = useState<any[]>([]);
   const [variedades, setVariedades] = useState<Record<string, any[]>>({});
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -34,13 +37,13 @@ export default function CulturasPage() {
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase.from("culturas" as any).select("*").eq("user_id", user.id).order("nome");
+    const { data } = await supabase.from("culturas" as any).select("*").eq("user_id", effectiveUserId).order("nome");
     const list = (data as any[]) || [];
     if (list.length === 0) {
       // Seed defaults
       const inserts = DEFAULT_CULTURES.map(c => ({ ...c, user_id: user.id }));
       await supabase.from("culturas" as any).insert(inserts as any);
-      const { data: seeded } = await supabase.from("culturas" as any).select("*").eq("user_id", user.id).order("nome");
+      const { data: seeded } = await supabase.from("culturas" as any).select("*").eq("user_id", effectiveUserId).order("nome");
       setCulturas((seeded as any[]) || []);
       return;
     }

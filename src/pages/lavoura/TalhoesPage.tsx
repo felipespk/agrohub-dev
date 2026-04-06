@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +21,7 @@ const soloColors: Record<string, string> = {
 
 export default function TalhoesPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [talhoes, setTalhoes] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
@@ -26,7 +29,7 @@ export default function TalhoesPage() {
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase.from("talhoes" as any).select("*").eq("user_id", user.id).order("nome");
+    const { data } = await supabase.from("talhoes" as any).select("*").eq("user_id", effectiveUserId).order("nome");
     setTalhoes((data as any[]) || []);
   };
   useEffect(() => { load(); }, [user]);
