@@ -243,6 +243,13 @@ export type Database = {
             referencedRelation: "safra_talhoes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "atividades_campo_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       categorias_financeiras: {
@@ -281,6 +288,13 @@ export type Database = {
             referencedRelation: "categorias_financeiras"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "categorias_financeiras_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       centros_custo: {
@@ -311,7 +325,15 @@ export type Database = {
           nome?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "centros_custo_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       colheitas: {
         Row: {
@@ -357,6 +379,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "safra_talhoes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colheitas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -425,6 +454,13 @@ export type Database = {
             referencedRelation: "safras"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "comercializacao_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       compradores: {
@@ -452,7 +488,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "compradores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       contas_bancarias: {
         Row: {
@@ -485,7 +529,15 @@ export type Database = {
           saldo_inicial?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contas_bancarias_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       contas_pr: {
         Row: {
@@ -571,6 +623,13 @@ export type Database = {
             referencedRelation: "contatos_financeiros"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contas_pr_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       contatos_financeiros: {
@@ -607,7 +666,15 @@ export type Database = {
           tipo?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contatos_financeiros_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       culturas: {
         Row: {
@@ -634,7 +701,15 @@ export type Database = {
           unidade_colheita?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "culturas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       insumos: {
         Row: {
@@ -670,7 +745,15 @@ export type Database = {
           unidade_medida?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "insumos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       lancamentos: {
         Row: {
@@ -761,6 +844,13 @@ export type Database = {
             referencedRelation: "contatos_financeiros"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lancamentos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       lotes: {
@@ -837,6 +927,13 @@ export type Database = {
             referencedRelation: "maquinas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "manutencoes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       maquinas: {
@@ -876,7 +973,15 @@ export type Database = {
           user_id?: string
           valor_aquisicao?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "maquinas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       medicamentos: {
         Row: {
@@ -1039,6 +1144,13 @@ export type Database = {
             referencedRelation: "insumos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "movimentacoes_insumo_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       ocorrencias_mip: {
@@ -1088,6 +1200,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "safra_talhoes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_mip_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1217,7 +1336,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "produtores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1322,7 +1449,15 @@ export type Database = {
           user_id?: string
           valor_arroba?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       quebras_tecnicas: {
         Row: {
@@ -1352,7 +1487,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quebras_tecnicas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       racas: {
         Row: {
@@ -1373,7 +1516,15 @@ export type Database = {
           nome?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "racas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       recebimentos: {
         Row: {
@@ -1462,6 +1613,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tipos_grao"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recebimentos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "recebimentos_variedade_id_fkey"
@@ -1605,6 +1763,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "safra_talhoes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "safra_talhoes_variedade_id_fkey"
             columns: ["variedade_id"]
             isOneToOne: false
@@ -1641,7 +1806,15 @@ export type Database = {
           status?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "safras_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       saidas: {
         Row: {
@@ -1746,6 +1919,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "saidas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "saidas_variedade_id_fkey"
             columns: ["variedade_id"]
             isOneToOne: false
@@ -1794,7 +1974,15 @@ export type Database = {
           tipo_solo?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "talhoes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       tipos_grao: {
         Row: {
@@ -1827,7 +2015,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tipos_grao_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       variedades_cultura: {
         Row: {
@@ -1858,6 +2054,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "culturas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variedades_cultura_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_users"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1898,7 +2101,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      all_users: {
+        Row: {
+          account_created_at: string | null
+          display_name: string | null
+          email: string | null
+          farm_name: string | null
+          is_admin: boolean | null
+          last_sign_in_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       is_admin: { Args: { check_user_id: string }; Returns: boolean }

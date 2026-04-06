@@ -36,13 +36,14 @@ function isSessionValid(): boolean {
   return Date.now() - parseInt(ts, 10) < SESSION_DURATION_MS;
 }
 
-interface ProfileRow {
+interface UserRow {
   user_id: string;
   display_name: string | null;
   email: string | null;
   farm_name: string | null;
   is_admin: boolean | null;
-  created_at: string;
+  account_created_at: string;
+  last_sign_in_at: string | null;
 }
 
 export default function AdminPage() {
@@ -59,13 +60,13 @@ export default function AdminPage() {
   const [verifying, setVerifying] = useState(false);
 
   // Data state
-  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [profiles, setProfiles] = useState<UserRow[]>([]);
   const [totalAnimais, setTotalAnimais] = useState(0);
   const [totalTalhoes, setTotalTalhoes] = useState(0);
   const [animaisByUser, setAnimaisByUser] = useState<Record<string, number>>({});
   const [talhoesByUser, setTalhoesByUser] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [confirmTarget, setConfirmTarget] = useState<ProfileRow | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<UserRow | null>(null);
 
   // Lockout timer
   useEffect(() => {
@@ -111,13 +112,13 @@ export default function AdminPage() {
 
   async function loadData() {
     setLoading(true);
-    const [profRes, aniRes, talRes] = await Promise.all([
-      supabase.from("profiles").select("user_id, display_name, email, farm_name, is_admin, created_at"),
+    const [usersRes, aniRes, talRes] = await Promise.all([
+      supabase.from("all_users" as any).select("*"),
       supabase.from("animais").select("user_id"),
       supabase.from("talhoes").select("user_id"),
     ]);
 
-    if (profRes.data) setProfiles(profRes.data as ProfileRow[]);
+    if (usersRes.data) setProfiles(usersRes.data as unknown as UserRow[]);
 
     if (aniRes.data) {
       setTotalAnimais(aniRes.data.length);
@@ -136,7 +137,7 @@ export default function AdminPage() {
     setLoading(false);
   }
 
-  async function toggleAdmin(profile: ProfileRow, makeAdmin: boolean) {
+  async function toggleAdmin(profile: UserRow, makeAdmin: boolean) {
     const { error } = await supabase
       .from("profiles")
       .update({ is_admin: makeAdmin } as any)
@@ -153,7 +154,7 @@ export default function AdminPage() {
     }
   }
 
-  function handleImpersonate(profile: ProfileRow) {
+  function handleImpersonate(profile: UserRow) {
     localStorage.setItem("admin_original_id", user?.id || "");
     startImpersonation(profile.user_id, profile.email || profile.display_name || "Usuário");
     navigate("/hub");
@@ -286,8 +287,10 @@ export default function AdminPage() {
                     <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
                     <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fazenda</th>
                     <th className="text-left px-4 py-3 font-medium text-muted-foreground">Cadastro</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Último Login</th>
                     <th className="text-center px-4 py-3 font-medium text-muted-foreground">Animais</th>
                     <th className="text-center px-4 py-3 font-medium text-muted-foreground">Talhões</th>
+                    <th className="text-center px-4 py-3 font-medium text-muted-foreground">Status</th>
                     <th className="text-center px-4 py-3 font-medium text-muted-foreground">Admin</th>
                     <th className="text-right px-4 py-3 font-medium text-muted-foreground">Ações</th>
                   </tr>
@@ -298,10 +301,22 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-foreground">{p.email || "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.farm_name || "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                        {new Date(p.account_created_at).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {p.last_sign_in_at
+                          ? new Date(p.last_sign_in_at).toLocaleDateString("pt-BR")
+                          : "Nunca"}
                       </td>
                       <td className="px-4 py-3 text-center">{animaisByUser[p.user_id] || 0}</td>
                       <td className="px-4 py-3 text-center">{talhoesByUser[p.user_id] || 0}</td>
+                      <td className="px-4 py-3 text-center">
+                        {p.display_name !== null ? (
+                          <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-600">Ativo</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[10px]">Sem perfil</Badge>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-center">
                         {p.is_admin ? (
                           <Badge variant="destructive" className="text-[10px]">Admin</Badge>
