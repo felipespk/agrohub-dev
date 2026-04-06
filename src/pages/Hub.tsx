@@ -46,14 +46,24 @@ export default function HubPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data?.is_admin) setIsAdmin(true);
-      });
+    const checkAdmin = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        console.log("Admin check:", { data, error, userId: user.id });
+        
+        if (data && data.is_admin === true) {
+          setIsAdmin(true);
+        }
+      } catch (e) {
+        console.error("Admin check error:", e);
+      }
+    };
+    checkAdmin();
   }, [user]);
 
   return (
