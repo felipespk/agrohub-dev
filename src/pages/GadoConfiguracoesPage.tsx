@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FarmIdentitySection, AccountDataSection, SecuritySection } from "@/components/settings/GlobalSettingsSections";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUser } from "@/hooks/useEffectiveUser";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
