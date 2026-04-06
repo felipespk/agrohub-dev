@@ -118,7 +118,7 @@ export default function AdminPage() {
       supabase.from("talhoes").select("user_id"),
     ]);
 
-    if (usersRes.data) setProfiles(usersRes.data as UserRow[]);
+    if (usersRes.data) setProfiles(usersRes.data as unknown as UserRow[]);
 
     if (aniRes.data) {
       setTotalAnimais(aniRes.data.length);
