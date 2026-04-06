@@ -102,6 +102,7 @@ export default function ColheitasPage() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.safra_talhao_id || !form.quantidade) return;
     const qty = parseFloat(form.quantidade);
     const prod = areaTalhao > 0 ? qty / areaTalhao : 0;
@@ -142,6 +143,7 @@ export default function ColheitasPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("colheitas" as any).delete().eq("id", id);
     toast.success("Removida."); load();
   };

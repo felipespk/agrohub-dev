@@ -78,6 +78,7 @@ export default function MovimentacoesPage() {
   };
 
   const handleSave = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user) return;
 
     if (form.tipo === "compra") {

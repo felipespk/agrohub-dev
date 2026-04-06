@@ -72,6 +72,7 @@ export default function AtividadesPage() {
   }, [form.insumo_id, form.quantidade_insumo, form.maquina_id, form.horas_maquina, insumos, maquinas]);
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.safra_talhao_id || !form.tipo) return;
     const payload: any = {
       safra_talhao_id: form.safra_talhao_id, tipo: form.tipo, data: form.data,
@@ -102,6 +103,7 @@ export default function AtividadesPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("atividades_campo" as any).delete().eq("id", id);
     toast.success("Atividade removida."); load();
   };

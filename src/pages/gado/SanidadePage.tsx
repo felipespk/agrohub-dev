@@ -69,12 +69,14 @@ export default function SanidadePage() {
   }, [formApp.modo, formApp.lote_id, user]);
 
   const handleSaveMed = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formMed.nome.trim()) return;
     await supabase.from("medicamentos" as any).insert({ nome: formMed.nome.trim(), tipo: formMed.tipo, fabricante: formMed.fabricante || null, carencia_dias: parseInt(formMed.carencia_dias) || 0, user_id: user.id } as any);
     toast.success("Medicamento cadastrado!"); setOpenMed(false); setFormMed({ nome: "", tipo: "vacina", fabricante: "", carencia_dias: "0" }); fetchAll();
   };
 
   const handleSaveApp = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formApp.medicamento_id) { toast.error("Selecione um medicamento."); return; }
 
     if (formApp.modo === "individual") {

@@ -38,6 +38,7 @@ export default function TalhoesPage() {
   const openEdit = (t: any) => { setEditItem(t); setForm({ nome: t.nome, area_hectares: String(t.area_hectares), tipo_solo: t.tipo_solo || "argiloso", observacoes: t.observacoes || "" }); setOpen(true); };
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.nome.trim() || !form.area_hectares) return;
     const payload = { nome: form.nome.trim(), area_hectares: parseFloat(form.area_hectares), tipo_solo: form.tipo_solo, observacoes: form.observacoes, user_id: user.id };
     if (editItem) {
@@ -51,6 +52,7 @@ export default function TalhoesPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("talhoes" as any).delete().eq("id", id);
     toast.success("Talhão removido."); load();
   };

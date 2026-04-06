@@ -40,6 +40,7 @@ export default function SafrasPage() {
   useEffect(() => { load(); }, [user]);
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.nome.trim()) return;
     await supabase.from("safras" as any).insert({ nome: form.nome.trim(), data_inicio: form.data_inicio || null, data_fim: form.data_fim || null, status: form.status, user_id: user.id } as any);
     toast.success("Safra criada!"); setOpen(false); load();

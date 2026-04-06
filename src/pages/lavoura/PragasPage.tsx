@@ -100,6 +100,7 @@ export default function PragasPage() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.safra_talhao_id || !form.nome_ocorrencia.trim()) return;
     await supabase.from("ocorrencias_mip" as any).insert({
       safra_talhao_id: form.safra_talhao_id, data: form.data, tipo: form.tipo,
@@ -115,6 +116,7 @@ export default function PragasPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("ocorrencias_mip" as any).delete().eq("id", id);
     toast.success("Removida."); load();
   };

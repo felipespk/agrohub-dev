@@ -72,6 +72,7 @@ export default function PesagensPage() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleCarregarExemplos = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user) return;
     setLoading(true);
     setConfirmCarregar(false);
@@ -127,6 +128,7 @@ export default function PesagensPage() {
   };
 
   const handleLimparExemplos = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user) return;
     setLoading(true);
     setConfirmLimpar(false);
@@ -137,6 +139,7 @@ export default function PesagensPage() {
   };
 
   const handleSaveInd = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.animal_id || !form.peso_kg) { toast.error("Preencha animal e peso."); return; }
     const peso = parseFloat(form.peso_kg);
 
@@ -157,6 +160,7 @@ export default function PesagensPage() {
   };
 
   const handleSaveLote = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formLote.lote_id || !formLote.peso_medio) { toast.error("Preencha lote e peso médio."); return; }
     const peso = parseFloat(formLote.peso_medio);
     const { data: animaisLote } = await supabase.from("animais" as any).select("id").eq("lote_id", formLote.lote_id).eq("status", "ativo").eq("user_id", effectiveUserId);

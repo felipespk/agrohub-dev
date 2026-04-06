@@ -94,6 +94,7 @@ export default function ComercializacaoPage() {
   const formValorTotal = form.quantidade && form.preco_unitario ? parseFloat(form.quantidade) * parseFloat(form.preco_unitario) : 0;
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.quantidade || !form.preco_unitario) return;
     const vt = formValorTotal;
     await supabase.from("comercializacao" as any).insert({
@@ -132,6 +133,7 @@ export default function ComercializacaoPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("comercializacao" as any).delete().eq("id", id);
     toast.success("Removida."); load();
   };

@@ -45,6 +45,7 @@ export default function InsumosPage() {
   }, [user]);
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.nome.trim()) return;
     const payload: any = { nome: form.nome.trim(), categoria: form.categoria, unidade_medida: form.unidade_medida, preco_unitario: parseFloat(form.preco_unitario) || 0, estoque_atual: parseFloat(form.estoque_atual) || 0, estoque_minimo: parseFloat(form.estoque_minimo) || 0, user_id: user.id };
     if (editItem) {
@@ -58,6 +59,7 @@ export default function InsumosPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("insumos" as any).delete().eq("id", id);
     toast.success("Insumo removido."); load();
   };

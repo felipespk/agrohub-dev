@@ -66,6 +66,7 @@ export default function PastosPage() {
 
   // === Create Pasto ===
   const handleSavePasto = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formPasto.nome.trim()) return;
     await supabase.from("pastos" as any).insert({
       nome: formPasto.nome.trim(),
@@ -81,6 +82,7 @@ export default function PastosPage() {
 
   // === Create Lote ===
   const handleSaveLote = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formLote.nome.trim()) return;
     await supabase.from("lotes" as any).insert({
       nome: formLote.nome.trim(), pasto_id: formLote.pasto_id || null, user_id: user.id,
@@ -101,6 +103,7 @@ export default function PastosPage() {
     });
   };
   const handleUpdatePasto = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!editPasto || !formEditPasto.nome.trim()) return;
     await supabase.from("pastos" as any).update({
       nome: formEditPasto.nome.trim(),
@@ -114,6 +117,7 @@ export default function PastosPage() {
 
   // === Delete Pasto ===
   const handleDeletePasto = async (p: any) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     const count = animais.filter(a => a.pasto_id === p.id).length;
     if (count > 0) { toast.error("Mova os animais para outro pasto antes de excluir."); return; }
     if (!confirm(`Tem certeza que deseja excluir o pasto "${p.nome}"?`)) return;
@@ -129,6 +133,7 @@ export default function PastosPage() {
     setFormEditLote({ nome: l.nome || "", pasto_id: l.pasto_id || "" });
   };
   const handleUpdateLote = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!editLote || !formEditLote.nome.trim()) return;
     await supabase.from("lotes" as any).update({
       nome: formEditLote.nome.trim(),
@@ -141,6 +146,7 @@ export default function PastosPage() {
 
   // === Delete Lote ===
   const handleDeleteLote = async (l: any) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     const count = animais.filter(a => a.lote_id === l.id).length;
     if (count > 0) { toast.error("Mova os animais para outro lote antes de excluir."); return; }
     if (!confirm(`Tem certeza que deseja excluir o lote "${l.nome}"?`)) return;

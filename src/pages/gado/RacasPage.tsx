@@ -35,6 +35,7 @@ export default function RacasPage() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleSave = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !nome.trim()) return;
     if (editId) {
       await supabase.from("racas" as any).update({ nome: nome.trim() } as any).eq("id", editId);
@@ -47,6 +48,7 @@ export default function RacasPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (contagens[id] > 0) { toast.error("Não é possível excluir raça com animais vinculados."); return; }
     if (!confirm("Excluir esta raça?")) return;
     await supabase.from("racas" as any).delete().eq("id", id);

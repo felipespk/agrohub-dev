@@ -96,6 +96,7 @@ export default function AnimaisPage() {
   const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const handleSave = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.brinco.trim() || !form.sexo || !form.categoria) {
       toast.error("Preencha os campos obrigatórios."); return;
     }
@@ -128,6 +129,7 @@ export default function AnimaisPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!confirm("Excluir este animal?")) return;
     await supabase.from("animais" as any).delete().eq("id", id);
     toast.success("Animal excluído.");

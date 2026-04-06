@@ -45,6 +45,7 @@ export default function MaquinasPage() {
   };
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.nome.trim()) return;
     const payload: any = { nome: form.nome.trim(), tipo: form.tipo, modelo: form.modelo || null, ano: form.ano ? parseInt(form.ano) : null, placa_chassi: form.placa_chassi || null, valor_aquisicao: form.valor_aquisicao ? parseFloat(form.valor_aquisicao) : null, custo_hora: parseFloat(form.custo_hora) || 0, user_id: user.id };
     if (editItem) {
@@ -58,11 +59,13 @@ export default function MaquinasPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("maquinas" as any).delete().eq("id", id);
     toast.success("Máquina removida."); load();
   };
 
   const saveManut = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !manutMaqId || !manutForm.descricao.trim()) return;
     await supabase.from("manutencoes" as any).insert({ maquina_id: manutMaqId, data: manutForm.data, tipo: manutForm.tipo, descricao: manutForm.descricao.trim(), custo: parseFloat(manutForm.custo) || 0, proxima_manutencao: manutForm.proxima_manutencao || null, user_id: user.id } as any);
     // Financial integration
