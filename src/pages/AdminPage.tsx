@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, ArrowLeft, Users, Beef, Sprout, LogIn, ShieldCheck, ShieldOff } from "lucide-react";
+import { Shield, ArrowLeft, Users, Beef, Sprout, LogIn, ShieldCheck, ShieldOff, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -15,6 +15,26 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+
+const ADMIN_PASSWORD_HASH = "1c8e7102b228cf26ed8e15e64ed2b1497d411ea88700995074a448d924ea922d";
+const SESSION_KEY = "admin_auth";
+const SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+const LOCKOUT_DURATION_MS = 30 * 1000; // 30 seconds
+
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function isSessionValid(): boolean {
+  const ts = sessionStorage.getItem(SESSION_KEY);
+  if (!ts) return false;
+  return Date.now() - parseInt(ts, 10) < SESSION_DURATION_MS;
+}
 
 interface ProfileRow {
   user_id: string;
@@ -31,6 +51,14 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { startImpersonation } = useImpersonation();
 
+  // Auth gate state
+  const [authenticated, setAuthenticated] = useState(isSessionValid());
+  const [password, setPassword] = useState("");
+  const [attempts, setAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [verifying, setVerifying] = useState(false);
+
+  // Data state
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [totalAnimais, setTotalAnimais] = useState(0);
   const [totalTalhoes, setTotalTalhoes] = useState(0);
@@ -39,9 +67,47 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [confirmTarget, setConfirmTarget] = useState<ProfileRow | null>(null);
 
+  // Lockout timer
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!lockedUntil) return;
+    const interval = setInterval(() => {
+      if (Date.now() >= lockedUntil) {
+        setLockedUntil(null);
+        setAttempts(0);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockedUntil]);
+
+  useEffect(() => {
+    if (authenticated) loadData();
+  }, [authenticated]);
+
+  async function handlePasswordSubmit() {
+    if (lockedUntil && Date.now() < lockedUntil) return;
+    if (!password.trim()) return;
+
+    setVerifying(true);
+    const inputHash = await hashPassword(password);
+    setVerifying(false);
+
+    if (inputHash === ADMIN_PASSWORD_HASH) {
+      sessionStorage.setItem(SESSION_KEY, Date.now().toString());
+      setAuthenticated(true);
+      setPassword("");
+      setAttempts(0);
+    } else {
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      setPassword("");
+      if (newAttempts >= 3) {
+        setLockedUntil(Date.now() + LOCKOUT_DURATION_MS);
+        toast({ title: "Muitas tentativas", description: "Tente novamente em 30 segundos.", variant: "destructive" });
+      } else {
+        toast({ title: "Senha incorreta", description: "Tente novamente.", variant: "destructive" });
+      }
+    }
+  }
 
   async function loadData() {
     setLoading(true);
@@ -91,6 +157,65 @@ export default function AdminPage() {
     localStorage.setItem("admin_original_id", user?.id || "");
     startImpersonation(profile.user_id, profile.email || profile.display_name || "Usuário");
     navigate("/hub");
+  }
+
+  const isLocked = lockedUntil !== null && Date.now() < lockedUntil;
+  const lockSeconds = isLocked ? Math.ceil((lockedUntil! - Date.now()) / 1000) : 0;
+
+  // Password gate modal
+  if (!authenticated) {
+    return (
+      <Dialog open onOpenChange={() => {}}>
+        <DialogContent
+          className="sm:max-w-md [&>button]:hidden"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" style={{ color: "#DC2626" }} />
+              Acesso Restrito
+            </DialogTitle>
+            <DialogDescription>
+              Digite a senha de administrador para continuar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="password"
+                className="pl-10"
+                placeholder="Senha de administrador"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
+                disabled={isLocked || verifying}
+                autoFocus
+              />
+            </div>
+            {isLocked && (
+              <p className="text-sm text-destructive font-medium">
+                Aguarde {lockSeconds}s para tentar novamente.
+              </p>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => navigate("/hub")}>
+              Voltar
+            </Button>
+            <Button
+              onClick={handlePasswordSubmit}
+              disabled={isLocked || verifying || !password.trim()}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {verifying ? "Verificando..." : "Entrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   const kpis = [
