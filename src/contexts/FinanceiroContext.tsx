@@ -48,7 +48,6 @@ export function FinanceiroProvider({ children }: { children: ReactNode }) {
       supabase.from("contas_pr").select("*").eq("user_id", uid).order("data_vencimento", { ascending: true }),
       supabase.from("lancamentos").select("*").eq("user_id", uid).order("data", { ascending: false }),
     ]);
-    ]);
 
     // Seed default cost centers if empty
     let centrosData: Row[];
