@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ const decisaoConfig: Record<string, { label: string; cls: string }> = {
 
 export default function PragasPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   const [safras, setSafras] = useState<any[]>([]);
   const [safraTalhoes, setSafraTalhoes] = useState<any[]>([]);
@@ -56,9 +58,9 @@ export default function PragasPage() {
     if (!user) return;
     const { data } = await supabase.from("ocorrencias_mip" as any)
       .select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome), safras:safra_id(nome))")
-      .eq("user_id", user.id).order("data", { ascending: false });
+      .eq("user_id", effectiveUserId).order("data", { ascending: false });
     setOcorrencias((data as any[]) || []);
-    const { data: s } = await supabase.from("safras" as any).select("id, nome").eq("user_id", user.id);
+    const { data: s } = await supabase.from("safras" as any).select("id, nome").eq("user_id", effectiveUserId);
     setSafras((s as any[]) || []);
   };
   useEffect(() => { load(); }, [user]);
@@ -66,7 +68,7 @@ export default function PragasPage() {
   useEffect(() => {
     if (!user || fSafra === "all") { setSafraTalhoes([]); return; }
     supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome)")
-      .eq("safra_id", fSafra).eq("user_id", user.id).then(({ data }) => setSafraTalhoes((data as any[]) || []));
+      .eq("safra_id", fSafra).eq("user_id", effectiveUserId).then(({ data }) => setSafraTalhoes((data as any[]) || []));
   }, [fSafra, user]);
 
   const loadFormST = async (safraId: string) => {
@@ -97,6 +99,7 @@ export default function PragasPage() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.safra_talhao_id || !form.nome_ocorrencia.trim()) return;
     await supabase.from("ocorrencias_mip" as any).insert({
       safra_talhao_id: form.safra_talhao_id, data: form.data, tipo: form.tipo,
@@ -112,6 +115,7 @@ export default function PragasPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("ocorrencias_mip" as any).delete().eq("id", id);
     toast.success("Removida."); load();
   };

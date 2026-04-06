@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ const catBadge: Record<string, string> = {
 
 export default function InsumosPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [insumos, setInsumos] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [openEntrada, setOpenEntrada] = useState(false);
@@ -31,17 +33,18 @@ export default function InsumosPage() {
 
   const load = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from("insumos" as any).select("*").eq("user_id", user.id).order("nome");
+    const { data } = await supabase.from("insumos" as any).select("*").eq("user_id", effectiveUserId).order("nome");
     setInsumos((data as any[]) || []);
   }, [user]);
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("contatos_financeiros").select("id, nome").eq("user_id", user.id).in("tipo", ["fornecedor", "ambos"]).then(({ data }) => setContatos((data as any[]) || []));
+    supabase.from("contatos_financeiros").select("id, nome").eq("user_id", effectiveUserId).in("tipo", ["fornecedor", "ambos"]).then(({ data }) => setContatos((data as any[]) || []));
   }, [user]);
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.nome.trim()) return;
     const payload: any = { nome: form.nome.trim(), categoria: form.categoria, unidade_medida: form.unidade_medida, preco_unitario: parseFloat(form.preco_unitario) || 0, estoque_atual: parseFloat(form.estoque_atual) || 0, estoque_minimo: parseFloat(form.estoque_minimo) || 0, user_id: user.id };
     if (editItem) {
@@ -55,6 +58,7 @@ export default function InsumosPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("insumos" as any).delete().eq("id", id);
     toast.success("Insumo removido."); load();
   };
@@ -70,7 +74,7 @@ export default function InsumosPage() {
     // Financial integration — create contas_pr for purchases with value
     if (entradaForm.valor_total && parseFloat(entradaForm.valor_total) > 0) {
       try {
-        const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%lavoura%").limit(1);
+        const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", effectiveUserId).ilike("nome", "%lavoura%").limit(1);
         if (cc && cc.length > 0) {
           await supabase.from("contas_pr").insert({
             tipo: "pagar", descricao: `Compra insumo: ${insumo?.nome}`, valor_total: parseFloat(entradaForm.valor_total),

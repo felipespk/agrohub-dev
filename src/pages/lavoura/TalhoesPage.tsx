@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ const soloColors: Record<string, string> = {
 
 export default function TalhoesPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [talhoes, setTalhoes] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
@@ -26,7 +28,7 @@ export default function TalhoesPage() {
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase.from("talhoes" as any).select("*").eq("user_id", user.id).order("nome");
+    const { data } = await supabase.from("talhoes" as any).select("*").eq("user_id", effectiveUserId).order("nome");
     setTalhoes((data as any[]) || []);
   };
   useEffect(() => { load(); }, [user]);
@@ -35,6 +37,7 @@ export default function TalhoesPage() {
   const openEdit = (t: any) => { setEditItem(t); setForm({ nome: t.nome, area_hectares: String(t.area_hectares), tipo_solo: t.tipo_solo || "argiloso", observacoes: t.observacoes || "" }); setOpen(true); };
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.nome.trim() || !form.area_hectares) return;
     const payload = { nome: form.nome.trim(), area_hectares: parseFloat(form.area_hectares), tipo_solo: form.tipo_solo, observacoes: form.observacoes, user_id: user.id };
     if (editItem) {
@@ -48,6 +51,7 @@ export default function TalhoesPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("talhoes" as any).delete().eq("id", id);
     toast.success("Talhão removido."); load();
   };

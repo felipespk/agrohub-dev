@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -93,6 +94,7 @@ export default function MapaFazendaPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const { toast } = useToast();
 
   // Determine initial module from query param
@@ -317,7 +319,7 @@ export default function MapaFazendaPage() {
       updateData.fazenda_lng = tempPin[1];
     }
 
-    await supabase.from("profiles").update(updateData).eq("user_id", user.id);
+    await supabase.from("profiles").update(updateData).eq("user_id", effectiveUserId);
     setProfile((p: any) => ({ ...p, ...updateData }));
     setSettingLocation(false);
     setTempPin(null);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ const tipoBadge: Record<string, string> = {
 
 export default function AtividadesPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [atividades, setAtividades] = useState<any[]>([]);
   const [safras, setSafras] = useState<any[]>([]);
   const [safraTalhoes, setSafraTalhoes] = useState<any[]>([]);
@@ -36,13 +38,13 @@ export default function AtividadesPage() {
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase.from("atividades_campo" as any).select("*, safra_talhoes:safra_talhao_id(safras:safra_id(nome), talhoes:talhao_id(nome)), insumos:insumo_id(nome, unidade_medida), maquinas:maquina_id(nome)").eq("user_id", user.id).order("data", { ascending: false }).limit(100);
+    const { data } = await supabase.from("atividades_campo" as any).select("*, safra_talhoes:safra_talhao_id(safras:safra_id(nome), talhoes:talhao_id(nome)), insumos:insumo_id(nome, unidade_medida), maquinas:maquina_id(nome)").eq("user_id", effectiveUserId).order("data", { ascending: false }).limit(100);
     setAtividades((data as any[]) || []);
-    const { data: s } = await supabase.from("safras" as any).select("id, nome").eq("user_id", user.id).order("created_at", { ascending: false });
+    const { data: s } = await supabase.from("safras" as any).select("id, nome").eq("user_id", effectiveUserId).order("created_at", { ascending: false });
     setSafras((s as any[]) || []);
-    const { data: ins } = await supabase.from("insumos" as any).select("id, nome, preco_unitario, unidade_medida").eq("user_id", user.id);
+    const { data: ins } = await supabase.from("insumos" as any).select("id, nome, preco_unitario, unidade_medida").eq("user_id", effectiveUserId);
     setInsumos((ins as any[]) || []);
-    const { data: maq } = await supabase.from("maquinas" as any).select("id, nome, custo_hora").eq("user_id", user.id);
+    const { data: maq } = await supabase.from("maquinas" as any).select("id, nome, custo_hora").eq("user_id", effectiveUserId);
     setMaquinas((maq as any[]) || []);
   };
   useEffect(() => { load(); }, [user]);
@@ -50,7 +52,7 @@ export default function AtividadesPage() {
   // Load safra_talhoes for filter
   useEffect(() => {
     if (!user || filterSafra === "all") { setSafraTalhoesFilter([]); return; }
-    supabase.from("safra_talhoes" as any).select("id").eq("safra_id", filterSafra).eq("user_id", user.id)
+    supabase.from("safra_talhoes" as any).select("id").eq("safra_id", filterSafra).eq("user_id", effectiveUserId)
       .then(({ data }) => setSafraTalhoesFilter((data as any[]) || []));
   }, [filterSafra, user]);
 
@@ -69,6 +71,7 @@ export default function AtividadesPage() {
   }, [form.insumo_id, form.quantidade_insumo, form.maquina_id, form.horas_maquina, insumos, maquinas]);
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.safra_talhao_id || !form.tipo) return;
     const payload: any = {
       safra_talhao_id: form.safra_talhao_id, tipo: form.tipo, data: form.data,
@@ -99,6 +102,7 @@ export default function AtividadesPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("atividades_campo" as any).delete().eq("id", id);
     toast.success("Atividade removida."); load();
   };

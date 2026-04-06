@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 
 export default function PastosPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [pastos, setPastos] = useState<any[]>([]);
   const [lotes, setLotes] = useState<any[]>([]);
   const [animais, setAnimais] = useState<any[]>([]);
@@ -45,10 +47,10 @@ export default function PastosPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [p, l, a, prof] = await Promise.all([
-      supabase.from("pastos" as any).select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("lotes" as any).select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("animais" as any).select("id, brinco, nome, categoria, peso_atual, pasto_id, lote_id").eq("user_id", user.id).eq("status", "ativo"),
-      supabase.from("profiles").select("valor_arroba, rendimento_carcaca").eq("user_id", user.id).maybeSingle(),
+      supabase.from("pastos" as any).select("*").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("lotes" as any).select("*").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("animais" as any).select("id, brinco, nome, categoria, peso_atual, pasto_id, lote_id").eq("user_id", effectiveUserId).eq("status", "ativo"),
+      supabase.from("profiles").select("valor_arroba, rendimento_carcaca").eq("user_id", effectiveUserId).maybeSingle(),
     ]);
     setPastos((p.data as any) || []);
     setLotes((l.data as any) || []);
@@ -63,6 +65,7 @@ export default function PastosPage() {
 
   // === Create Pasto ===
   const handleSavePasto = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formPasto.nome.trim()) return;
     await supabase.from("pastos" as any).insert({
       nome: formPasto.nome.trim(),
@@ -78,6 +81,7 @@ export default function PastosPage() {
 
   // === Create Lote ===
   const handleSaveLote = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formLote.nome.trim()) return;
     await supabase.from("lotes" as any).insert({
       nome: formLote.nome.trim(), pasto_id: formLote.pasto_id || null, user_id: user.id,
@@ -98,6 +102,7 @@ export default function PastosPage() {
     });
   };
   const handleUpdatePasto = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!editPasto || !formEditPasto.nome.trim()) return;
     await supabase.from("pastos" as any).update({
       nome: formEditPasto.nome.trim(),
@@ -111,6 +116,7 @@ export default function PastosPage() {
 
   // === Delete Pasto ===
   const handleDeletePasto = async (p: any) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     const count = animais.filter(a => a.pasto_id === p.id).length;
     if (count > 0) { toast.error("Mova os animais para outro pasto antes de excluir."); return; }
     if (!confirm(`Tem certeza que deseja excluir o pasto "${p.nome}"?`)) return;
@@ -126,6 +132,7 @@ export default function PastosPage() {
     setFormEditLote({ nome: l.nome || "", pasto_id: l.pasto_id || "" });
   };
   const handleUpdateLote = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!editLote || !formEditLote.nome.trim()) return;
     await supabase.from("lotes" as any).update({
       nome: formEditLote.nome.trim(),
@@ -138,6 +145,7 @@ export default function PastosPage() {
 
   // === Delete Lote ===
   const handleDeleteLote = async (l: any) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     const count = animais.filter(a => a.lote_id === l.id).length;
     if (count > 0) { toast.error("Mova os animais para outro lote antes de excluir."); return; }
     if (!confirm(`Tem certeza que deseja excluir o lote "${l.nome}"?`)) return;

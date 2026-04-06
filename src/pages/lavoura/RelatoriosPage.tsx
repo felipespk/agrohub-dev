@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +17,7 @@ type Report = "none" | "custo" | "produtividade" | "insumos" | "maquinas";
 
 export default function RelatoriosPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [active, setActive] = useState<Report>("none");
   const [safras, setSafras] = useState<any[]>([]);
   const [selSafra, setSelSafra] = useState("all");
@@ -35,7 +37,7 @@ export default function RelatoriosPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("safras" as any).select("id, nome").eq("user_id", user.id).order("created_at", { ascending: false })
+    supabase.from("safras" as any).select("id, nome").eq("user_id", effectiveUserId).order("created_at", { ascending: false })
       .then(({ data }) => setSafras((data as any[]) || []));
   }, [user]);
 
@@ -49,16 +51,16 @@ export default function RelatoriosPage() {
 
   const loadCusto = async () => {
     if (!user) return;
-    let stQ = supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome), meta_produtividade").eq("user_id", user.id);
+    let stQ = supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome), meta_produtividade").eq("user_id", effectiveUserId);
     if (selSafra !== "all") stQ = stQ.eq("safra_id", selSafra);
     const { data: stData } = await stQ;
     const sts = (stData as any[]) || [];
     if (sts.length === 0) { setCustoData([]); return; }
 
     const stIds = sts.map((s: any) => s.id);
-    const { data: ativs } = await supabase.from("atividades_campo" as any).select("safra_talhao_id, custo_total, insumo_id, quantidade_insumo, horas_maquina, insumos:insumo_id(preco_unitario), maquinas:maquina_id(custo_hora)").eq("user_id", user.id).in("safra_talhao_id", stIds);
-    const { data: cols } = await supabase.from("colheitas" as any).select("safra_talhao_id, quantidade").eq("user_id", user.id).in("safra_talhao_id", stIds);
-    const { data: coms } = await supabase.from("comercializacao" as any).select("safra_id, valor_total").eq("user_id", user.id);
+    const { data: ativs } = await supabase.from("atividades_campo" as any).select("safra_talhao_id, custo_total, insumo_id, quantidade_insumo, horas_maquina, insumos:insumo_id(preco_unitario), maquinas:maquina_id(custo_hora)").eq("user_id", effectiveUserId).in("safra_talhao_id", stIds);
+    const { data: cols } = await supabase.from("colheitas" as any).select("safra_talhao_id, quantidade").eq("user_id", effectiveUserId).in("safra_talhao_id", stIds);
+    const { data: coms } = await supabase.from("comercializacao" as any).select("safra_id, valor_total").eq("user_id", effectiveUserId);
 
     const rows = sts.map((st: any) => {
       const area = Number(st.talhoes?.area_hectares) || 1;
@@ -79,13 +81,13 @@ export default function RelatoriosPage() {
 
   const loadProd = async () => {
     if (!user) return;
-    let stQ = supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome), safras:safra_id(nome), meta_produtividade").eq("user_id", user.id);
+    let stQ = supabase.from("safra_talhoes" as any).select("id, talhoes:talhao_id(nome), safras:safra_id(nome), meta_produtividade").eq("user_id", effectiveUserId);
     if (selSafra !== "all") stQ = stQ.eq("safra_id", selSafra);
     const { data: stData } = await stQ;
     const sts = (stData as any[]) || [];
     if (sts.length === 0) { setProdData([]); return; }
     const stIds = sts.map((s: any) => s.id);
-    const { data: cols } = await supabase.from("colheitas" as any).select("safra_talhao_id, produtividade_calculada").eq("user_id", user.id).in("safra_talhao_id", stIds);
+    const { data: cols } = await supabase.from("colheitas" as any).select("safra_talhao_id, produtividade_calculada").eq("user_id", effectiveUserId).in("safra_talhao_id", stIds);
     const rows = sts.map((st: any) => {
       const myCols = ((cols as any[]) || []).filter(c => c.safra_talhao_id === st.id);
       const avg = myCols.length > 0 ? myCols.reduce((s, c) => s + (Number(c.produtividade_calculada) || 0), 0) / myCols.length : 0;
@@ -98,7 +100,7 @@ export default function RelatoriosPage() {
     if (!user) return;
     const { data: ativs } = await supabase.from("atividades_campo" as any)
       .select("quantidade_insumo, insumos:insumo_id(nome, categoria, preco_unitario), safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome))")
-      .eq("user_id", user.id).not("insumo_id", "is", null);
+      .eq("user_id", effectiveUserId).not("insumo_id", "is", null);
     const list = (ativs as any[]) || [];
     const byInsumo: Record<string, { nome: string; categoria: string; qty: number; valor: number; talhaoMax: string; talhaoQty: number }> = {};
     list.forEach((a: any) => {
@@ -120,8 +122,8 @@ export default function RelatoriosPage() {
   const loadMaquinas = async () => {
     if (!user) return;
     const { data: ativs } = await supabase.from("atividades_campo" as any)
-      .select("horas_maquina, maquinas:maquina_id(id, nome, custo_hora)").eq("user_id", user.id).not("maquina_id", "is", null);
-    const { data: mants } = await supabase.from("manutencoes" as any).select("maquina_id, custo, maquinas:maquina_id(nome)").eq("user_id", user.id);
+      .select("horas_maquina, maquinas:maquina_id(id, nome, custo_hora)").eq("user_id", effectiveUserId).not("maquina_id", "is", null);
+    const { data: mants } = await supabase.from("manutencoes" as any).select("maquina_id, custo, maquinas:maquina_id(nome)").eq("user_id", effectiveUserId);
 
     const byMaq: Record<string, { nome: string; horas: number; custoOp: number; manuCount: number; custoManu: number }> = {};
     ((ativs as any[]) || []).forEach((a: any) => {

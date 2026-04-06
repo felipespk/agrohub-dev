@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ const CAT_BADGE: Record<string, string> = { vaca: "bg-pink-100 text-pink-700", t
 
 export default function SanidadePage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [meds, setMeds] = useState<any[]>([]);
   const [apps, setApps] = useState<any[]>([]);
   const [animais, setAnimais] = useState<any[]>([]);
@@ -43,11 +45,11 @@ export default function SanidadePage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [m, a, an, l, p] = await Promise.all([
-      supabase.from("medicamentos" as any).select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("aplicacoes_sanitarias" as any).select("*, animal:animais!animal_id(brinco, categoria), medicamento:medicamentos!medicamento_id(nome, tipo)").eq("user_id", user.id).order("data_aplicacao", { ascending: false }),
-      supabase.from("animais" as any).select("id, brinco, categoria, pasto_id, peso_atual, status").eq("user_id", user.id).eq("status", "ativo").order("brinco"),
-      supabase.from("lotes" as any).select("id, nome").eq("user_id", user.id).order("nome"),
-      supabase.from("pastos" as any).select("id, nome").eq("user_id", user.id).order("nome"),
+      supabase.from("medicamentos" as any).select("*").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("aplicacoes_sanitarias" as any).select("*, animal:animais!animal_id(brinco, categoria), medicamento:medicamentos!medicamento_id(nome, tipo)").eq("user_id", effectiveUserId).order("data_aplicacao", { ascending: false }),
+      supabase.from("animais" as any).select("id, brinco, categoria, pasto_id, peso_atual, status").eq("user_id", effectiveUserId).eq("status", "ativo").order("brinco"),
+      supabase.from("lotes" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("pastos" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
     ]);
     setMeds((m.data as any) || []);
     setApps((a.data as any) || []);
@@ -61,17 +63,19 @@ export default function SanidadePage() {
   // Fetch lote animals for preview
   useEffect(() => {
     if (formApp.modo !== "lote" || !formApp.lote_id || !user) { setLoteAnimais([]); return; }
-    supabase.from("animais" as any).select("id, brinco, categoria").eq("lote_id", formApp.lote_id).eq("status", "ativo").eq("user_id", user.id).order("brinco")
+    supabase.from("animais" as any).select("id, brinco, categoria").eq("lote_id", formApp.lote_id).eq("status", "ativo").eq("user_id", effectiveUserId).order("brinco")
       .then(({ data }) => setLoteAnimais((data as any) || []));
   }, [formApp.modo, formApp.lote_id, user]);
 
   const handleSaveMed = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formMed.nome.trim()) return;
     await supabase.from("medicamentos" as any).insert({ nome: formMed.nome.trim(), tipo: formMed.tipo, fabricante: formMed.fabricante || null, carencia_dias: parseInt(formMed.carencia_dias) || 0, user_id: user.id } as any);
     toast.success("Medicamento cadastrado!"); setOpenMed(false); setFormMed({ nome: "", tipo: "vacina", fabricante: "", carencia_dias: "0" }); fetchAll();
   };
 
   const handleSaveApp = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formApp.medicamento_id) { toast.error("Selecione um medicamento."); return; }
 
     if (formApp.modo === "individual") {
@@ -84,7 +88,7 @@ export default function SanidadePage() {
       toast.success("Aplicação registrada!");
     } else if (formApp.modo === "lote") {
       if (!formApp.lote_id) { toast.error("Selecione um lote."); return; }
-      const { data: animaisLote } = await supabase.from("animais" as any).select("id").eq("lote_id", formApp.lote_id).eq("status", "ativo").eq("user_id", user.id);
+      const { data: animaisLote } = await supabase.from("animais" as any).select("id").eq("lote_id", formApp.lote_id).eq("status", "ativo").eq("user_id", effectiveUserId);
       if (!animaisLote || animaisLote.length === 0) { toast.error("Nenhum animal no lote."); return; }
       setSaving(true); setSaveProgress(0);
       for (let i = 0; i < (animaisLote as any[]).length; i++) {

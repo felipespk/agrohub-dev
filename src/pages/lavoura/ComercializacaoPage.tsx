@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { criarLancamentoReceita } from "@/lib/financeiro-integration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ const contratoBadge: Record<string, { label: string; cls: string }> = {
 
 export default function ComercializacaoPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [vendas, setVendas] = useState<any[]>([]);
   const [safras, setSafras] = useState<any[]>([]);
   const [culturas, setCulturas] = useState<any[]>([]);
@@ -46,13 +48,13 @@ export default function ComercializacaoPage() {
     if (!user) return;
     const { data } = await supabase.from("comercializacao" as any)
       .select("*, safras:safra_id(nome), culturas:cultura_id(nome), contatos_financeiros:comprador_id(nome)")
-      .eq("user_id", user.id).order("data_venda", { ascending: false });
+      .eq("user_id", effectiveUserId).order("data_venda", { ascending: false });
     setVendas((data as any[]) || []);
-    const { data: s } = await supabase.from("safras" as any).select("id, nome").eq("user_id", user.id);
+    const { data: s } = await supabase.from("safras" as any).select("id, nome").eq("user_id", effectiveUserId);
     setSafras((s as any[]) || []);
-    const { data: c } = await supabase.from("culturas" as any).select("id, nome").eq("user_id", user.id);
+    const { data: c } = await supabase.from("culturas" as any).select("id, nome").eq("user_id", effectiveUserId);
     setCulturas((c as any[]) || []);
-    const { data: ct } = await supabase.from("contatos_financeiros").select("id, nome").eq("user_id", user.id).in("tipo", ["cliente", "ambos"]);
+    const { data: ct } = await supabase.from("contatos_financeiros").select("id, nome").eq("user_id", effectiveUserId).in("tipo", ["cliente", "ambos"]);
     setContatos((ct as any[]) || []);
   };
   useEffect(() => { load(); }, [user]);
@@ -91,6 +93,7 @@ export default function ComercializacaoPage() {
   const formValorTotal = form.quantidade && form.preco_unitario ? parseFloat(form.quantidade) * parseFloat(form.preco_unitario) : 0;
 
   const save = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !form.quantidade || !form.preco_unitario) return;
     const vt = formValorTotal;
     await supabase.from("comercializacao" as any).insert({
@@ -100,7 +103,7 @@ export default function ComercializacaoPage() {
     } as any);
     // Financial integration
     try {
-      const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", user.id).ilike("nome", "%lavoura%").limit(1);
+      const { data: cc } = await supabase.from("centros_custo").select("id").eq("user_id", effectiveUserId).ilike("nome", "%lavoura%").limit(1);
       if (cc && cc.length > 0) {
         const cultura = culturas.find(c => c.id === form.cultura_id);
         const comprador = contatos.find(c => c.id === form.comprador_id);
@@ -129,6 +132,7 @@ export default function ComercializacaoPage() {
   };
 
   const remove = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("comercializacao" as any).delete().eq("id", id);
     toast.success("Removida."); load();
   };

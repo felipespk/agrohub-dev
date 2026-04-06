@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFarm } from "@/contexts/FarmContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { useMasterPassword } from "@/hooks/useMasterPassword";
 import { Settings, Building2, Save, User, ShieldCheck, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 export default function ContaPage() {
   const { farmName, setFarmName, loading } = useFarm();
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const { hasPassword, refresh: refreshMasterPw } = useMasterPassword();
   const [nome, setNome] = useState(farmName);
 

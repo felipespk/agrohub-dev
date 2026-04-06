@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 
 export default function RacasPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [racas, setRacas] = useState<any[]>([]);
   const [contagens, setContagens] = useState<Record<string, number>>({});
   const [open, setOpen] = useState(false);
@@ -20,8 +22,8 @@ export default function RacasPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [r, a] = await Promise.all([
-      supabase.from("racas" as any).select("id, nome").eq("user_id", user.id).order("nome"),
-      supabase.from("animais" as any).select("raca_id").eq("user_id", user.id).eq("status", "ativo"),
+      supabase.from("racas" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("animais" as any).select("raca_id").eq("user_id", effectiveUserId).eq("status", "ativo"),
     ]);
     setRacas((r.data as any) || []);
     const counts: Record<string, number> = {};
@@ -32,6 +34,7 @@ export default function RacasPage() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleSave = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !nome.trim()) return;
     if (editId) {
       await supabase.from("racas" as any).update({ nome: nome.trim() } as any).eq("id", editId);
@@ -44,6 +47,7 @@ export default function RacasPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (contagens[id] > 0) { toast.error("Não é possível excluir raça com animais vinculados."); return; }
     if (!confirm("Excluir esta raça?")) return;
     await supabase.from("racas" as any).delete().eq("id", id);

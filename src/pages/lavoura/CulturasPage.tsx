@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ const DEFAULT_CULTURES = [
 
 export default function CulturasPage() {
   const { user } = useAuth();
+  const { effectiveUserId, isImpersonating } = useEffectiveUser();
   const [culturas, setCulturas] = useState<any[]>([]);
   const [variedades, setVariedades] = useState<Record<string, any[]>>({});
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -34,13 +36,13 @@ export default function CulturasPage() {
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase.from("culturas" as any).select("*").eq("user_id", user.id).order("nome");
+    const { data } = await supabase.from("culturas" as any).select("*").eq("user_id", effectiveUserId).order("nome");
     const list = (data as any[]) || [];
     if (list.length === 0) {
       // Seed defaults
       const inserts = DEFAULT_CULTURES.map(c => ({ ...c, user_id: user.id }));
       await supabase.from("culturas" as any).insert(inserts as any);
-      const { data: seeded } = await supabase.from("culturas" as any).select("*").eq("user_id", user.id).order("nome");
+      const { data: seeded } = await supabase.from("culturas" as any).select("*").eq("user_id", effectiveUserId).order("nome");
       setCulturas((seeded as any[]) || []);
       return;
     }
@@ -49,11 +51,12 @@ export default function CulturasPage() {
   useEffect(() => { load(); }, [user]);
 
   const loadVariedades = async (culturaId: string) => {
-    const { data } = await supabase.from("variedades_cultura" as any).select("*").eq("cultura_id", culturaId).eq("user_id", user!.id).order("nome");
+    const { data } = await supabase.from("variedades_cultura" as any).select("*").eq("cultura_id", culturaId).eq("user_id", effectiveUserId).order("nome");
     setVariedades(prev => ({ ...prev, [culturaId]: (data as any[]) || [] }));
   };
 
   const saveCultura = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formC.nome.trim()) return;
     const payload: any = { nome: formC.nome.trim(), unidade_colheita: formC.unidade_colheita, ciclo_medio_dias: formC.ciclo_medio_dias ? parseInt(formC.ciclo_medio_dias) : null, user_id: user.id };
     if (editCultura) {
@@ -67,17 +70,20 @@ export default function CulturasPage() {
   };
 
   const removeCultura = async (id: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("culturas" as any).delete().eq("id", id);
     toast.success("Cultura removida."); load();
   };
 
   const saveVariedade = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     if (!user || !formV.cultura_id || !formV.nome.trim()) return;
     await supabase.from("variedades_cultura" as any).insert({ cultura_id: formV.cultura_id, nome: formV.nome.trim(), user_id: user.id } as any);
     toast.success("Variedade adicionada!"); setOpenVariedade(false); loadVariedades(formV.cultura_id);
   };
 
   const removeVariedade = async (id: string, culturaId: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
     await supabase.from("variedades_cultura" as any).delete().eq("id", id);
     toast.success("Variedade removida."); loadVariedades(culturaId);
   };
