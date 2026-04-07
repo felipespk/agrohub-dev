@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 210 20% 98%;
     --foreground: 215 28% 17%;
 
     --card: 0 0% 100%;
@@ -30,11 +30,11 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 142 76% 36%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
 
     --sidebar-background: 150 38% 15%;
     --sidebar-foreground: 214 32% 91%;
@@ -102,7 +102,7 @@
 
 @layer components {
   .kpi-card {
-    @apply bg-card rounded-lg border border-border p-6;
+    @apply bg-card rounded-2xl border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow;
   }
 
   .page-header {
@@ -118,10 +118,10 @@
   }
 
   .form-section {
-    @apply bg-card rounded-lg border border-border p-6;
+    @apply bg-card rounded-2xl border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)];
   }
 
   .results-section {
-    @apply bg-muted/50 rounded-lg border-2 border-dashed border-primary/30 p-5;
+    @apply bg-muted/50 rounded-2xl border-2 border-dashed border-primary/30 p-5;
   }
 }
