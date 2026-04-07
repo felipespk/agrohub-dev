@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Map, Grid3X3, BookOpen, TrendingUp, CheckCircle, Package, Cog, Bug, AlertTriangle } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { getGreeting } from "@/lib/greeting";
 
 const COLORS = ["#16A34A", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316"];
 
@@ -25,6 +26,8 @@ export default function LavouraDashboard() {
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [custoData, setCustoData] = useState<any[]>([]);
+
+  const { greeting } = getGreeting(null, user?.email);
 
   const getDateRange = useCallback(() => {
     const now = new Date();
@@ -59,7 +62,6 @@ export default function LavouraDashboard() {
     if (!user) return;
     const { start: firstDay, end: lastDay } = getDateRange();
 
-    // KPIs
     let stQuery = supabase.from("safra_talhoes" as any).select("*, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome)").eq("user_id", effectiveUserId);
     if (selectedSafra !== "all") stQuery = stQuery.eq("safra_id", selectedSafra);
     const { data: stData } = await stQuery;
@@ -67,10 +69,8 @@ export default function LavouraDashboard() {
 
     const totalArea = safraTalhoes.reduce((s, st) => s + (Number((st as any).talhoes?.area_hectares) || 0), 0);
 
-    // Atividades no período
     const { count: atividadesCount } = await supabase.from("atividades_campo" as any).select("*", { count: "exact", head: true }).eq("user_id", effectiveUserId).gte("data", firstDay).lte("data", lastDay);
 
-    // Produtividade
     const stIds = safraTalhoes.map((st: any) => st.id);
     let prodMedia = 0;
     let prodData: any[] = [];
@@ -91,7 +91,6 @@ export default function LavouraDashboard() {
     }
     setProdByTalhao(prodData);
 
-    // Culturas distribution
     const cultMap: Record<string, number> = {};
     safraTalhoes.forEach((st: any) => {
       const cName = st.culturas?.nome || "Outra";
@@ -102,18 +101,16 @@ export default function LavouraDashboard() {
 
     setKpis({ area: totalArea, talhoes: safraTalhoes.length, atividades: atividadesCount || 0, produtividade: prodMedia });
 
-    // Recent activities
     const { data: acts } = await supabase.from("atividades_campo" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome)), insumos:insumo_id(nome)").eq("user_id", effectiveUserId).order("data", { ascending: false }).limit(5);
     setRecentActivities((acts as any[]) || []);
 
-    // Alerts
     const alertsList: any[] = [];
     const { data: lowStock } = await supabase.from("insumos" as any).select("nome, estoque_atual, estoque_minimo").eq("user_id", effectiveUserId);
     ((lowStock as any[]) || []).filter(i => Number(i.estoque_atual) < Number(i.estoque_minimo)).forEach(i => {
       alertsList.push({ icon: "package", text: `Estoque baixo: ${i.nome}`, color: "red" });
     });
-    const today = new Date().toISOString().split("T")[0];
-    const { data: overdueMaint } = await supabase.from("manutencoes" as any).select("*, maquinas:maquina_id(nome)").eq("user_id", effectiveUserId).lt("proxima_manutencao", today).not("proxima_manutencao", "is", null);
+    const todayStr = new Date().toISOString().split("T")[0];
+    const { data: overdueMaint } = await supabase.from("manutencoes" as any).select("*, maquinas:maquina_id(nome)").eq("user_id", effectiveUserId).lt("proxima_manutencao", todayStr).not("proxima_manutencao", "is", null);
     ((overdueMaint as any[]) || []).forEach(m => {
       alertsList.push({ icon: "cog", text: `Manutenção atrasada: ${m.maquinas?.nome}`, color: "red" });
     });
@@ -124,7 +121,6 @@ export default function LavouraDashboard() {
     });
     setAlerts(alertsList);
 
-    // Custo de produção
     if (safraTalhoes.length > 0) {
       const stIds2 = safraTalhoes.map((st: any) => st.id);
       const { data: ativsCusto } = await supabase.from("atividades_campo" as any)
@@ -155,18 +151,21 @@ export default function LavouraDashboard() {
 
   const tipoBadge = (tipo: string) => {
     const map: Record<string, string> = {
-      plantio: "bg-green-800 text-white", adubacao: "bg-blue-100 text-blue-800",
-      pulverizacao: "bg-red-100 text-red-800", irrigacao: "bg-cyan-100 text-cyan-800",
-      capina: "bg-yellow-100 text-yellow-800", colheita: "bg-amber-100 text-amber-800",
-      outro: "bg-gray-100 text-gray-800",
+      plantio: "bg-primary text-primary-foreground", adubacao: "bg-[hsl(217,91%,60%)]/10 text-[hsl(217,91%,60%)]",
+      pulverizacao: "bg-destructive/10 text-destructive", irrigacao: "bg-[hsl(190,80%,50%)]/10 text-[hsl(190,80%,50%)]",
+      capina: "bg-warning/10 text-warning", colheita: "bg-[hsl(38,92%,50%)]/10 text-[hsl(38,92%,50%)]",
+      outro: "bg-muted text-muted-foreground",
     };
     return map[tipo] || map.outro;
   };
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard da Lavoura</h1>
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-[28px] font-bold text-foreground">{greeting}</h1>
+          <p className="text-sm text-muted-foreground mt-1">Aqui está o resumo da sua lavoura.</p>
+        </div>
         <div className="flex flex-wrap items-end gap-3">
           <Select value={selectedSafra} onValueChange={setSelectedSafra}>
             <SelectTrigger className="w-[220px]"><SelectValue placeholder="Safra" /></SelectTrigger>
@@ -202,21 +201,32 @@ export default function LavouraDashboard() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Área Plantada - gradient */}
+        <div className="rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]" style={{ background: "linear-gradient(135deg, #16A34A, #166534)" }}>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+              <Map className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-white/70 font-medium">Área Plantada</p>
+              <p className="text-[28px] font-bold text-white">{kpis.area.toLocaleString("pt-BR", { minimumFractionDigits: 1 })} ha</p>
+            </div>
+          </div>
+        </div>
         {[
-          { label: "Área Plantada", value: `${kpis.area.toLocaleString("pt-BR", { minimumFractionDigits: 1 })} ha`, icon: Map, color: "text-green-600", bg: "bg-green-50" },
-          { label: "Talhões Ativos", value: kpis.talhoes, icon: Grid3X3, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Atividades no Mês", value: kpis.atividades, icon: BookOpen, color: "text-orange-600", bg: "bg-orange-50" },
-          { label: "Produtividade Média", value: kpis.produtividade > 0 ? `${kpis.produtividade.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} sacas/ha` : "—", icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
+          { label: "Talhões Ativos", value: kpis.talhoes, icon: Grid3X3, color: "#3B82F6", bg: "#DBEAFE" },
+          { label: "Atividades no Mês", value: kpis.atividades, icon: BookOpen, color: "#F97316", bg: "#FFF7ED" },
+          { label: "Produtividade Média", value: kpis.produtividade > 0 ? `${kpis.produtividade.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} sacas/ha` : "—", icon: TrendingUp, color: "#16A34A", bg: "#DCFCE7" },
         ].map((kpi) => (
-          <Card key={kpi.label} className="border-[#E5E7EB]">
+          <Card key={kpi.label}>
             <CardContent className="p-5">
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-full ${kpi.bg} flex items-center justify-center`}>
-                  <kpi.icon className={`h-6 w-6 ${kpi.color}`} />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: kpi.bg }}>
+                  <kpi.icon className="h-6 w-6" style={{ color: kpi.color }} />
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">{kpi.label}</p>
-                  <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
+                  <p className="text-[24px] font-bold text-foreground">{kpi.value}</p>
                 </div>
               </div>
             </CardContent>
@@ -226,8 +236,8 @@ export default function LavouraDashboard() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-[#E5E7EB]">
-          <CardHeader><CardTitle className="text-base">Produtividade por Talhão</CardTitle></CardHeader>
+        <Card className="lg:col-span-2">
+          <CardHeader><CardTitle>Produtividade por Talhão</CardTitle></CardHeader>
           <CardContent>
             {prodByTalhao.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Registre colheitas para ver a produtividade por talhão.</p>
@@ -238,14 +248,14 @@ export default function LavouraDashboard() {
                   <XAxis type="number" tick={{ fontSize: 12 }} />
                   <YAxis type="category" dataKey="nome" tick={{ fontSize: 12 }} width={100} />
                   <Tooltip formatter={(v: number) => `${v.toFixed(1)} sacas/ha`} />
-                  <Bar dataKey="produtividade" fill="#16A34A" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="produtividade" fill="#16A34A" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
-        <Card className="border-[#E5E7EB]">
-          <CardHeader><CardTitle className="text-base">Culturas na Safra</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle>Culturas na Safra</CardTitle></CardHeader>
           <CardContent>
             {culturasDist.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Vincule talhões a uma safra para ver a distribuição.</p>
@@ -265,18 +275,18 @@ export default function LavouraDashboard() {
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-[#E5E7EB]">
-          <CardHeader><CardTitle className="text-base">Últimas Atividades</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle>Últimas Atividades</CardTitle></CardHeader>
           <CardContent>
             {recentActivities.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">Nenhuma atividade registrada.</p>
             ) : (
               <div className="space-y-2">
                 {recentActivities.map((a: any) => (
-                  <div key={a.id} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+                  <div key={a.id} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
                     <span className="text-sm text-muted-foreground w-20 shrink-0">{new Date(a.data).toLocaleDateString("pt-BR")}</span>
                     <span className="text-sm font-medium truncate">{a.safra_talhoes?.talhoes?.nome || "—"}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${tipoBadge(a.tipo)}`}>{a.tipo}</span>
+                    <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium ${tipoBadge(a.tipo)}`}>{a.tipo}</span>
                     <span className="text-sm text-muted-foreground truncate ml-auto">{a.insumos?.nome || ""}</span>
                   </div>
                 ))}
@@ -284,21 +294,21 @@ export default function LavouraDashboard() {
             )}
           </CardContent>
         </Card>
-        <Card className="border-[#E5E7EB]">
-          <CardHeader><CardTitle className="text-base">Alertas</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle>Alertas</CardTitle></CardHeader>
           <CardContent>
             {alerts.length === 0 ? (
               <div className="flex flex-col items-center py-6 gap-2">
-                <CheckCircle className="h-10 w-10 text-green-500" />
+                <CheckCircle className="h-10 w-10 text-primary" />
                 <p className="text-sm text-muted-foreground">Tudo em ordem!</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {alerts.map((a, i) => (
-                  <div key={i} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
-                    {a.icon === "package" && <Package className="h-4 w-4 text-red-500 shrink-0" />}
-                    {a.icon === "cog" && <Cog className="h-4 w-4 text-red-500 shrink-0" />}
-                    {a.icon === "bug" && <Bug className="h-4 w-4 text-red-500 shrink-0" />}
+                  <div key={i} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
+                    {a.icon === "package" && <Package className="h-4 w-4 text-destructive shrink-0" />}
+                    {a.icon === "cog" && <Cog className="h-4 w-4 text-destructive shrink-0" />}
+                    {a.icon === "bug" && <Bug className="h-4 w-4 text-destructive shrink-0" />}
                     <span className="text-sm text-foreground">{a.text}</span>
                   </div>
                 ))}
@@ -310,25 +320,25 @@ export default function LavouraDashboard() {
 
       {/* Custo de Produção */}
       {custoData.length > 0 && (
-        <Card className="border-[#E5E7EB]">
-          <CardHeader><CardTitle className="text-base">Custo de Produção por Talhão</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle>Custo de Produção por Talhão</CardTitle></CardHeader>
           <CardContent>
             <Table>
-              <TableHeader><TableRow className="bg-[#F9FAFB]">
-                <TableHead className="text-[11px] uppercase">Talhão</TableHead>
-                <TableHead className="text-[11px] uppercase">Cultura</TableHead>
-                <TableHead className="text-[11px] uppercase">Área (ha)</TableHead>
-                <TableHead className="text-[11px] uppercase">Custo Insumos</TableHead>
-                <TableHead className="text-[11px] uppercase">Custo Máquinas</TableHead>
-                <TableHead className="text-[11px] uppercase">Custo Total</TableHead>
-                <TableHead className="text-[11px] uppercase">Custo/ha</TableHead>
-                <TableHead className="text-[11px] uppercase">Produção</TableHead>
-                <TableHead className="text-[11px] uppercase">Custo/saca</TableHead>
-                <TableHead className="text-[11px] uppercase">Resultado</TableHead>
+              <TableHeader><TableRow>
+                <TableHead>Talhão</TableHead>
+                <TableHead>Cultura</TableHead>
+                <TableHead>Área (ha)</TableHead>
+                <TableHead>Custo Insumos</TableHead>
+                <TableHead>Custo Máquinas</TableHead>
+                <TableHead>Custo Total</TableHead>
+                <TableHead>Custo/ha</TableHead>
+                <TableHead>Produção</TableHead>
+                <TableHead>Custo/saca</TableHead>
+                <TableHead>Resultado</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {custoData.map((r: any, i: number) => (
-                  <TableRow key={i} className="hover:bg-[#F8FAFC]">
+                  <TableRow key={i}>
                     <TableCell className="font-medium">{r.talhao}</TableCell>
                     <TableCell>{r.cultura}</TableCell>
                     <TableCell>{r.area.toLocaleString("pt-BR", { minimumFractionDigits: 1 })}</TableCell>
@@ -338,13 +348,13 @@ export default function LavouraDashboard() {
                     <TableCell>R$ {r.custoHa.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>{r.producao > 0 ? r.producao.toLocaleString("pt-BR") + " sacas" : "—"}</TableCell>
                     <TableCell>{r.custoSaca > 0 ? `R$ ${r.custoSaca.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}</TableCell>
-                    <TableCell className={r.resultado >= 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>R$ {r.resultado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className={r.resultado >= 0 ? "text-primary font-medium" : "text-destructive font-medium"}>R$ {r.resultado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            <div className="text-sm text-muted-foreground bg-[#F9FAFB] p-3 rounded-md mt-3">
-              Custo Total: <strong>R$ {custoData.reduce((s: number, r: any) => s + r.custoTotal, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong> | Produção Total: <strong>{custoData.reduce((s: number, r: any) => s + r.producao, 0).toLocaleString("pt-BR")} sacas</strong> | Resultado: <strong className={custoData.reduce((s: number, r: any) => s + r.resultado, 0) >= 0 ? "text-green-600" : "text-red-600"}>R$ {custoData.reduce((s: number, r: any) => s + r.resultado, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
+            <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-xl mt-3">
+              Custo Total: <strong>R$ {custoData.reduce((s: number, r: any) => s + r.custoTotal, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong> | Produção Total: <strong>{custoData.reduce((s: number, r: any) => s + r.producao, 0).toLocaleString("pt-BR")} sacas</strong> | Resultado: <strong className={custoData.reduce((s: number, r: any) => s + r.resultado, 0) >= 0 ? "text-primary" : "text-destructive"}>R$ {custoData.reduce((s: number, r: any) => s + r.resultado, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
             </div>
           </CardContent>
         </Card>

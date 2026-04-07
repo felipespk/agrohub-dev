@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { List, Scale, Baby, Skull, CheckCircle, AlertTriangle } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { getGreeting } from "@/lib/greeting";
 
 const CATEGORY_COLORS: Record<string, string> = {
   vaca: "#EC4899", touro: "#3B82F6", bezerro: "#34D399", bezerra: "#6EE7B7",
@@ -33,6 +34,8 @@ export default function GadoDashboard() {
   const [rendimento, setRendimento] = useState(52);
   const [valorArroba, setValorArroba] = useState(300);
   const [dataCotacao, setDataCotacao] = useState<string | null>(null);
+
+  const { greeting } = getGreeting(null, user?.email);
 
   const getDateRange = useCallback(() => {
     const now = new Date();
@@ -85,22 +88,14 @@ export default function GadoDashboard() {
   const totalArrobas = animaisAtivos.reduce((s, a) => s + ((Number(a.peso_atual) || 0) * rendimento / 100 / 15), 0);
   const valorEstimado = totalArrobas * valorArroba;
 
-  // Cotação desatualizada?
   const cotacaoDesatualizada = dataCotacao ? (Date.now() - new Date(dataCotacao + "T12:00:00").getTime()) > 7 * 86400000 : true;
 
   const recentMovs = movs.slice(0, 5);
 
-  const kpis = [
-    { label: "TOTAL DE CABEÇAS", value: totalCabecas.toString(), icon: List, color: "text-green-600", bgColor: "bg-green-100" },
-    { label: "PESO MÉDIO", value: `${pesoMedio.toFixed(1)} kg`, icon: Scale, color: "text-blue-600", bgColor: "bg-blue-100" },
-    { label: "NASCIMENTOS", value: nascimentos.toString(), icon: Baby, color: "text-emerald-600", bgColor: "bg-emerald-100" },
-    { label: "MORTES", value: mortes.toString(), icon: Skull, color: "text-red-600", bgColor: "bg-red-100" },
-  ];
-
   const tipoBadge: Record<string, string> = {
-    compra: "bg-blue-100 text-blue-700", venda: "bg-green-100 text-green-700",
-    nascimento: "bg-cyan-100 text-cyan-700", morte: "bg-red-100 text-red-700",
-    transferencia: "bg-gray-100 text-gray-700",
+    compra: "bg-[hsl(217,91%,60%)]/10 text-[hsl(217,91%,60%)]", venda: "bg-[hsl(160,84%,39%)]/10 text-[hsl(160,84%,39%)]",
+    nascimento: "bg-[hsl(190,80%,50%)]/10 text-[hsl(190,80%,50%)]", morte: "bg-[hsl(0,84%,60%)]/10 text-[hsl(0,84%,60%)]",
+    transferencia: "bg-muted text-muted-foreground",
   };
   const tipoLabel: Record<string, string> = {
     compra: "Compra", venda: "Venda", nascimento: "Nascimento", morte: "Morte", transferencia: "Transferência",
@@ -108,8 +103,11 @@ export default function GadoDashboard() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard Pecuário</h1>
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-[28px] font-bold text-foreground">{greeting}</h1>
+          <p className="text-sm text-muted-foreground mt-1">Aqui está o resumo do seu rebanho.</p>
+        </div>
         <div className="flex flex-wrap items-end gap-3">
           <Select value={periodo} onValueChange={setPeriodo}>
             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
@@ -138,16 +136,32 @@ export default function GadoDashboard() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map(k => (
-          <Card key={k.label} className="border-[#E5E7EB]">
+        {/* Total de Cabeças - gradient */}
+        <div className="rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]" style={{ background: "linear-gradient(135deg, #16A34A, #166534)" }}>
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <List className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-white/70 font-semibold">Total de Cabeças</p>
+              <p className="text-[32px] font-bold text-white leading-tight">{totalCabecas}</p>
+            </div>
+          </div>
+        </div>
+        {[
+          { label: "Peso Médio", value: `${pesoMedio.toFixed(1)} kg`, icon: Scale, color: "#3B82F6", bg: "#DBEAFE" },
+          { label: "Nascimentos", value: nascimentos.toString(), icon: Baby, color: "#10B981", bg: "#D1FAE5" },
+          { label: "Mortes", value: mortes.toString(), icon: Skull, color: "#EF4444", bg: "#FEE2E2" },
+        ].map(k => (
+          <Card key={k.label}>
             <CardContent className="pt-6 pb-4 px-5">
               <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-full ${k.bgColor} flex items-center justify-center shrink-0`}>
-                  <k.icon className={`h-5 w-5 ${k.color}`} />
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: k.bg }}>
+                  <k.icon className="h-5 w-5" style={{ color: k.color }} />
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">{k.label}</p>
-                  <p className="text-[26px] font-bold text-foreground leading-tight">{k.value}</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{k.label}</p>
+                  <p className="text-[28px] font-bold text-foreground leading-tight">{k.value}</p>
                 </div>
               </div>
             </CardContent>
@@ -157,8 +171,8 @@ export default function GadoDashboard() {
 
       {/* Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-[#E5E7EB]">
-          <CardHeader><CardTitle className="text-base">Composição do Rebanho</CardTitle></CardHeader>
+        <Card className="lg:col-span-2">
+          <CardHeader><CardTitle>Composição do Rebanho</CardTitle></CardHeader>
           <CardContent>
             {composicao.length === 0 ? (
               <p className="text-muted-foreground text-sm text-center py-12">Nenhum animal cadastrado</p>
@@ -196,8 +210,8 @@ export default function GadoDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-[#E5E7EB]">
-          <CardHeader><CardTitle className="text-base">Valor Estimado do Rebanho</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle>Valor Estimado do Rebanho</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">Total de Arrobas</p>
@@ -205,7 +219,7 @@ export default function GadoDashboard() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Valor Estimado</p>
-              <p className="text-2xl font-bold text-green-600">{fmt(valorEstimado)}</p>
+              <p className="text-2xl font-bold text-primary">{fmt(valorEstimado)}</p>
             </div>
             <div className="text-xs text-muted-foreground space-y-1">
               <p>Base: rendimento {rendimento}% | @ {fmt(valorArroba)}</p>
@@ -214,7 +228,7 @@ export default function GadoDashboard() {
               )}
             </div>
             {cotacaoDesatualizada && (
-              <div className="flex items-center gap-2 text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-md px-3 py-2">
+              <div className="flex items-center gap-2 text-xs bg-warning/10 text-warning border border-warning/20 rounded-xl px-3 py-2">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 <span>Cotação desatualizada — atualize nas Configurações.</span>
               </div>
@@ -225,33 +239,35 @@ export default function GadoDashboard() {
 
       {/* Row 3 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-[#E5E7EB]">
-          <CardHeader><CardTitle className="text-base flex items-center gap-2">Próximas Vacinas
-            {vacinas.length > 0 && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{vacinas.length}</span>}
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2">Próximas Vacinas
+            {vacinas.length > 0 && <span className="text-xs bg-warning/10 text-warning px-2 py-0.5 rounded-full">{vacinas.length}</span>}
           </CardTitle></CardHeader>
           <CardContent>
             {vacinas.length === 0 ? (
               <div className="flex flex-col items-center py-8 text-muted-foreground">
-                <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
+                <CheckCircle className="h-8 w-8 text-primary mb-2" />
                 <p className="text-sm">Nenhuma vacina pendente</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b text-muted-foreground text-left">
-                    <th className="pb-2 font-medium">Animal</th><th className="pb-2 font-medium">Medicamento</th>
-                    <th className="pb-2 font-medium">Próx. Dose</th><th className="pb-2 font-medium">Dias</th>
+                    <th className="pb-2 font-semibold text-[11px] uppercase tracking-wider">Animal</th>
+                    <th className="pb-2 font-semibold text-[11px] uppercase tracking-wider">Medicamento</th>
+                    <th className="pb-2 font-semibold text-[11px] uppercase tracking-wider">Próx. Dose</th>
+                    <th className="pb-2 font-semibold text-[11px] uppercase tracking-wider">Dias</th>
                   </tr></thead>
                   <tbody>
                     {vacinas.map((v: any) => {
                       const dias = Math.ceil((new Date(v.proxima_dose).getTime() - Date.now()) / 86400000);
-                      const bg = dias < 0 ? "bg-red-50" : dias < 3 ? "bg-yellow-50" : "";
+                      const bgClass = dias < 0 ? "bg-destructive/5" : dias < 3 ? "bg-warning/5" : "";
                       return (
-                        <tr key={v.id} className={`border-b ${bg}`}>
-                          <td className="py-2 font-mono">{v.animal?.brinco}</td>
-                          <td className="py-2">{v.medicamento?.nome}</td>
-                          <td className="py-2">{new Date(v.proxima_dose + "T12:00:00").toLocaleDateString("pt-BR")}</td>
-                          <td className={`py-2 font-bold ${dias < 0 ? "text-red-600" : dias < 3 ? "text-yellow-600" : ""}`}>{dias}d</td>
+                        <tr key={v.id} className={`border-b border-border ${bgClass}`}>
+                          <td className="py-3 font-mono">{v.animal?.brinco}</td>
+                          <td className="py-3">{v.medicamento?.nome}</td>
+                          <td className="py-3">{new Date(v.proxima_dose + "T12:00:00").toLocaleDateString("pt-BR")}</td>
+                          <td className={`py-3 font-bold ${dias < 0 ? "text-destructive" : dias < 3 ? "text-warning" : ""}`}>{dias}d</td>
                         </tr>
                       );
                     })}
@@ -262,8 +278,8 @@ export default function GadoDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-[#E5E7EB]">
-          <CardHeader><CardTitle className="text-base">Últimas Movimentações</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle>Últimas Movimentações</CardTitle></CardHeader>
           <CardContent>
             {recentMovs.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground py-8">Nenhuma movimentação no período</p>
@@ -271,16 +287,18 @@ export default function GadoDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b text-muted-foreground text-left">
-                    <th className="pb-2 font-medium">Data</th><th className="pb-2 font-medium">Tipo</th>
-                    <th className="pb-2 font-medium">Qtd</th><th className="pb-2 font-medium">Valor</th>
+                    <th className="pb-2 font-semibold text-[11px] uppercase tracking-wider">Data</th>
+                    <th className="pb-2 font-semibold text-[11px] uppercase tracking-wider">Tipo</th>
+                    <th className="pb-2 font-semibold text-[11px] uppercase tracking-wider">Qtd</th>
+                    <th className="pb-2 font-semibold text-[11px] uppercase tracking-wider">Valor</th>
                   </tr></thead>
                   <tbody>
                     {recentMovs.map((m: any) => (
-                      <tr key={m.id} className="border-b">
-                        <td className="py-2">{new Date(m.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</td>
-                        <td className="py-2"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${tipoBadge[m.tipo] || ""}`}>{tipoLabel[m.tipo]}</span></td>
-                        <td className="py-2">{m.quantidade}</td>
-                        <td className="py-2">{m.valor_total ? fmt(Number(m.valor_total)) : "—"}</td>
+                      <tr key={m.id} className="border-b border-border">
+                        <td className="py-3">{new Date(m.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</td>
+                        <td className="py-3"><span className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium ${tipoBadge[m.tipo] || ""}`}>{tipoLabel[m.tipo]}</span></td>
+                        <td className="py-3">{m.quantidade}</td>
+                        <td className="py-3">{m.valor_total ? fmt(Number(m.valor_total)) : "—"}</td>
                       </tr>
                     ))}
                   </tbody>

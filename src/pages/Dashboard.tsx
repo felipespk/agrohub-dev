@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/contexts/AppContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { formatDateBR } from "@/lib/date";
+import { getGreeting } from "@/lib/greeting";
 
 const PIE_COLORS = [
   "hsl(231, 71%, 55%)", "hsl(160, 84%, 39%)", "hsl(38, 92%, 50%)",
@@ -19,8 +21,11 @@ const EMPTY_COLOR = "hsl(214, 32%, 91%)";
 
 export default function Dashboard() {
   const { recebimentos, saidas, quebras, capacidadeSilo, setCapacidadeSilo } = useAppData();
+  const { user } = useAuth();
   const [editingCap, setEditingCap] = useState(false);
   const [capInput, setCapInput] = useState(String(capacidadeSilo / 1000));
+
+  const { greeting } = getGreeting(null, user?.email);
 
   const totalRecebido = recebimentos.reduce((s, r) => s + r.peso_liquido, 0);
   const totalBruto = recebimentos.reduce((s, r) => s + r.peso_bruto, 0);
@@ -69,15 +74,21 @@ export default function Dashboard() {
   }, [recebimentos, saidas]);
 
   const kpis = [
-    { icon: Package, label: "Estoque Atual", value: `${(totalEstoque / 1000).toFixed(1)} ton`, sub: `${totalEstoque.toLocaleString("pt-BR")} Kg`, trend: +5.2, color: "#3C50E0", bg: "#EEF2FF" },
-    { icon: Scale, label: "Volume Bruto", value: `${(totalBruto / 1000).toFixed(1)} ton`, sub: `${totalBruto.toLocaleString("pt-BR")} Kg`, trend: +12.0, color: "#10B981", bg: "#D1FAE5" },
-    { icon: ArrowDownToLine, label: "Recebido (Ajustado)", value: `${(totalRecebido / 1000).toFixed(1)} ton`, sub: `${recebimentos.length} entradas`, trend: +12.0, color: "#3B82F6", bg: "#DBEAFE" },
-    { icon: ArrowUpFromLine, label: "Expedido no Mês", value: `${(totalExpedido / 1000).toFixed(1)} ton`, sub: `${saidas.length} saídas`, trend: -3.1, color: "#F59E0B", bg: "#FEF3C7" },
-    { icon: AlertTriangle, label: "Quebra Técnica", value: `${Math.abs(totalQuebra).toLocaleString("pt-BR")} Kg`, sub: `${quebras.length} registros`, trend: -1.5, color: "#EF4444", bg: "#FEE2E2" },
+    { icon: Package, label: "Estoque Atual", value: `${(totalEstoque / 1000).toFixed(1)} ton`, sub: `${totalEstoque.toLocaleString("pt-BR")} Kg`, trend: +5.2, color: "#3C50E0", bg: "#EEF2FF", gradient: false },
+    { icon: Scale, label: "Volume Bruto", value: `${(totalBruto / 1000).toFixed(1)} ton`, sub: `${totalBruto.toLocaleString("pt-BR")} Kg`, trend: +12.0, color: "#10B981", bg: "#D1FAE5", gradient: true },
+    { icon: ArrowDownToLine, label: "Recebido (Ajustado)", value: `${(totalRecebido / 1000).toFixed(1)} ton`, sub: `${recebimentos.length} entradas`, trend: +12.0, color: "#3B82F6", bg: "#DBEAFE", gradient: false },
+    { icon: ArrowUpFromLine, label: "Expedido no Mês", value: `${(totalExpedido / 1000).toFixed(1)} ton`, sub: `${saidas.length} saídas`, trend: -3.1, color: "#F59E0B", bg: "#FEF3C7", gradient: false },
+    { icon: AlertTriangle, label: "Quebra Técnica", value: `${Math.abs(totalQuebra).toLocaleString("pt-BR")} Kg`, sub: `${quebras.length} registros`, trend: -1.5, color: "#EF4444", bg: "#FEE2E2", gradient: false },
   ];
 
   return (
     <div className="animate-fade-in space-y-6">
+      {/* Greeting */}
+      <div>
+        <h1 className="text-[28px] font-bold text-foreground">{greeting}</h1>
+        <p className="text-sm text-muted-foreground mt-1">Aqui está o resumo do seu secador.</p>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {kpis.map(kpi => (
           <KpiCard key={kpi.label} {...kpi} />
@@ -86,7 +97,7 @@ export default function Dashboard() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 form-section">
-          <h2 className="font-semibold text-base text-foreground mb-4">Fluxo de Entrada vs Saída — 30 dias</h2>
+          <h2 className="font-bold text-lg text-foreground mb-4">Fluxo de Entrada vs Saída — 30 dias</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={areaData}>
@@ -103,7 +114,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                 <XAxis dataKey="dia" fontSize={11} tick={{ fill: "#94A3B8" }} interval={4} />
                 <YAxis fontSize={11} tick={{ fill: "#94A3B8" }} tickFormatter={(v: number) => v > 0 ? `${(v / 1000).toFixed(0)}t` : "0"} />
-                <Tooltip formatter={(value: number) => `${value.toLocaleString("pt-BR")} Kg`} />
+                <Tooltip formatter={(value: number) => `${value.toLocaleString("pt-BR")} Kg`} contentStyle={{ borderRadius: 12, border: "1px solid hsl(220, 13%, 91%)", fontSize: 13 }} />
                 <Legend />
                 <Area type="monotone" dataKey="entrada" name="Entrada" stroke="#3C50E0" fill="url(#gradEntrada)" strokeWidth={2} />
                 <Area type="monotone" dataKey="saida" name="Saída" stroke="#10B981" fill="url(#gradSaida)" strokeWidth={2} />
@@ -114,10 +125,10 @@ export default function Dashboard() {
 
         <div className="form-section">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-base text-foreground">Ocupação do Silo</h2>
+            <h2 className="font-bold text-lg text-foreground">Ocupação do Silo</h2>
             {editingCap ? (
               <div className="flex items-center gap-2">
-                <Input type="number" className="w-28 h-8 text-sm" value={capInput} onChange={e => setCapInput(e.target.value)} placeholder="Ton" />
+                <Input type="number" className="w-28 h-8 text-sm rounded-lg" value={capInput} onChange={e => setCapInput(e.target.value)} placeholder="Ton" />
                 <span className="text-xs text-muted-foreground">ton</span>
                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { const v = parseFloat(capInput); if (v > 0) { setCapacidadeSilo(v * 1000); } setEditingCap(false); }}>
                   <Check className="h-4 w-4" />
@@ -151,23 +162,23 @@ export default function Dashboard() {
       </div>
 
       <div className="form-section">
-        <h2 className="font-semibold text-base text-foreground mb-4">Últimas Movimentações</h2>
-        <div className="overflow-x-auto">
+        <h2 className="font-bold text-lg text-foreground mb-4">Últimas Movimentações</h2>
+        <div className="overflow-x-auto rounded-2xl">
           <Table>
-            <TableHeader><TableRow className="bg-muted/50">
-              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Data</TableHead>
-              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Tipo</TableHead>
-              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Placa</TableHead>
-              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Descrição</TableHead>
-              <TableHead className="text-xs uppercase tracking-wider font-semibold text-muted-foreground text-right">Kgs</TableHead>
+            <TableHeader><TableRow className="bg-[hsl(210,20%,98%)]">
+              <TableHead>Data</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Placa</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead className="text-right">Kgs</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {ultimasMovimentacoes.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma movimentação registrada.</TableCell></TableRow>
               ) : ultimasMovimentacoes.map(m => (
-                <TableRow key={m.id} className="hover:bg-muted/30 border-b border-[#F1F5F9]">
+                <TableRow key={m.id}>
                   <TableCell className="text-sm">{formatDateBR(m.data)}</TableCell>
-                  <TableCell><Badge variant={m.tipo === "Entrada" ? "default" : "secondary"} className="text-[10px]">{m.tipo}</Badge></TableCell>
+                  <TableCell><Badge variant={m.tipo === "Entrada" ? "default" : "secondary"} className="text-[11px] rounded-full px-2.5 py-0.5 font-medium">{m.tipo}</Badge></TableCell>
                   <TableCell className="font-mono text-sm">{m.placa}</TableCell>
                   <TableCell className="text-sm">{m.descricao}</TableCell>
                   <TableCell className="text-right font-semibold text-sm">{m.kgs.toLocaleString("pt-BR")}</TableCell>
@@ -181,21 +192,42 @@ export default function Dashboard() {
   );
 }
 
-function KpiCard({ icon: Icon, label, value, sub, trend, color, bg }: { icon: any; label: string; value: string; sub: string; trend: number; color: string; bg: string }) {
+function KpiCard({ icon: Icon, label, value, sub, trend, color, bg, gradient }: { icon: any; label: string; value: string; sub: string; trend: number; color: string; bg: string; gradient: boolean }) {
   const TrendIcon = trend >= 0 ? TrendingUp : TrendingDown;
   const isPositive = trend >= 0;
+
+  if (gradient) {
+    return (
+      <div className="rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]" style={{ background: "linear-gradient(135deg, #16A34A, #166534)" }}>
+        <div className="flex items-center gap-4 mb-3">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-white/20">
+            <Icon className="h-[22px] w-[22px] text-white" />
+          </div>
+          <span className="text-sm font-medium text-white/80">{label}</span>
+        </div>
+        <p className="text-[32px] font-bold text-white leading-none">{value}</p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-xs text-white/60">{sub}</p>
+          <span className="inline-flex items-center gap-0.5 text-[13px] font-medium px-2 py-0.5 rounded-full bg-white/20 text-white">
+            <TrendIcon className="h-3.5 w-3.5" />{Math.abs(trend)}%
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="kpi-card">
       <div className="flex items-center gap-4 mb-3">
-        <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: bg }}>
+        <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: bg }}>
           <Icon className="h-[22px] w-[22px]" style={{ color }} />
         </div>
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
       </div>
       <p className="text-[28px] font-bold text-foreground leading-none">{value}</p>
       <div className="flex items-center justify-between mt-2">
         <p className="text-xs text-muted-foreground">{sub}</p>
-        <span className={`inline-flex items-center gap-0.5 text-[13px] font-medium px-2 py-0.5 rounded-full ${isPositive ? "text-[#10B981] bg-[#D1FAE5]" : "text-[#EF4444] bg-[#FEE2E2]"}`}>
+        <span className={`inline-flex items-center gap-0.5 text-[13px] font-medium px-2 py-0.5 rounded-full ${isPositive ? "text-[hsl(160,84%,39%)] bg-[hsl(160,84%,39%)]/10" : "text-[hsl(0,84%,60%)] bg-[hsl(0,84%,60%)]/10"}`}>
           <TrendIcon className="h-3.5 w-3.5" />{Math.abs(trend)}%
         </span>
       </div>
