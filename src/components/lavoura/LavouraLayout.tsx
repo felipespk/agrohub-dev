@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { LavouraSidebar } from "./LavouraSidebar";
-import { Bell, Sprout } from "lucide-react";
+import { Sprout } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 import { ProfileDropdown } from "@/components/ProfileDropdown";
@@ -23,7 +23,6 @@ export function LavouraLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   const title = pageTitles[location.pathname] || "Lavoura";
-  
 
   return (
     <SidebarProvider>
@@ -40,13 +39,10 @@ export function LavouraLayout({ children }: { children: React.ReactNode }) {
               <span className="hidden md:block text-lg font-semibold text-foreground">{title}</span>
             </div>
             <div className="flex items-center gap-3">
-              <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-                <Bell className="h-5 w-5 text-muted-foreground" />
-              </button>
               <ProfileDropdown />
             </div>
           </header>
-          <main className="flex-1 p-6 md:p-8 overflow-auto bg-background">
+          <main className="flex-1 p-6 overflow-auto bg-background">
             {children}
           </main>
         </div>
