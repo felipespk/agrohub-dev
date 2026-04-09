@@ -221,18 +221,20 @@ export function FinanceiroDashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card style={{ animationDelay: '0ms' } as React.CSSProperties} className="animate-fade-up">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-t3 uppercase tracking-wider">Saldo em Contas</span>
-              <div className="w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center">
-                <DollarSign size={15} className="text-blue-600" />
-              </div>
+        <div
+          style={{ animationDelay: '0ms', background: 'linear-gradient(135deg, #78FC90 0%, #2DD264 100%)' } as React.CSSProperties}
+          className="animate-fade-up rounded-xl p-5 overflow-hidden relative shadow-[0_4px_16px_rgba(120,252,144,0.3)]"
+        >
+          <div className="absolute top-0 bottom-0 w-[80px] bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shine-sweep pointer-events-none" />
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold text-[#111110]/60 uppercase tracking-wider">Saldo em Contas</span>
+            <div className="w-8 h-8 rounded-md bg-[#111110]/10 flex items-center justify-center">
+              <DollarSign size={15} className="text-[#111110]" />
             </div>
-            <p className="t-display-sm tabular text-t1">{formatCurrency(countedSaldo)}</p>
-            <p className="text-xs text-t3 mt-1">{contasBancarias.filter(c => c.ativa).length} conta(s) ativa(s)</p>
-          </CardContent>
-        </Card>
+          </div>
+          <p className="t-display-sm tabular text-[#111110]">{formatCurrency(countedSaldo)}</p>
+          <p className="text-xs text-[#111110]/55 mt-1">{contasBancarias.filter(c => c.ativa).length} conta(s) ativa(s)</p>
+        </div>
 
         <Card style={{ animationDelay: '50ms' } as React.CSSProperties} className="animate-fade-up">
           <CardContent className="p-5">
@@ -294,7 +296,7 @@ export function FinanceiroDashboard() {
                 <YAxis tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10, fill: 'var(--t3)' }} axisLine={false} tickLine={false} width={55} />
                 <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => formatCurrency(v)} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="Receitas" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Receitas" fill="#78FC90" radius={[3, 3, 0, 0]} />
                 <Bar dataKey="Despesas" fill="#ef4444" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -345,7 +347,7 @@ export function FinanceiroDashboard() {
                   <div className="flex-1 bg-[var(--surface-raised)] rounded-full h-2 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%`, background: cc.resultado >= 0 ? '#22c55e' : '#ef4444' }}
+                      style={{ width: `${pct}%`, background: cc.resultado >= 0 ? '#78FC90' : '#ef4444' }}
                     />
                   </div>
                   <span className={`text-sm font-medium tabular w-28 text-right ${cc.resultado >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>

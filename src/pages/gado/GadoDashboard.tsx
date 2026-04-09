@@ -247,13 +247,14 @@ export function GadoDashboard() {
       {/* ── KPI row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
-          icon={<PawPrint size={16} className="text-[var(--primary-dark)]" />}
-          iconBg="bg-[var(--primary-bg)]"
+          icon={<PawPrint size={16} className="text-[#111110]" />}
+          iconBg="bg-[#111110]/10"
           label="Cabeças Ativas"
           rawValue={kpis.totalCabecas}
           format={n => n.toString()}
           sub="animais no rebanho"
           delay={0}
+          accent
         />
         <KpiCard
           icon={<TrendingUp size={16} className="text-blue-500" />}
@@ -512,7 +513,7 @@ export function GadoDashboard() {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function KpiCard({
-  icon, iconBg, label, rawValue, format, sub, positive, negative, delay = 0,
+  icon, iconBg, label, rawValue, format, sub, positive, negative, delay = 0, accent,
 }: {
   icon: React.ReactNode
   iconBg: string
@@ -523,11 +524,30 @@ function KpiCard({
   positive?: boolean
   negative?: boolean
   delay?: number
+  accent?: boolean
 }) {
   const counted = useCountUp(rawValue, 900)
-  const valueColor = negative ? 'text-[var(--danger)]'
+  const valueColor = accent ? 'text-[#111110]'
+    : negative ? 'text-[var(--danger)]'
     : positive ? 'text-[var(--success)]'
     : 'text-t1'
+
+  if (accent) {
+    return (
+      <div
+        className="animate-fade-up rounded-xl p-5 overflow-hidden relative shadow-[0_4px_16px_rgba(120,252,144,0.3)]"
+        style={{ background: 'linear-gradient(135deg, #78FC90 0%, #2DD264 100%)', animationDelay: `${delay}ms` }}
+      >
+        <div className="absolute top-0 bottom-0 w-[80px] bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shine-sweep pointer-events-none" />
+        <div className="w-8 h-8 rounded-md bg-[#111110]/10 flex items-center justify-center mb-3">
+          {icon}
+        </div>
+        <p className="t-display-sm tabular text-[#111110] transition-all duration-100">{format(counted)}</p>
+        <p className="text-sm font-semibold text-[#111110]/80 mt-1">{label}</p>
+        <p className="text-xs text-[#111110]/55 mt-0.5">{sub}</p>
+      </div>
+    )
+  }
 
   return (
     <Card

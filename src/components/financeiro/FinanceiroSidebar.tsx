@@ -35,7 +35,7 @@ export function FinanceiroSidebar() {
                 'text-sm font-medium whitespace-nowrap',
                 'transition-colors duration-150',
                 active
-                  ? 'bg-[#111110] text-white'
+                  ? 'bg-[#111110] text-white shadow-[inset_0_-2px_0_#78FC90]'
                   : 'text-[#6B7280] hover:text-[#111110] hover:bg-[#F6F6F6]'
               )}
             >

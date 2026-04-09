@@ -24,7 +24,7 @@ export async function buscarContaBancaria(userId: string) {
     .from('contas_bancarias')
     .select('*')
     .eq('user_id', userId)
-    .eq('ativo', true)
+    .eq('ativa', true)
     .limit(1)
     .maybeSingle()
   return data

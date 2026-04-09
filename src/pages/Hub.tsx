@@ -125,7 +125,7 @@ export function Hub() {
                 'group relative text-left rounded-xl border border-[var(--border)] bg-[var(--surface)]',
                 'p-5 shadow-elev-1',
                 'transition-all duration-200',
-                'hover:-translate-y-1 hover:scale-[1.02]',
+                'hover:-translate-y-1 hover:scale-[1.02] hover:border-t-[#78FC90] hover:[border-top-width:3px]',
                 'active:scale-[0.98] active:shadow-elev-1',
                 'cursor-pointer',
                 'animate-fade-up',
@@ -154,7 +154,7 @@ export function Hub() {
         >
           <button
             onClick={() => navigate('/mapa')}
-            className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm text-t2 hover:text-t1 hover:bg-[var(--surface-raised)] hover:border-[var(--border-strong)] transition-all duration-150 shadow-elev-1 active:scale-[0.97]"
+            className="flex items-center gap-2 rounded-lg border border-[#78FC90]/40 bg-[var(--primary-bg)] px-4 py-2.5 text-sm text-[var(--primary-dark)] font-medium hover:bg-[#78FC90]/20 hover:border-[#78FC90]/60 transition-all duration-150 shadow-[0_1px_3px_rgba(120,252,144,0.15)] active:scale-[0.97]"
           >
             <Map size={15} />
             Mapa da Fazenda

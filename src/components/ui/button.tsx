@@ -16,9 +16,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary: dark bg + white text
+        // Primary: brand green bg + dark text
         default:
-          'bg-[var(--text)] text-white shadow-elev-1 hover:bg-[#2a2a28] hover:shadow-elev-2 hover:-translate-y-px active:bg-[#111110] active:shadow-none active:translate-y-0',
+          'bg-[#78FC90] text-[#111110] font-semibold shadow-[0_1px_3px_rgba(120,252,144,0.3)] hover:bg-[#5de870] hover:shadow-[0_4px_12px_rgba(120,252,144,0.35)] hover:-translate-y-px active:bg-[#4dd460] active:shadow-none active:translate-y-0',
         // Outline: white bg + dark border
         outline:
           'border border-[var(--border-strong)] bg-[var(--surface)] text-t1 hover:bg-[var(--surface-raised)] hover:border-[var(--text)]/20',

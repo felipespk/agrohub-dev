@@ -7,7 +7,7 @@ interface ImpersonationContextValue {
   isImpersonating: boolean
   startImpersonation: (userId: string, email: string) => void
   stopImpersonation: () => void
-  getEffectiveUserId: () => string | null
+  getEffectiveUserId: () => string
 }
 
 const ImpersonationContext = createContext<ImpersonationContextValue | undefined>(undefined)
@@ -27,8 +27,8 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
     setImpersonatedEmail(null)
   }
 
-  function getEffectiveUserId() {
-    return impersonatedUserId ?? user?.id ?? null
+  function getEffectiveUserId(): string {
+    return impersonatedUserId ?? user?.id ?? ''
   }
 
   return (

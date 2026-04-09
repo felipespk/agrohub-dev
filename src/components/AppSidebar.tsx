@@ -73,9 +73,14 @@ export function AppSidebar() {
               )}
             >
               {active && (
-                <span className="absolute left-0 top-[6px] bottom-[6px] w-[3px] bg-[#78FC90] rounded-r-full" />
+                <span className="absolute left-0 top-[6px] bottom-[6px] w-1 bg-[#78FC90] rounded-r-full shadow-[0_0_8px_rgba(120,252,144,0.5)]" />
               )}
-              <Icon size={18} strokeWidth={active ? 2.1 : 1.8} className="flex-shrink-0" />
+              <Icon
+                size={18}
+                strokeWidth={active ? 2.1 : 1.8}
+                className="flex-shrink-0"
+                style={active ? { filter: 'drop-shadow(0 0 6px rgba(120,252,144,0.25))' } : undefined}
+              />
               <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-sm font-medium whitespace-nowrap">
                 {label}
               </span>
@@ -105,7 +110,7 @@ export function AppSidebar() {
               )}
             >
               {active && (
-                <span className="absolute left-0 top-[6px] bottom-[6px] w-[3px] bg-[#78FC90] rounded-r-full" />
+                <span className="absolute left-0 top-[6px] bottom-[6px] w-1 bg-[#78FC90] rounded-r-full shadow-[0_0_8px_rgba(120,252,144,0.5)]" />
               )}
               <Icon size={18} strokeWidth={1.8} className="flex-shrink-0" />
               <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-sm font-medium whitespace-nowrap">
@@ -128,7 +133,7 @@ export function AppSidebar() {
             )}
           >
             {isActive('/admin') && (
-              <span className="absolute left-0 top-[6px] bottom-[6px] w-[3px] bg-amber-400 rounded-r-full" />
+              <span className="absolute left-0 top-[6px] bottom-[6px] w-1 bg-amber-400 rounded-r-full shadow-[0_0_8px_rgba(251,191,36,0.4)]" />
             )}
             <ShieldCheck size={18} strokeWidth={1.8} className="flex-shrink-0" />
             <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-sm font-medium whitespace-nowrap">

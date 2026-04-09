@@ -146,10 +146,77 @@
   }
 }
 
+/* ── Global brand strip at top of every page ── */
+@layer base {
+  body::before {
+    content: '';
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #78FC90 0%, #2DD264 60%, #78FC90 100%);
+    z-index: 9999;
+    pointer-events: none;
+  }
+}
+
 /* ── Green gradient (accent KPI card) ── */
 @layer utilities {
   .bg-green-gradient {
     background: linear-gradient(135deg, #78FC90 0%, #2DD264 100%);
+  }
+
+  /* First KPI card accent */
+  .kpi-primary {
+    background: linear-gradient(135deg, #78FC90 0%, #2DD264 100%);
+    color: #111110;
+  }
+  .kpi-primary .kpi-value { color: #111110; }
+  .kpi-primary .kpi-label { color: rgba(17,17,16,0.65); }
+
+  /* Green section dot */
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #78FC90;
+    margin-right: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  /* Active tab green underline */
+  .tab-active-green {
+    border-bottom: 2px solid #78FC90;
+    color: #111110;
+  }
+
+  /* Green progress bar */
+  .progress-green {
+    background: linear-gradient(90deg, #78FC90, #2DD264);
+  }
+
+  /* Positive badge (Ativo, Pago) */
+  .badge-success-green {
+    background: rgba(120, 252, 144, 0.15);
+    color: #1a7a30;
+    border: 1px solid rgba(120, 252, 144, 0.35);
+  }
+
+  /* Ver todas link */
+  .link-green {
+    color: var(--primary-dark);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+  .link-green:hover {
+    color: #111110;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 }
 
@@ -266,12 +333,12 @@
   }
   .animate-blink-cursor    { animation: blink-cursor 1s step-end infinite; }
 
-  /* Skeleton shimmer utility */
+  /* Skeleton shimmer utility — subtle green tint */
   .animate-skeleton {
     background: linear-gradient(
       90deg,
       var(--surface-raised) 0%,
-      var(--surface-overlay) 50%,
+      rgba(120, 252, 144, 0.06) 50%,
       var(--surface-raised) 100%
     );
     background-size: 500px 100%;
