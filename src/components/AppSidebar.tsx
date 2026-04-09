@@ -41,14 +41,18 @@ export function AppSidebar() {
     )}>
 
       {/* Logo / Header */}
-      <div className="flex items-center h-14 px-[18px] gap-3 flex-shrink-0 border-b border-white/[0.06]">
-        <div className="w-7 h-7 rounded-lg bg-[var(--primary)] flex items-center justify-center flex-shrink-0 transition-transform duration-200 hover:scale-110">
-          <span className="text-[#111110] font-black text-[10px] leading-none">AG</span>
-        </div>
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden">
-          <p className="text-white font-bold text-[15px] leading-tight whitespace-nowrap">Agrix</p>
+      <div className="flex items-center h-14 px-[14px] flex-shrink-0 border-b border-white/[0.06] overflow-hidden">
+        {/* Collapsed: small square icon */}
+        <img
+          src="/icon-agrix.png"
+          alt="Agrix"
+          className="h-7 w-7 flex-shrink-0 object-contain transition-all duration-150 group-hover:h-0 group-hover:w-0 group-hover:opacity-0"
+        />
+        {/* Expanded: full logo + optional farm name */}
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden flex flex-col justify-center gap-0.5">
+          <img src="/logo-agrix.png.png" alt="Agrix" className="h-7 object-contain" style={{ maxWidth: '140px' }} />
           {profile?.farm_name && (
-            <p className="text-white/40 text-[11px] leading-tight whitespace-nowrap truncate max-w-[160px]">
+            <p className="text-white/40 text-[11px] leading-tight whitespace-nowrap truncate" style={{ maxWidth: '160px' }}>
               {profile.farm_name}
             </p>
           )}

@@ -74,11 +74,8 @@ export function Hub() {
     <div className="min-h-screen bg-[var(--bg)] flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-8 py-4 border-b border-[var(--border)] bg-[var(--surface)]">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center shadow-elev-1 transition-transform duration-200 hover:scale-110">
-            <span className="text-[#111110] font-black text-xs tracking-tight">AG</span>
-          </div>
-          <span className="text-md font-semibold text-t1">Agrix</span>
+        <div>
+          <img src="/logo-agrix.png.png" alt="Agrix" className="h-8" />
         </div>
         <div className="flex items-center gap-4">
           <LiveClock />

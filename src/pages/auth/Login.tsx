@@ -65,11 +65,8 @@ export function Login() {
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[var(--primary)] flex items-center justify-center shadow-elev-1">
-              <span className="text-[#111110] font-black text-sm tracking-tight">AG</span>
-            </div>
-            <span className="text-md font-semibold text-white">Agrix</span>
+          <div>
+            <img src="/logo-agrix.png.png" alt="Agrix" className="h-9" />
           </div>
 
           {/* Quote + stats */}
@@ -103,11 +100,8 @@ export function Login() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-sm animate-fade-up">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-9 h-9 rounded-lg bg-[var(--primary)] flex items-center justify-center shadow-elev-1">
-              <span className="text-[#111110] font-black text-sm">AG</span>
-            </div>
-            <span className="text-md font-semibold text-t1">Agrix</span>
+          <div className="lg:hidden mb-10">
+            <img src="/logo-agrix.png.png" alt="Agrix" className="h-10" />
           </div>
 
           {/* design.md: display-sm for auth page headings */}
