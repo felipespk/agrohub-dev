@@ -65,10 +65,7 @@ export function Login() {
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
-            <span style={{ fontSize: 26, fontWeight: 800, fontStyle: 'italic', lineHeight: 1 }}>
-              <span style={{ color: '#78FC90' }}>agri</span>
-              <span style={{ color: 'white' }}>x</span>
-            </span>
+            <img src="/logo-agrix.png" alt="Agrix" className="h-8 object-contain brightness-0 invert" />
           </div>
 
           {/* Quote + stats */}
@@ -103,10 +100,7 @@ export function Login() {
         <div className="w-full max-w-sm animate-fade-up">
           {/* Logo */}
           <div className="mb-8">
-            <span style={{ fontSize: 36, fontWeight: 800, fontStyle: 'italic', lineHeight: 1, display: 'block' }}>
-              <span style={{ color: '#78FC90' }}>agri</span>
-              <span style={{ color: '#111110' }}>x</span>
-            </span>
+            <img src="/logo-agrix.png" alt="Agrix" className="h-10 object-contain" />
             <p className="text-sm text-t3 mt-1">Gestão Rural Inteligente</p>
           </div>
 

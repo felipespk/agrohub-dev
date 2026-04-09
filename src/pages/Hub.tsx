@@ -56,28 +56,23 @@ function LiveClock() {
   return <span className="text-xs text-t4 tabular font-medium tracking-wide">{time}</span>
 }
 
-function AgrixLogo({ size = 24, darkX = false }: { size?: number; darkX?: boolean }) {
-  return (
-    <span style={{ fontSize: size, fontWeight: 800, fontStyle: 'italic', lineHeight: 1 }} className="whitespace-nowrap">
-      <span style={{ color: '#78FC90' }}>agri</span>
-      <span style={{ color: darkX ? '#111110' : 'white' }}>x</span>
-    </span>
-  )
-}
 
 export function Hub() {
   const { user, profile, signOut } = useAuth()
   const navigate = useNavigate()
 
-  const firstName = profile?.display_name
-    ? getFirstName(profile.display_name)
-    : user?.email?.split('@')[0] ?? ''
+  const firstName = (() => {
+    if (profile?.display_name) return getFirstName(profile.display_name)
+    const raw = user?.email?.split('@')[0] ?? ''
+    const lettersOnly = raw.replace(/\d+/g, '')
+    return lettersOnly.charAt(0).toUpperCase() + lettersOnly.slice(1)
+  })()
 
   return (
     <div className="min-h-screen bg-[var(--bg)] flex flex-col">
       {/* Navbar */}
       <header className="h-16 flex items-center justify-between px-6 border-b border-[var(--border)] bg-[var(--surface)] flex-shrink-0">
-        <AgrixLogo size={24} darkX />
+        <img src="/logo-agrix.png" alt="Agrix" className="h-8 object-contain" />
         <div className="flex items-center gap-4">
           <LiveClock />
           <span className="text-sm text-t3 hidden sm:block">{user?.email}</span>
@@ -98,17 +93,9 @@ export function Hub() {
           className="text-center mb-10 animate-fade-up"
           style={{ animationDelay: '0ms' }}
         >
-          <div className="mb-5">
-            <span className="text-5xl font-extrabold italic tracking-tight">
-              <span className="text-[#78FC90]">agri</span>
-              <span className="text-[#111110]">x</span>
-            </span>
+          <div className="mb-5 inline-block bg-white rounded-2xl p-6 shadow-elev-1">
+            <img src="/logo-agrix.png" alt="Agrix" className="h-32 object-contain" />
           </div>
-          <h1 className="text-[2rem] font-bold text-t1 tracking-tight">{getGreeting(firstName)}</h1>
-          <p className="text-sm text-t3 mt-2">
-            {profile?.farm_name ? `${profile.farm_name} · ` : ''}
-            O que deseja gerenciar hoje?
-          </p>
         </div>
 
         {/* Module grid */}

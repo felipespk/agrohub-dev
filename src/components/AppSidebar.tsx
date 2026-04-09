@@ -42,18 +42,11 @@ export function AppSidebar() {
 
       {/* Logo / Header */}
       <div className="relative flex items-center justify-center h-14 flex-shrink-0 border-b border-white/[0.06]">
-        {/* Collapsed: green circle with italic "ax" */}
-        <div className="absolute w-9 h-9 rounded-xl bg-[#78FC90] flex items-center justify-center transition-all duration-200 group-hover:opacity-0 group-hover:scale-75">
-          <span style={{ fontStyle: 'italic', fontWeight: 900, fontSize: 13, color: '#111110', lineHeight: 1, letterSpacing: '-0.5px' }}>ax</span>
-        </div>
-        {/* Expanded: text logo + farm name */}
-        <div className="absolute left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-center gap-0.5">
-          <span style={{ fontSize: 22, fontWeight: 800, fontStyle: 'italic', lineHeight: 1 }} className="whitespace-nowrap">
-            <span style={{ color: '#78FC90' }}>agri</span>
-            <span style={{ color: 'white' }}>x</span>
-          </span>
+        {/* Icon — always visible */}
+        <div className="absolute left-4 flex items-center gap-3">
+          <img src="/icon-agrix.png" alt="Agrix" className="w-11 h-11 rounded-xl object-contain shrink-0" />
           {profile?.farm_name && (
-            <p className="text-white/40 text-[11px] leading-tight whitespace-nowrap truncate" style={{ maxWidth: '160px' }}>
+            <p className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/40 text-[11px] leading-tight whitespace-nowrap truncate" style={{ maxWidth: '144px' }}>
               {profile.farm_name}
             </p>
           )}
