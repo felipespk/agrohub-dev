@@ -69,9 +69,25 @@ function DashSkeleton() {
   )
 }
 
-function KpiCard({ icon: Icon, label, value, sub, color }: {
-  icon: React.ElementType; label: string; value: string; sub?: string; color?: string
+function KpiCard({ icon: Icon, label, value, sub, color, accent }: {
+  icon: React.ElementType; label: string; value: string; sub?: string; color?: string; accent?: boolean
 }) {
+  if (accent) {
+    return (
+      <div
+        className="rounded-xl p-5 overflow-hidden relative shadow-[0_4px_16px_rgba(120,252,144,0.3)]"
+        style={{ background: 'linear-gradient(135deg, #78FC90 0%, #2DD264 100%)' }}
+      >
+        <div className="absolute top-0 bottom-0 w-[80px] bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shine-sweep pointer-events-none" />
+        <div className="w-8 h-8 rounded-md bg-[#111110]/10 flex items-center justify-center mb-3">
+          <Icon className="w-4 h-4 text-[#111110]" />
+        </div>
+        <p className="text-2xl font-bold text-[#111110]">{value}</p>
+        <p className="text-sm font-semibold text-[#111110]/80 mt-0.5">{label}</p>
+        {sub && <p className="text-xs text-[#111110]/55 mt-0.5">{sub}</p>}
+      </div>
+    )
+  }
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${color ?? 'bg-[var(--primary-bg)]'}`}>
@@ -225,7 +241,7 @@ export function LavouraDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard icon={MapPin} label="Área Plantada" value={`${formatNumber(areaPlantadaAnim, 0)} ha`} />
+        <KpiCard icon={MapPin} label="Área Plantada" value={`${formatNumber(areaPlantadaAnim, 0)} ha`} accent />
         <KpiCard icon={Sprout} label="Talhões Ativos" value={String(talhoesAtivosAnim)} />
         <KpiCard icon={Activity} label="Atividades este Mês" value={String(atividadesMesAnim)} />
         <KpiCard icon={TrendingUp} label="Produtividade Média" value={`${formatNumber(produtividadeAnim, 0)} sc/ha`} />

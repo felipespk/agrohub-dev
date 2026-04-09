@@ -44,6 +44,7 @@ export function SecadorSidebar() {
             </NavLink>
           )
         })}
+        <span className="flex-shrink-0 w-4" />
       </div>
     </nav>
   )

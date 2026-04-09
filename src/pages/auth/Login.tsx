@@ -64,9 +64,11 @@ export function Login() {
         <div className="absolute top-0 left-0 w-96 h-96 bg-[var(--primary)]/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          {/* Logo */}
           <div>
-            <img src="/logo-agrix.png.png" alt="Agrix" className="h-9" />
+            <span style={{ fontSize: 26, fontWeight: 800, fontStyle: 'italic', lineHeight: 1 }}>
+              <span style={{ color: '#78FC90' }}>agri</span>
+              <span style={{ color: 'white' }}>x</span>
+            </span>
           </div>
 
           {/* Quote + stats */}
@@ -99,9 +101,13 @@ export function Login() {
       {/* Right — form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-sm animate-fade-up">
-          {/* Mobile logo */}
-          <div className="lg:hidden mb-10">
-            <img src="/logo-agrix.png.png" alt="Agrix" className="h-10" />
+          {/* Logo */}
+          <div className="mb-8">
+            <span style={{ fontSize: 36, fontWeight: 800, fontStyle: 'italic', lineHeight: 1, display: 'block' }}>
+              <span style={{ color: '#78FC90' }}>agri</span>
+              <span style={{ color: '#111110' }}>x</span>
+            </span>
+            <p className="text-sm text-t3 mt-1">Gestão Rural Inteligente</p>
           </div>
 
           {/* design.md: display-sm for auth page headings */}

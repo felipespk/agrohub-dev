@@ -49,11 +49,30 @@ const PERIOD_LABELS: Record<Period, string> = {
 }
 
 function KPICard({
-  icon: Icon, label, value, unit, color, loading,
+  icon: Icon, label, value, unit, color, loading, accent,
 }: {
-  icon: React.ElementType; label: string; value: number; unit: string; color: string; loading: boolean
+  icon: React.ElementType; label: string; value: number; unit: string; color: string; loading: boolean; accent?: boolean
 }) {
   const animated = useCountUp(Math.round(value * 10), 900)
+
+  if (accent && !loading) {
+    return (
+      <div
+        className="rounded-xl p-5 overflow-hidden relative shadow-[0_4px_16px_rgba(120,252,144,0.3)]"
+        style={{ background: 'linear-gradient(135deg, #78FC90 0%, #2DD264 100%)' }}
+      >
+        <div className="absolute top-0 bottom-0 w-[80px] bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shine-sweep pointer-events-none" />
+        <div className="w-8 h-8 rounded-md bg-[#111110]/10 flex items-center justify-center mb-3">
+          <Icon size={18} className="text-[#111110]" />
+        </div>
+        <p className="text-2xl font-bold text-[#111110] tabular-nums">
+          {formatNumber(animated / 10, 1)}<span className="text-sm font-semibold text-[#111110]/70 ml-1">{unit}</span>
+        </p>
+        <p className="text-xs font-semibold text-[#111110]/70 mt-1">{label}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
       {loading ? (
@@ -237,7 +256,7 @@ export function SecadorDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KPICard icon={Warehouse} label="Estoque Atual" value={kpis.estoqueAtual} unit="t" color="bg-[var(--primary-dark)]" loading={false} />
+        <KPICard icon={Warehouse} label="Estoque Atual" value={kpis.estoqueAtual} unit="t" color="bg-[var(--primary-dark)]" loading={false} accent />
         <KPICard icon={TrendingUp} label="Vol. Bruto Recebido" value={kpis.volumeBruto} unit="t" color="bg-blue-500" loading={false} />
         <KPICard icon={PackageCheck} label="Peso Ajustado" value={kpis.pesoAjustado} unit="t" color="bg-violet-500" loading={false} />
         <KPICard icon={TrendingDown} label="Expedido (Venda)" value={kpis.expedido} unit="t" color="bg-emerald-500" loading={false} />

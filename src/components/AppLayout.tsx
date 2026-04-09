@@ -12,7 +12,7 @@ export function AppLayout() {
       <ImpersonationBanner />
       <AppSidebar />
       <main
-        className="ml-16 min-h-screen"
+        className="min-h-screen"
         style={{ paddingTop: isImpersonating ? '40px' : '0' }}
       >
         <PageTransition>

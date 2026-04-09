@@ -12,7 +12,6 @@ const modules = [
     description: 'Recebimento, armazenamento e expedição de grãos',
     accent: 'text-orange-500',
     iconBg: 'bg-orange-50',
-    hoverBorder: 'hover:border-orange-200',
     hoverGlow: 'hover:shadow-[0_8px_24px_rgba(249,115,22,0.12)]',
   },
   {
@@ -22,7 +21,6 @@ const modules = [
     description: 'Controle financeiro, contas e fluxo de caixa',
     accent: 'text-emerald-600',
     iconBg: 'bg-emerald-50',
-    hoverBorder: 'hover:border-emerald-200',
     hoverGlow: 'hover:shadow-[0_8px_24px_rgba(16,185,129,0.12)]',
   },
   {
@@ -32,7 +30,6 @@ const modules = [
     description: 'Gestão do rebanho, sanidade e movimentações',
     accent: 'text-[var(--primary-dark)]',
     iconBg: 'bg-[var(--primary-bg)]',
-    hoverBorder: 'hover:border-[var(--primary)]/40',
     hoverGlow: 'hover:shadow-[0_8px_24px_rgba(120,252,144,0.15)]',
   },
   {
@@ -42,7 +39,6 @@ const modules = [
     description: 'Safras, atividades de campo e colheitas',
     accent: 'text-yellow-600',
     iconBg: 'bg-yellow-50',
-    hoverBorder: 'hover:border-yellow-200',
     hoverGlow: 'hover:shadow-[0_8px_24px_rgba(234,179,8,0.12)]',
   },
 ]
@@ -57,8 +53,15 @@ function LiveClock() {
     }, 1000)
     return () => clearInterval(id)
   }, [])
+  return <span className="text-xs text-t4 tabular font-medium tracking-wide">{time}</span>
+}
+
+function AgrixLogo({ size = 24, darkX = false }: { size?: number; darkX?: boolean }) {
   return (
-    <span className="text-xs text-t4 tabular font-medium tracking-wide">{time}</span>
+    <span style={{ fontSize: size, fontWeight: 800, fontStyle: 'italic', lineHeight: 1 }} className="whitespace-nowrap">
+      <span style={{ color: '#78FC90' }}>agri</span>
+      <span style={{ color: darkX ? '#111110' : 'white' }}>x</span>
+    </span>
   )
 }
 
@@ -72,13 +75,12 @@ export function Hub() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] flex flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between px-8 py-4 border-b border-[var(--border)] bg-[var(--surface)]">
-        <div>
-          <img src="/logo-agrix.png.png" alt="Agrix" className="h-8" />
-        </div>
+      {/* Navbar */}
+      <header className="h-16 flex items-center justify-between px-6 border-b border-[var(--border)] bg-[var(--surface)] flex-shrink-0">
+        <AgrixLogo size={24} darkX />
         <div className="flex items-center gap-4">
           <LiveClock />
+          <span className="text-sm text-t3 hidden sm:block">{user?.email}</span>
           <button
             onClick={signOut}
             className="flex items-center gap-1.5 text-sm text-t3 hover:text-t1 transition-colors duration-150"
@@ -91,30 +93,27 @@ export function Hub() {
 
       {/* Main */}
       <main className="flex-1 flex flex-col items-center justify-center px-8 py-16">
-        {/* Status chip — fade in */}
+        {/* Greeting */}
         <div
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/20 bg-[var(--primary-bg)] px-4 py-1.5 mb-8 animate-fade-up"
+          className="text-center mb-10 animate-fade-up"
           style={{ animationDelay: '0ms' }}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse-dot" />
-          <span className="text-xs font-medium text-[var(--primary-dark)]">Sistema operacional</span>
-        </div>
-
-        {/* Greeting — staggered after chip */}
-        <div
-          className="text-center mb-2 animate-fade-up"
-          style={{ animationDelay: '60ms' }}
-        >
-          <h1 className="t-display-sm text-t1">{getGreeting(firstName)}</h1>
+          <div className="mb-5">
+            <span className="text-5xl font-extrabold italic tracking-tight">
+              <span className="text-[#78FC90]">agri</span>
+              <span className="text-[#111110]">x</span>
+            </span>
+          </div>
+          <h1 className="text-[2rem] font-bold text-t1 tracking-tight">{getGreeting(firstName)}</h1>
           <p className="text-sm text-t3 mt-2">
             {profile?.farm_name ? `${profile.farm_name} · ` : ''}
-            Selecione um módulo para começar
+            O que deseja gerenciar hoje?
           </p>
         </div>
 
-        {/* Module grid — stagger each card */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full max-w-4xl mt-10">
-          {modules.map(({ to, icon: Icon, label, description, accent, iconBg, hoverBorder, hoverGlow }, i) => (
+        {/* Module grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full max-w-4xl">
+          {modules.map(({ to, icon: Icon, label, description, accent, iconBg, hoverGlow }, i) => (
             <button
               key={to}
               onClick={() => navigate(to)}
@@ -124,12 +123,10 @@ export function Hub() {
                 'transition-all duration-200',
                 'hover:-translate-y-1 hover:scale-[1.02] hover:border-t-[#78FC90] hover:[border-top-width:3px]',
                 'active:scale-[0.98] active:shadow-elev-1',
-                'cursor-pointer',
-                'animate-fade-up',
-                hoverBorder,
+                'cursor-pointer animate-fade-up',
                 hoverGlow,
               ].join(' ')}
-              style={{ animationDelay: `${140 + i * 60}ms` }}
+              style={{ animationDelay: `${80 + i * 60}ms` }}
             >
               <div className={`w-9 h-9 rounded-lg ${iconBg} flex items-center justify-center mb-4 transition-transform duration-200 group-hover:scale-110`}>
                 <Icon size={18} className={accent} strokeWidth={1.8} />
@@ -146,12 +143,12 @@ export function Hub() {
 
         {/* Secondary actions */}
         <div
-          className="flex items-center gap-2 mt-5 animate-fade-up"
-          style={{ animationDelay: '400ms' }}
+          className="flex items-center gap-2 mt-6 animate-fade-up"
+          style={{ animationDelay: '360ms' }}
         >
           <button
             onClick={() => navigate('/mapa')}
-            className="flex items-center gap-2 rounded-lg border border-[#78FC90]/40 bg-[var(--primary-bg)] px-4 py-2.5 text-sm text-[var(--primary-dark)] font-medium hover:bg-[#78FC90]/20 hover:border-[#78FC90]/60 transition-all duration-150 shadow-[0_1px_3px_rgba(120,252,144,0.15)] active:scale-[0.97]"
+            className="flex items-center gap-2 rounded-lg border border-[#78FC90]/40 bg-[var(--primary-bg)] px-4 py-2.5 text-sm text-[var(--primary-dark)] font-medium hover:bg-[#78FC90]/20 hover:border-[#78FC90]/60 transition-all duration-150 active:scale-[0.97]"
           >
             <Map size={15} />
             Mapa da Fazenda
@@ -169,10 +166,7 @@ export function Hub() {
       </main>
 
       {/* Footer */}
-      <footer
-        className="px-8 py-4 border-t border-[var(--border)] flex items-center justify-between animate-fade-up"
-        style={{ animationDelay: '450ms' }}
-      >
+      <footer className="px-8 py-4 border-t border-[var(--border)] flex items-center justify-between">
         <p className="text-2xs text-t4 uppercase tracking-wider">Agrix — Gestão Rural</p>
         <p className="text-xs text-t4">{user?.email}</p>
       </footer>

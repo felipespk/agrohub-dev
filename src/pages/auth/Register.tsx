@@ -52,8 +52,12 @@ export function Register() {
   return (
     <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-8">
       <div className="w-full max-w-sm animate-fade-up">
-        <div className="mb-10">
-          <img src="/logo-agrix.png.png" alt="Agrix" className="h-10" />
+        <div className="mb-8">
+          <span style={{ fontSize: 36, fontWeight: 800, fontStyle: 'italic', lineHeight: 1, display: 'block' }}>
+            <span style={{ color: '#78FC90' }}>agri</span>
+            <span style={{ color: '#111110' }}>x</span>
+          </span>
+          <p className="text-sm text-t3 mt-1">Gestão Rural Inteligente</p>
         </div>
 
         <div className="mb-7">

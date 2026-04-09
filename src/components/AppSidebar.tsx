@@ -36,21 +36,22 @@ export function AppSidebar() {
       'overflow-hidden',
       'bg-[#111110]',
       'border-r border-white/[0.08]',
-      'shadow-[4px_0_16px_rgba(0,0,0,0.18)]',
+      'shadow-[1px_0_0_rgba(255,255,255,0.04)]',
       'flex flex-col',
     )}>
 
       {/* Logo / Header */}
-      <div className="flex items-center h-14 px-[14px] flex-shrink-0 border-b border-white/[0.06] overflow-hidden">
-        {/* Collapsed: small square icon */}
-        <img
-          src="/icon-agrix.png"
-          alt="Agrix"
-          className="h-7 w-7 flex-shrink-0 object-contain transition-all duration-150 group-hover:h-0 group-hover:w-0 group-hover:opacity-0"
-        />
-        {/* Expanded: full logo + optional farm name */}
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden flex flex-col justify-center gap-0.5">
-          <img src="/logo-agrix.png.png" alt="Agrix" className="h-7 object-contain" style={{ maxWidth: '140px' }} />
+      <div className="relative flex items-center justify-center h-14 flex-shrink-0 border-b border-white/[0.06]">
+        {/* Collapsed: green circle with italic "ax" */}
+        <div className="absolute w-9 h-9 rounded-xl bg-[#78FC90] flex items-center justify-center transition-all duration-200 group-hover:opacity-0 group-hover:scale-75">
+          <span style={{ fontStyle: 'italic', fontWeight: 900, fontSize: 13, color: '#111110', lineHeight: 1, letterSpacing: '-0.5px' }}>ax</span>
+        </div>
+        {/* Expanded: text logo + farm name */}
+        <div className="absolute left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-center gap-0.5">
+          <span style={{ fontSize: 22, fontWeight: 800, fontStyle: 'italic', lineHeight: 1 }} className="whitespace-nowrap">
+            <span style={{ color: '#78FC90' }}>agri</span>
+            <span style={{ color: 'white' }}>x</span>
+          </span>
           {profile?.farm_name && (
             <p className="text-white/40 text-[11px] leading-tight whitespace-nowrap truncate" style={{ maxWidth: '160px' }}>
               {profile.farm_name}

@@ -43,6 +43,7 @@ export function GadoSidebar() {
             </NavLink>
           )
         })}
+        <span className="flex-shrink-0 w-4" />
       </div>
     </nav>
   )

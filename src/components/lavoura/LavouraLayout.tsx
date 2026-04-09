@@ -6,7 +6,7 @@ import { Wheat } from 'lucide-react'
 
 export function LavouraLayout() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen ml-16">
       <header className="h-14 flex items-center justify-between px-5 border-b border-[var(--border)] bg-[var(--surface)] sticky top-0 z-30">
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-md bg-yellow-500/12 flex items-center justify-center">
