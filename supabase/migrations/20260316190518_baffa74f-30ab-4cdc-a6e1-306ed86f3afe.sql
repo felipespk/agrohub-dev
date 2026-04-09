@@ -1,1 +1,0 @@
-ALTER TABLE public.recebimentos ADD COLUMN peso_grao_seco numeric NOT NULL DEFAULT 0;

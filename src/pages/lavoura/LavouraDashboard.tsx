@@ -1,364 +1,340 @@
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useEffectiveUser } from "@/hooks/useEffectiveUser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Map, Grid3X3, BookOpen, TrendingUp, CheckCircle, Package, Cog, Bug, AlertTriangle } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { getGreeting } from "@/lib/greeting";
+import { useEffect, useState, useCallback } from 'react'
+import {
+  Sprout, MapPin, Activity, TrendingUp, AlertTriangle, RefreshCw, Calendar,
+} from 'lucide-react'
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  PieChart, Pie, Cell,
+} from 'recharts'
+import { format, subMonths, startOfMonth } from 'date-fns'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
+import { useImpersonation } from '@/contexts/ImpersonationContext'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
+import { useCountUp } from '@/hooks/useCountUp'
+import { formatNumber, formatDate } from '@/lib/utils'
 
-const COLORS = ["#16A34A", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316"];
+type Period = '1m' | '3m' | '6m' | '12m'
 
-export default function LavouraDashboard() {
-  const { user } = useAuth();
-  const { effectiveUserId, isImpersonating } = useEffectiveUser();
-  const [safras, setSafras] = useState<any[]>([]);
-  const [selectedSafra, setSelectedSafra] = useState<string>("all");
-  const [periodo, setPeriodo] = useState("mes");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
-  const [kpis, setKpis] = useState({ area: 0, talhoes: 0, atividades: 0, produtividade: 0 });
-  const [prodByTalhao, setProdByTalhao] = useState<any[]>([]);
-  const [culturasDist, setCulturasDist] = useState<any[]>([]);
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [custoData, setCustoData] = useState<any[]>([]);
+interface KPIs {
+  areaPlantada: number
+  talhoesAtivos: number
+  atividadesMes: number
+  produtividadeMedia: number
+}
 
-  const { greeting } = getGreeting(null, user?.email);
+interface ProdTalhao { nome: string; produtividade: number }
+interface CulturaDistrib { name: string; value: number }
+interface AlertaPraga { id: string; nome: string; tipo: string; severidade: string; talhao: string; data: string }
 
-  const getDateRange = useCallback(() => {
-    const now = new Date();
-    const fmtD = (d: Date) => d.toISOString().split("T")[0];
-    if (periodo === "personalizado") {
-      return { start: customStart || fmtD(new Date(now.getFullYear(), 0, 1)), end: customEnd || fmtD(now) };
-    }
-    let start: Date;
-    if (periodo === "mes") { start = new Date(now.getFullYear(), now.getMonth(), 1); }
-    else if (periodo === "3meses") { start = new Date(now.getFullYear(), now.getMonth() - 2, 1); }
-    else if (periodo === "6meses") { start = new Date(now.getFullYear(), now.getMonth() - 5, 1); }
-    else { start = new Date(now.getFullYear(), 0, 1); }
-    return { start: fmtD(start), end: fmtD(now) };
-  }, [periodo, customStart, customEnd]);
+const SEVERIDADE_COLOR: Record<string, string> = {
+  critico: 'bg-red-100 text-red-700',
+  alto: 'bg-orange-100 text-orange-700',
+  medio: 'bg-yellow-100 text-yellow-700',
+  baixo: 'bg-green-100 text-green-700',
+}
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("safras" as any).select("*").eq("user_id", effectiveUserId).order("created_at", { ascending: false })
-      .then(({ data }: any) => {
-        const list = (data as any[]) || [];
-        setSafras(list);
-        if (list.length > 0) setSelectedSafra(list[0].id);
-      });
-  }, [user]);
+const CULTURA_COLORS = ['#78FC90', '#34d399', '#60a5fa', '#f97316', '#a78bfa', '#f472b6']
 
-  useEffect(() => {
-    if (!user) return;
-    loadDashboard();
-  }, [user, selectedSafra, periodo, customStart, customEnd]);
+const PERIOD_MONTHS: Record<Period, number> = { '1m': 1, '3m': 3, '6m': 6, '12m': 12 }
 
-  const loadDashboard = async () => {
-    if (!user) return;
-    const { start: firstDay, end: lastDay } = getDateRange();
-
-    let stQuery = supabase.from("safra_talhoes" as any).select("*, talhoes:talhao_id(nome, area_hectares), culturas:cultura_id(nome)").eq("user_id", effectiveUserId);
-    if (selectedSafra !== "all") stQuery = stQuery.eq("safra_id", selectedSafra);
-    const { data: stData } = await stQuery;
-    const safraTalhoes = (stData as any[]) || [];
-
-    const totalArea = safraTalhoes.reduce((s, st) => s + (Number((st as any).talhoes?.area_hectares) || 0), 0);
-
-    const { count: atividadesCount } = await supabase.from("atividades_campo" as any).select("*", { count: "exact", head: true }).eq("user_id", effectiveUserId).gte("data", firstDay).lte("data", lastDay);
-
-    const stIds = safraTalhoes.map((st: any) => st.id);
-    let prodMedia = 0;
-    let prodData: any[] = [];
-    if (stIds.length > 0) {
-      const { data: colheitas } = await supabase.from("colheitas" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome), meta_produtividade)").eq("user_id", effectiveUserId).in("safra_talhao_id", stIds);
-      const cols = (colheitas as any[]) || [];
-      if (cols.length > 0) {
-        prodMedia = cols.reduce((s, c) => s + (Number(c.produtividade_calculada) || 0), 0) / cols.length;
-        const byTalhao: Record<string, { prod: number; meta: number; count: number }> = {};
-        cols.forEach((c: any) => {
-          const nome = c.safra_talhoes?.talhoes?.nome || "?";
-          if (!byTalhao[nome]) byTalhao[nome] = { prod: 0, meta: Number(c.safra_talhoes?.meta_produtividade) || 0, count: 0 };
-          byTalhao[nome].prod += Number(c.produtividade_calculada) || 0;
-          byTalhao[nome].count++;
-        });
-        prodData = Object.entries(byTalhao).map(([nome, v]) => ({ nome, produtividade: v.count > 0 ? v.prod / v.count : 0, meta: v.meta }));
-      }
-    }
-    setProdByTalhao(prodData);
-
-    const cultMap: Record<string, number> = {};
-    safraTalhoes.forEach((st: any) => {
-      const cName = st.culturas?.nome || "Outra";
-      const area = Number(st.talhoes?.area_hectares) || 0;
-      cultMap[cName] = (cultMap[cName] || 0) + area;
-    });
-    setCulturasDist(Object.entries(cultMap).map(([name, value]) => ({ name, value })));
-
-    setKpis({ area: totalArea, talhoes: safraTalhoes.length, atividades: atividadesCount || 0, produtividade: prodMedia });
-
-    const { data: acts } = await supabase.from("atividades_campo" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome)), insumos:insumo_id(nome)").eq("user_id", effectiveUserId).order("data", { ascending: false }).limit(5);
-    setRecentActivities((acts as any[]) || []);
-
-    const alertsList: any[] = [];
-    const { data: lowStock } = await supabase.from("insumos" as any).select("nome, estoque_atual, estoque_minimo").eq("user_id", effectiveUserId);
-    ((lowStock as any[]) || []).filter(i => Number(i.estoque_atual) < Number(i.estoque_minimo)).forEach(i => {
-      alertsList.push({ icon: "package", text: `Estoque baixo: ${i.nome}`, color: "red" });
-    });
-    const todayStr = new Date().toISOString().split("T")[0];
-    const { data: overdueMaint } = await supabase.from("manutencoes" as any).select("*, maquinas:maquina_id(nome)").eq("user_id", effectiveUserId).lt("proxima_manutencao", todayStr).not("proxima_manutencao", "is", null);
-    ((overdueMaint as any[]) || []).forEach(m => {
-      alertsList.push({ icon: "cog", text: `Manutenção atrasada: ${m.maquinas?.nome}`, color: "red" });
-    });
-    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
-    const { data: critMip } = await supabase.from("ocorrencias_mip" as any).select("*, safra_talhoes:safra_talhao_id(talhoes:talhao_id(nome))").eq("user_id", effectiveUserId).in("nivel", ["alto", "critico"]).gte("data", weekAgo);
-    ((critMip as any[]) || []).forEach(o => {
-      alertsList.push({ icon: "bug", text: `Praga crítica no ${o.safra_talhoes?.talhoes?.nome || "talhão"}`, color: "red" });
-    });
-    setAlerts(alertsList);
-
-    if (safraTalhoes.length > 0) {
-      const stIds2 = safraTalhoes.map((st: any) => st.id);
-      const { data: ativsCusto } = await supabase.from("atividades_campo" as any)
-        .select("safra_talhao_id, quantidade_insumo, horas_maquina, insumos:insumo_id(preco_unitario), maquinas:maquina_id(custo_hora)")
-        .eq("user_id", effectiveUserId).in("safra_talhao_id", stIds2);
-      const { data: colsCusto } = await supabase.from("colheitas" as any)
-        .select("safra_talhao_id, quantidade").eq("user_id", effectiveUserId).in("safra_talhao_id", stIds2);
-
-      const custoRows = safraTalhoes.map((st: any) => {
-        const area = Number(st.talhoes?.area_hectares) || 1;
-        const myAtivs = ((ativsCusto as any[]) || []).filter(a => a.safra_talhao_id === st.id);
-        const custoInsumos = myAtivs.reduce((s: number, a: any) => s + ((Number(a.quantidade_insumo) || 0) * (Number(a.insumos?.preco_unitario) || 0)), 0);
-        const custoMaq = myAtivs.reduce((s: number, a: any) => s + ((Number(a.horas_maquina) || 0) * (Number(a.maquinas?.custo_hora) || 0)), 0);
-        const custoTotal = custoInsumos + custoMaq;
-        const colTotal = ((colsCusto as any[]) || []).filter(c => c.safra_talhao_id === st.id).reduce((s: number, c: any) => s + Number(c.quantidade), 0);
-        return {
-          talhao: st.talhoes?.nome || "?", cultura: st.culturas?.nome || "?", area,
-          custoInsumos, custoMaq, custoTotal, custoHa: custoTotal / area,
-          producao: colTotal, custoSaca: colTotal > 0 ? custoTotal / colTotal : 0,
-          resultado: 0 - custoTotal,
-        };
-      });
-      setCustoData(custoRows);
-    } else {
-      setCustoData([]);
-    }
-  };
-
-  const tipoBadge = (tipo: string) => {
-    const map: Record<string, string> = {
-      plantio: "bg-primary text-primary-foreground", adubacao: "bg-[hsl(217,91%,60%)]/10 text-[hsl(217,91%,60%)]",
-      pulverizacao: "bg-destructive/10 text-destructive", irrigacao: "bg-[hsl(190,80%,50%)]/10 text-[hsl(190,80%,50%)]",
-      capina: "bg-warning/10 text-warning", colheita: "bg-[hsl(38,92%,50%)]/10 text-[hsl(38,92%,50%)]",
-      outro: "bg-muted text-muted-foreground",
-    };
-    return map[tipo] || map.outro;
-  };
-
+function DashSkeleton() {
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex items-end justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-[28px] font-bold text-foreground">{greeting}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Aqui está o resumo da sua lavoura.</p>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-60" />
         </div>
-        <div className="flex flex-wrap items-end gap-3">
-          <Select value={selectedSafra} onValueChange={setSelectedSafra}>
-            <SelectTrigger className="w-[220px]"><SelectValue placeholder="Safra" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as Safras</SelectItem>
-              {safras.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={periodo} onValueChange={setPeriodo}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="mes">Este Mês</SelectItem>
-              <SelectItem value="3meses">Últimos 3 Meses</SelectItem>
-              <SelectItem value="6meses">Últimos 6 Meses</SelectItem>
-              <SelectItem value="ano">Este Ano</SelectItem>
-              <SelectItem value="personalizado">Personalizado</SelectItem>
-            </SelectContent>
-          </Select>
-          {periodo === "personalizado" && (
-            <div className="flex items-center gap-2 animate-fade-in">
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">De</span>
-                <Input type="date" className="w-[150px] h-9" value={customStart} onChange={e => setCustomStart(e.target.value)} />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">Até</span>
-                <Input type="date" className="w-[150px] h-9" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
-              </div>
-            </div>
-          )}
-        </div>
+        <Skeleton className="h-8 w-28 rounded-md" />
       </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Área Plantada - gradient */}
-        <div className="rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]" style={{ background: "linear-gradient(135deg, #16A34A, #166534)" }}>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-              <Map className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-white/70 font-medium">Área Plantada</p>
-              <p className="text-[28px] font-bold text-white">{kpis.area.toLocaleString("pt-BR", { minimumFractionDigits: 1 })} ha</p>
-            </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
+            <Skeleton className="w-8 h-8 rounded-md mb-3" />
+            <Skeleton className="h-7 w-16 mb-2" />
+            <Skeleton className="h-4 w-28" />
           </div>
-        </div>
-        {[
-          { label: "Talhões Ativos", value: kpis.talhoes, icon: Grid3X3, color: "#3B82F6", bg: "#DBEAFE" },
-          { label: "Atividades no Mês", value: kpis.atividades, icon: BookOpen, color: "#F97316", bg: "#FFF7ED" },
-          { label: "Produtividade Média", value: kpis.produtividade > 0 ? `${kpis.produtividade.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} sacas/ha` : "—", icon: TrendingUp, color: "#16A34A", bg: "#DCFCE7" },
-        ].map((kpi) => (
-          <Card key={kpi.label}>
-            <CardContent className="p-5">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: kpi.bg }}>
-                  <kpi.icon className="h-6 w-6" style={{ color: kpi.color }} />
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">{kpi.label}</p>
-                  <p className="text-[24px] font-bold text-foreground">{kpi.value}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         ))}
       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <Skeleton className="h-64 rounded-xl lg:col-span-2" />
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+      <Skeleton className="h-40 rounded-xl" />
+    </div>
+  )
+}
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>Produtividade por Talhão</CardTitle></CardHeader>
+function KpiCard({ icon: Icon, label, value, sub, color }: {
+  icon: React.ElementType; label: string; value: string; sub?: string; color?: string
+}) {
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${color ?? 'bg-[var(--primary-bg)]'}`}>
+        <Icon className="w-4 h-4 text-[var(--primary-dark)]" />
+      </div>
+      <p className="text-2xl font-semibold text-t1">{value}</p>
+      <p className="text-sm text-t2 mt-0.5">{label}</p>
+      {sub && <p className="text-xs text-t3 mt-0.5">{sub}</p>}
+    </div>
+  )
+}
+
+export function LavouraDashboard() {
+  const { session } = useAuth()
+  const { getEffectiveUserId } = useImpersonation()
+  const userId = getEffectiveUserId()
+
+  const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState<Period>('1m')
+  const [kpis, setKpis] = useState<KPIs>({ areaPlantada: 0, talhoesAtivos: 0, atividadesMes: 0, produtividadeMedia: 0 })
+  const [prodTalhoes, setProdTalhoes] = useState<ProdTalhao[]>([])
+  const [culturaDistrib, setCulturaDistrib] = useState<CulturaDistrib[]>([])
+  const [alertas, setAlertas] = useState<AlertaPraga[]>([])
+
+  const areaPlantadaAnim = useCountUp(Math.round(kpis.areaPlantada))
+  const talhoesAtivosAnim = useCountUp(kpis.talhoesAtivos)
+  const atividadesMesAnim = useCountUp(kpis.atividadesMes)
+  const produtividadeAnim = useCountUp(Math.round(kpis.produtividadeMedia * 10) / 10)
+
+  const loadData = useCallback(async () => {
+    if (!userId) return
+    setLoading(true)
+    try {
+      const months = PERIOD_MONTHS[period]
+      const since = format(startOfMonth(subMonths(new Date(), months - 1)), 'yyyy-MM-dd')
+
+      const [safrasRes, talhoesRes, atividadesRes, colheitasRes, safTalhoesRes, pragas] = await Promise.all([
+        supabase.from('safras').select('*').eq('user_id', userId).eq('status', 'andamento'),
+        supabase.from('talhoes').select('*').eq('user_id', userId).eq('ativo', true),
+        supabase.from('atividades_campo').select('*').eq('user_id', userId).gte('data', since),
+        supabase.from('colheitas').select('*').eq('user_id', userId).gte('data', since),
+        supabase.from('safra_talhoes').select('*').eq('user_id', userId),
+        supabase.from('ocorrencias_mip').select('*').eq('user_id', userId)
+          .in('severidade', ['alto', 'critico']).order('data', { ascending: false }).limit(10),
+      ])
+
+      const talhoes = talhoesRes.data ?? []
+      const atividades = atividadesRes.data ?? []
+      const colheitas = colheitasRes.data ?? []
+      const safTalhoes = safTalhoesRes.data ?? []
+      const safrasAtivas = safrasRes.data ?? []
+
+      const safTalhaoIds = new Set(safrasAtivas.map((s: { id: string }) => s.id))
+      const linkedST = safTalhoes.filter((st: { safra_id: string }) => safTalhaoIds.has(st.safra_id))
+      const linkedTalhaoIds = new Set(linkedST.map((st: { talhao_id: string }) => st.talhao_id))
+      const activeTalhoes = talhoes.filter((t: { id: string }) => linkedTalhaoIds.has(t.id))
+      const areaTotal = activeTalhoes.reduce((s: number, t: { area_hectares: number | null }) => s + (t.area_hectares ?? 0), 0)
+
+      const currentMonthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd')
+      const atividadesMes = atividades.filter((a: { data: string }) => a.data >= currentMonthStart).length
+
+      const colheitasByST: Record<string, number[]> = {}
+      for (const c of colheitas as { safra_talhao_id: string; quantidade: number }[]) {
+        if (!colheitasByST[c.safra_talhao_id]) colheitasByST[c.safra_talhao_id] = []
+        colheitasByST[c.safra_talhao_id].push(c.quantidade)
+      }
+
+      const prodData: ProdTalhao[] = []
+      for (const st of linkedST as { id: string; talhao_id: string }[]) {
+        const talhao = talhoes.find((t: { id: string }) => t.id === st.talhao_id)
+        if (!talhao) continue
+        const qtds = colheitasByST[st.id] ?? []
+        if (qtds.length === 0) continue
+        const total = qtds.reduce((s, v) => s + v, 0)
+        const area = (talhao as { area_hectares: number | null }).area_hectares ?? 1
+        prodData.push({ nome: (talhao as { nome: string }).nome, produtividade: Math.round(total / area) })
+      }
+      setProdTalhoes(prodData.slice(0, 8))
+
+      const prodVals = prodData.map(p => p.produtividade)
+      const prodMedia = prodVals.length ? prodVals.reduce((a, b) => a + b, 0) / prodVals.length : 0
+
+      const culturaCount: Record<string, number> = {}
+      for (const st of linkedST as { cultura_id: string }[]) {
+        culturaCount[st.cultura_id] = (culturaCount[st.cultura_id] ?? 0) + 1
+      }
+      const culturasRes = await supabase.from('culturas').select('*').eq('user_id', userId)
+      const culturas = culturasRes.data ?? []
+      const distribData = Object.entries(culturaCount).map(([cid, cnt]) => {
+        const c = (culturas as { id: string; nome: string }[]).find(x => x.id === cid)
+        return { name: c?.nome ?? 'Desconhecida', value: cnt }
+      })
+      setCulturaDistrib(distribData)
+
+      const alertasData: AlertaPraga[] = ((pragas.data ?? []) as {
+        id: string; nome: string; tipo: string; severidade: string; safra_talhao_id: string; data: string
+      }[]).map(p => {
+        const st = safTalhoes.find((s: { id: string }) => s.id === p.safra_talhao_id)
+        const talhao = st ? talhoes.find((t: { id: string }) => t.id === (st as { talhao_id: string }).talhao_id) : null
+        return {
+          id: p.id,
+          nome: p.nome,
+          tipo: p.tipo,
+          severidade: p.severidade,
+          talhao: (talhao as { nome: string } | null)?.nome ?? '–',
+          data: p.data,
+        }
+      })
+      setAlertas(alertasData)
+
+      setKpis({
+        areaPlantada: areaTotal,
+        talhoesAtivos: activeTalhoes.length,
+        atividadesMes,
+        produtividadeMedia: prodMedia,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [userId, period])
+
+  useEffect(() => { loadData() }, [loadData])
+
+  if (loading) return <DashSkeleton />
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-t1">Dashboard · Lavoura</h1>
+          <p className="text-sm text-t3">Visão geral da sua operação de lavoura</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-[var(--border)] overflow-hidden">
+            {(['1m', '3m', '6m', '12m'] as Period[]).map(p => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${period === p
+                  ? 'bg-[var(--primary)] text-black'
+                  : 'text-t2 hover:bg-[var(--surface-raised)]'}`}
+              >
+                {p === '1m' ? 'Este Mês' : p === '3m' ? '3 Meses' : p === '6m' ? '6 Meses' : 'Ano'}
+              </button>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" onClick={loadData}>
+            <RefreshCw className="w-3.5 h-3.5 mr-1" /> Atualizar
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard icon={MapPin} label="Área Plantada" value={`${formatNumber(areaPlantadaAnim, 0)} ha`} />
+        <KpiCard icon={Sprout} label="Talhões Ativos" value={String(talhoesAtivosAnim)} />
+        <KpiCard icon={Activity} label="Atividades este Mês" value={String(atividadesMesAnim)} />
+        <KpiCard icon={TrendingUp} label="Produtividade Média" value={`${formatNumber(produtividadeAnim, 0)} sc/ha`} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <Card className="lg:col-span-2 shadow-elev-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-t2">Produtividade por Talhão (sc/ha)</CardTitle>
+          </CardHeader>
           <CardContent>
-            {prodByTalhao.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">Registre colheitas para ver a produtividade por talhão.</p>
+            {prodTalhoes.length === 0 ? (
+              <div className="h-48 flex items-center justify-center text-sm text-t3">Sem dados de colheita no período</div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={prodByTalhao} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                  <XAxis type="number" tick={{ fontSize: 12 }} />
-                  <YAxis type="category" dataKey="nome" tick={{ fontSize: 12 }} width={100} />
-                  <Tooltip formatter={(v: number) => `${v.toFixed(1)} sacas/ha`} />
-                  <Bar dataKey="produtividade" fill="#16A34A" radius={[0, 6, 6, 0]} />
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={prodTalhoes} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="nome" tick={{ fontSize: 11, fill: 'var(--text-t3)' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--text-t3)' }} />
+                  <Tooltip
+                    contentStyle={{ background: 'var(--surface-overlay)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+                    formatter={(v: number) => [`${v} sc/ha`, 'Produtividade']}
+                  />
+                  <Bar dataKey="produtividade" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle>Culturas na Safra</CardTitle></CardHeader>
-          <CardContent>
-            {culturasDist.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">Vincule talhões a uma safra para ver a distribuição.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={culturasDist} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="value" nameKey="name" label={({ name, value }) => `${name}: ${value.toFixed(1)} ha`}>
-                    {culturasDist.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => `${v.toFixed(1)} ha`} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader><CardTitle>Últimas Atividades</CardTitle></CardHeader>
+        <Card className="shadow-elev-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-t2">Distribuição de Culturas</CardTitle>
+          </CardHeader>
           <CardContent>
-            {recentActivities.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma atividade registrada.</p>
+            {culturaDistrib.length === 0 ? (
+              <div className="h-48 flex items-center justify-center text-sm text-t3">Sem safras ativas</div>
             ) : (
-              <div className="space-y-2">
-                {recentActivities.map((a: any) => (
-                  <div key={a.id} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
-                    <span className="text-sm text-muted-foreground w-20 shrink-0">{new Date(a.data).toLocaleDateString("pt-BR")}</span>
-                    <span className="text-sm font-medium truncate">{a.safra_talhoes?.talhoes?.nome || "—"}</span>
-                    <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium ${tipoBadge(a.tipo)}`}>{a.tipo}</span>
-                    <span className="text-sm text-muted-foreground truncate ml-auto">{a.insumos?.nome || ""}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle>Alertas</CardTitle></CardHeader>
-          <CardContent>
-            {alerts.length === 0 ? (
-              <div className="flex flex-col items-center py-6 gap-2">
-                <CheckCircle className="h-10 w-10 text-primary" />
-                <p className="text-sm text-muted-foreground">Tudo em ordem!</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {alerts.map((a, i) => (
-                  <div key={i} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
-                    {a.icon === "package" && <Package className="h-4 w-4 text-destructive shrink-0" />}
-                    {a.icon === "cog" && <Cog className="h-4 w-4 text-destructive shrink-0" />}
-                    {a.icon === "bug" && <Bug className="h-4 w-4 text-destructive shrink-0" />}
-                    <span className="text-sm text-foreground">{a.text}</span>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center">
+                <ResponsiveContainer width="100%" height={160}>
+                  <PieChart>
+                    <Pie
+                      data={culturaDistrib}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={70}
+                    >
+                      {culturaDistrib.map((_, i) => (
+                        <Cell key={i} fill={CULTURA_COLORS[i % CULTURA_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ background: 'var(--surface-overlay)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-2 justify-center mt-1">
+                  {culturaDistrib.map((d, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-xs text-t2">
+                      <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: CULTURA_COLORS[i % CULTURA_COLORS.length] }} />
+                      {d.name} ({d.value})
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Custo de Produção */}
-      {custoData.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>Custo de Produção por Talhão</CardTitle></CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>Talhão</TableHead>
-                <TableHead>Cultura</TableHead>
-                <TableHead>Área (ha)</TableHead>
-                <TableHead>Custo Insumos</TableHead>
-                <TableHead>Custo Máquinas</TableHead>
-                <TableHead>Custo Total</TableHead>
-                <TableHead>Custo/ha</TableHead>
-                <TableHead>Produção</TableHead>
-                <TableHead>Custo/saca</TableHead>
-                <TableHead>Resultado</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {custoData.map((r: any, i: number) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-medium">{r.talhao}</TableCell>
-                    <TableCell>{r.cultura}</TableCell>
-                    <TableCell>{r.area.toLocaleString("pt-BR", { minimumFractionDigits: 1 })}</TableCell>
-                    <TableCell>R$ {r.custoInsumos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell>R$ {r.custoMaq.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="font-medium">R$ {r.custoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell>R$ {r.custoHa.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell>{r.producao > 0 ? r.producao.toLocaleString("pt-BR") + " sacas" : "—"}</TableCell>
-                    <TableCell>{r.custoSaca > 0 ? `R$ ${r.custoSaca.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}</TableCell>
-                    <TableCell className={r.resultado >= 0 ? "text-primary font-medium" : "text-destructive font-medium"}>R$ {r.resultado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-xl mt-3">
-              Custo Total: <strong>R$ {custoData.reduce((s: number, r: any) => s + r.custoTotal, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong> | Produção Total: <strong>{custoData.reduce((s: number, r: any) => s + r.producao, 0).toLocaleString("pt-BR")} sacas</strong> | Resultado: <strong className={custoData.reduce((s: number, r: any) => s + r.resultado, 0) >= 0 ? "text-primary" : "text-destructive"}>R$ {custoData.reduce((s: number, r: any) => s + r.resultado, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
+      <Card className="shadow-elev-1">
+        <CardHeader className="pb-2 flex flex-row items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-red-500" />
+          <CardTitle className="text-sm font-medium text-t2">Alertas de Pragas e Doenças</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {alertas.length === 0 ? (
+            <p className="text-sm text-t3 py-2">Nenhum alerta de praga crítico ou alto.</p>
+          ) : (
+            <div className="space-y-2">
+              {alertas.map((a) => (
+                <div key={a.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
+                  <div className="flex items-center gap-3">
+                    {a.severidade === 'critico' && (
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                      </span>
+                    )}
+                    <div>
+                      <span className="text-sm font-medium text-t1">{a.nome}</span>
+                      <span className="text-xs text-t3 ml-2">{a.talhao}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className={`text-xs ${SEVERIDADE_COLOR[a.severidade] ?? ''}`}>{a.severidade}</Badge>
+                    <span className="text-xs text-t3">
+                      <Calendar className="w-3 h-3 inline mr-1" />{formatDate(a.data)}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
-  );
+  )
 }

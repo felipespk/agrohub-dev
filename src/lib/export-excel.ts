@@ -1,155 +1,119 @@
-import ExcelJS from "exceljs";
+/**
+ * Professional Excel export using ExcelJS.
+ * Colored headers, zebra rows, currency/date formatting, totals row.
+ */
+import ExcelJS from 'exceljs'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
-export interface ExportColuna {
-  header: string;
-  key: string;
-  width: number;
-  tipo?: "texto" | "moeda" | "data" | "numero";
+export interface ExcelColumn {
+  key: string
+  header: string
+  width?: number
+  type?: 'currency' | 'date' | 'number' | 'text'
 }
 
-export interface ExportTotalizador {
-  label: string;
-  valor: string;
-  positivo?: boolean;
-}
+export async function exportToExcel(
+  filename: string,
+  sheetName: string,
+  columns: ExcelColumn[],
+  rows: Record<string, unknown>[],
+  totals?: Record<string, number>
+): Promise<void> {
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'Agrix'
+  workbook.created = new Date()
 
-export interface ExportConfig {
-  nomeArquivo: string;
-  titulo: string;
-  subtitulo?: string;
-  colunas: ExportColuna[];
-  dados: Record<string, any>[];
-  totalizadores?: ExportTotalizador[];
-}
+  const sheet = workbook.addWorksheet(sheetName, {
+    pageSetup: { paperSize: 9, orientation: 'landscape' },
+  })
 
-const VERDE_ESCURO = "FF1B4332";
-const CINZA_CLARO = "FFF9FAFB";
-const CINZA_BORDA = "FFE5E7EB";
-const CINZA_TEXTO = "FF6B7280";
+  // Define columns
+  sheet.columns = columns.map(col => ({
+    key: col.key,
+    width: col.width ?? 18,
+  }))
 
-const thinBorder: Partial<ExcelJS.Borders> = {
-  top: { style: "thin", color: { argb: CINZA_BORDA } },
-  bottom: { style: "thin", color: { argb: CINZA_BORDA } },
-  left: { style: "thin", color: { argb: CINZA_BORDA } },
-  right: { style: "thin", color: { argb: CINZA_BORDA } },
-};
-
-export async function exportarExcel(config: ExportConfig) {
-  const { nomeArquivo, titulo, subtitulo, colunas, dados, totalizadores } = config;
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "AgroHub";
-  wb.created = new Date();
-  const ws = wb.addWorksheet(titulo.substring(0, 31));
-  const colCount = colunas.length;
-  const lastCol = colCount;
-
-  // Row 1 — Title
-  ws.mergeCells(1, 1, 1, lastCol);
-  const titleCell = ws.getCell(1, 1);
-  titleCell.value = titulo;
-  titleCell.font = { bold: true, size: 16, color: { argb: VERDE_ESCURO } };
-  titleCell.alignment = { vertical: "middle" };
-  ws.getRow(1).height = 30;
-
-  // Row 2 — Subtitle
-  ws.mergeCells(2, 1, 2, lastCol);
-  const subCell = ws.getCell(2, 1);
-  subCell.value = subtitulo || `Gerado em ${new Date().toLocaleDateString("pt-BR")}`;
-  subCell.font = { size: 11, color: { argb: CINZA_TEXTO } };
-  ws.getRow(2).height = 20;
-
-  // Row 3 — spacing
-  ws.getRow(3).height = 8;
-
-  // Row 4 — Header
-  const headerRow = ws.getRow(4);
-  colunas.forEach((col, i) => {
-    const cell = headerRow.getCell(i + 1);
-    cell.value = col.header;
-    cell.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: VERDE_ESCURO } };
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-    cell.border = thinBorder;
-  });
-  headerRow.height = 22;
-
-  // Set column widths
-  colunas.forEach((col, i) => {
-    ws.getColumn(i + 1).width = col.width;
-  });
-
-  // Data rows
-  dados.forEach((obj, rowIdx) => {
-    const row = ws.getRow(5 + rowIdx);
-    colunas.forEach((col, colIdx) => {
-      const cell = row.getCell(colIdx + 1);
-      let val = obj[col.key];
-
-      if (col.tipo === "moeda" && val != null) {
-        cell.value = Number(val);
-        cell.numFmt = '#,##0.00;-#,##0.00';
-      } else if (col.tipo === "data" && val) {
-        cell.value = typeof val === "string" ? val : val;
-      } else if (col.tipo === "numero" && val != null) {
-        cell.value = Number(val);
-        cell.numFmt = "#,##0.00";
-      } else {
-        cell.value = val ?? "—";
-      }
-
-      cell.font = { size: 10 };
-      cell.border = thinBorder;
-      cell.alignment = { vertical: "middle" };
-    });
-    row.height = 18;
-
-    // Zebra striping
-    if (rowIdx % 2 === 1) {
-      for (let c = 1; c <= colCount; c++) {
-        row.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: CINZA_CLARO } };
-      }
+  // Header row
+  const headerRow = sheet.addRow(columns.map(c => c.header))
+  headerRow.height = 28
+  headerRow.eachCell(cell => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF111110' },
     }
-  });
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }
+    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+    cell.border = {
+      bottom: { style: 'medium', color: { argb: 'FF78FC90' } },
+    }
+  })
 
-  let nextRow = 5 + dados.length;
-
-  // Totalizadores
-  if (totalizadores && totalizadores.length > 0) {
-    nextRow++; // blank row
-    totalizadores.forEach((t) => {
-      const row = ws.getRow(nextRow);
-      if (colCount > 1) {
-        ws.mergeCells(nextRow, 1, nextRow, colCount - 1);
+  // Data rows (zebra striping)
+  rows.forEach((row, idx) => {
+    const dataRow = sheet.addRow(columns.map(col => {
+      const val = row[col.key]
+      if (col.type === 'date' && val) {
+        return typeof val === 'string' ? new Date(val) : val
       }
-      const labelCell = row.getCell(1);
-      labelCell.value = t.label;
-      labelCell.font = { bold: true, size: 11 };
-      labelCell.alignment = { horizontal: "right", vertical: "middle" };
+      return val ?? ''
+    }))
 
-      const valCell = row.getCell(colCount);
-      valCell.value = t.valor;
-      valCell.font = { bold: true, size: 11, color: { argb: t.positivo === false ? "FFDC2626" : "FF059669" } };
-      valCell.alignment = { horizontal: "right", vertical: "middle" };
-      row.height = 20;
-      nextRow++;
-    });
+    const isEven = idx % 2 === 0
+    dataRow.eachCell((cell, colNumber) => {
+      const col = columns[colNumber - 1]
+      if (isEven) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F9FA' } }
+      }
+      cell.alignment = { vertical: 'middle', horizontal: col?.type === 'currency' || col?.type === 'number' ? 'right' : 'left' }
+      cell.font = { size: 10 }
+      if (col?.type === 'currency') {
+        cell.numFmt = 'R$ #,##0.00'
+      } else if (col?.type === 'date') {
+        cell.numFmt = 'DD/MM/YYYY'
+      } else if (col?.type === 'number') {
+        cell.numFmt = '#,##0.00'
+      }
+      cell.border = {
+        bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+      }
+    })
+  })
+
+  // Totals row (if provided)
+  if (totals) {
+    const totalRow = sheet.addRow(
+      columns.map(col => totals[col.key] !== undefined ? totals[col.key] : (col.key === columns[0].key ? 'TOTAL' : ''))
+    )
+    totalRow.height = 24
+    totalRow.eachCell((cell, colNumber) => {
+      const col = columns[colNumber - 1]
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } }
+      cell.font = { bold: true, size: 10 }
+      cell.alignment = { vertical: 'middle', horizontal: col?.type === 'currency' ? 'right' : 'left' }
+      if (col?.type === 'currency') cell.numFmt = 'R$ #,##0.00'
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF111110' } },
+      }
+    })
   }
 
   // Footer
-  nextRow++;
-  ws.mergeCells(nextRow, 1, nextRow, lastCol);
-  const footerCell = ws.getCell(nextRow, 1);
-  footerCell.value = `AgroHub — Gerado em ${new Date().toLocaleString("pt-BR")} — www.agrohub.com`;
-  footerCell.font = { size: 9, color: { argb: CINZA_TEXTO }, italic: true };
-  footerCell.alignment = { horizontal: "center", vertical: "middle" };
+  sheet.addRow([])
+  const footerRow = sheet.addRow([
+    `Agrix — Gestão Rural — Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
+  ])
+  footerRow.getCell(1).font = { italic: true, color: { argb: 'FF9CA3AF' }, size: 9 }
+  sheet.mergeCells(footerRow.number, 1, footerRow.number, columns.length)
 
   // Download
-  const buffer = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${nomeArquivo}.xlsx`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${filename}_${format(new Date(), 'ddMMyyyy')}.xlsx`
+  a.click()
+  URL.revokeObjectURL(url)
 }

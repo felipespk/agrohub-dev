@@ -1,2 +1,0 @@
-ALTER TABLE public.saidas ADD COLUMN produtor_id uuid REFERENCES public.produtores(id) ON DELETE SET NULL;
-ALTER TABLE public.saidas ADD COLUMN tipo_grao_id uuid REFERENCES public.tipos_grao(id) ON DELETE SET NULL;

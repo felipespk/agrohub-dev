@@ -1,0 +1,27 @@
+import { Outlet } from 'react-router-dom'
+import { SecadorSidebar } from './SecadorSidebar'
+import { ProfileDropdown } from '@/components/ProfileDropdown'
+import { PageTransition } from '@/components/PageTransition'
+import { Warehouse } from 'lucide-react'
+
+export function SecadorLayout() {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <header className="h-14 flex items-center justify-between px-5 border-b border-[var(--border)] bg-[var(--surface)] sticky top-0 z-30">
+        <div className="flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-md bg-orange-500/12 flex items-center justify-center">
+            <Warehouse size={13} className="text-orange-400" strokeWidth={2} />
+          </div>
+          <span className="text-md font-semibold text-t1 tracking-tight">Secador / Silo</span>
+        </div>
+        <ProfileDropdown settingsPath="/secador/configuracoes" />
+      </header>
+      <SecadorSidebar />
+      <div className="flex-1 p-6 max-w-content mx-auto w-full">
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
+      </div>
+    </div>
+  )
+}

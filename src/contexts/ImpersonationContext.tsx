@@ -1,63 +1,52 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from 'react'
+import { useAuth } from './AuthContext'
 
-interface ImpersonationContextType {
-  isImpersonating: boolean;
-  impersonatedUserId: string | null;
-  impersonatedEmail: string | null;
-  startImpersonation: (userId: string, email: string) => void;
-  stopImpersonation: () => void;
-  getEffectiveUserId: (realUserId: string) => string;
+interface ImpersonationContextValue {
+  impersonatedUserId: string | null
+  impersonatedEmail: string | null
+  isImpersonating: boolean
+  startImpersonation: (userId: string, email: string) => void
+  stopImpersonation: () => void
+  getEffectiveUserId: () => string | null
 }
 
-const ImpersonationContext = createContext<ImpersonationContextType | null>(null);
+const ImpersonationContext = createContext<ImpersonationContextValue | undefined>(undefined)
 
 export function ImpersonationProvider({ children }: { children: ReactNode }) {
-  const [impersonatedUserId, setImpersonatedUserId] = useState<string | null>(
-    () => localStorage.getItem("impersonating_user_id")
-  );
-  const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(
-    () => localStorage.getItem("impersonating_email")
-  );
+  const { user } = useAuth()
+  const [impersonatedUserId, setImpersonatedUserId] = useState<string | null>(null)
+  const [impersonatedEmail, setImpersonatedEmail] = useState<string | null>(null)
 
-  const isImpersonating = !!impersonatedUserId;
+  function startImpersonation(userId: string, email: string) {
+    setImpersonatedUserId(userId)
+    setImpersonatedEmail(email)
+  }
 
-  const startImpersonation = (userId: string, email: string) => {
-    localStorage.setItem("impersonating_user_id", userId);
-    localStorage.setItem("impersonating_email", email);
-    setImpersonatedUserId(userId);
-    setImpersonatedEmail(email);
-  };
+  function stopImpersonation() {
+    setImpersonatedUserId(null)
+    setImpersonatedEmail(null)
+  }
 
-  const stopImpersonation = () => {
-    localStorage.removeItem("impersonating_user_id");
-    localStorage.removeItem("impersonating_email");
-    localStorage.removeItem("admin_original_id");
-    setImpersonatedUserId(null);
-    setImpersonatedEmail(null);
-  };
-
-  const getEffectiveUserId = (realUserId: string) => {
-    return impersonatedUserId || realUserId;
-  };
+  function getEffectiveUserId() {
+    return impersonatedUserId ?? user?.id ?? null
+  }
 
   return (
-    <ImpersonationContext.Provider
-      value={{
-        isImpersonating,
-        impersonatedUserId,
-        impersonatedEmail,
-        startImpersonation,
-        stopImpersonation,
-        getEffectiveUserId,
-      }}
-    >
+    <ImpersonationContext.Provider value={{
+      impersonatedUserId,
+      impersonatedEmail,
+      isImpersonating: !!impersonatedUserId,
+      startImpersonation,
+      stopImpersonation,
+      getEffectiveUserId,
+    }}>
       {children}
     </ImpersonationContext.Provider>
-  );
+  )
 }
 
 export function useImpersonation() {
-  const ctx = useContext(ImpersonationContext);
-  if (!ctx) throw new Error("useImpersonation must be used within ImpersonationProvider");
-  return ctx;
+  const ctx = useContext(ImpersonationContext)
+  if (!ctx) throw new Error('useImpersonation must be used inside ImpersonationProvider')
+  return ctx
 }

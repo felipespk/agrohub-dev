@@ -1,107 +1,160 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useImpersonation } from '@/contexts/ImpersonationContext'
 
-type Row = Record<string, any>;
+// ─── Interfaces ───────────────────────────────────────────────────────────────
 
-interface FinanceiroContextType {
-  centrosCusto: Row[];
-  contasBancarias: Row[];
-  categorias: Row[];
-  contatos: Row[];
-  contasPR: Row[];
-  lancamentos: Row[];
-  loading: boolean;
-  reload: () => void;
+export interface CentroCusto {
+  id: string
+  user_id: string
+  nome: string
+  cor: string
+  icone: string | null
+  ativo: boolean
+  created_at?: string
 }
 
-const FinanceiroContext = createContext<FinanceiroContextType | null>(null);
+export interface ContaBancaria {
+  id: string
+  user_id: string
+  nome: string
+  banco: string | null
+  agencia: string | null
+  conta: string | null
+  tipo: 'corrente' | 'poupanca' | 'investimento'
+  saldo_atual: number
+  ativa: boolean
+  created_at?: string
+}
+
+export interface CategoriaFinanceira {
+  id: string
+  user_id: string
+  nome: string
+  tipo: 'receita' | 'despesa' | 'investimento'
+  created_at?: string
+}
+
+export interface ContatoFinanceiro {
+  id: string
+  user_id: string
+  nome: string
+  tipo: 'fornecedor' | 'cliente' | 'ambos'
+  cpf_cnpj: string | null
+  telefone: string | null
+  email: string | null
+  endereco: string | null
+  created_at?: string
+}
+
+// ─── Context Shape ────────────────────────────────────────────────────────────
+
+interface FinanceiroContextValue {
+  centrosCusto: CentroCusto[]
+  contasBancarias: ContaBancaria[]
+  categorias: CategoriaFinanceira[]
+  contatos: ContatoFinanceiro[]
+  loading: boolean
+  reload: () => void
+}
+
+export const FinanceiroContext = createContext<FinanceiroContextValue | undefined>(undefined)
+
+// ─── Default cost centers ────────────────────────────────────────────────────
 
 const DEFAULT_CENTROS = [
-  { nome: "Secador / Silo", cor: "#16A34A", icone: "wheat" },
-  { nome: "Pecuária", cor: "#D97706", icone: "beef" },
-  { nome: "Administrativo", cor: "#2563EB", icone: "building" },
-  { nome: "Pessoal", cor: "#8B5CF6", icone: "user" },
-];
+  { nome: 'Secador / Silo', cor: '#f97316' },
+  { nome: 'Pecuária',       cor: '#22c55e' },
+  { nome: 'Lavoura',        cor: '#eab308' },
+  { nome: 'Administrativo', cor: '#6366f1' },
+]
+
+// ─── Provider ────────────────────────────────────────────────────────────────
 
 export function FinanceiroProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const { effectiveUserId } = useEffectiveUser();
-  const [centrosCusto, setCentrosCusto] = useState<Row[]>([]);
-  const [contasBancarias, setContasBancarias] = useState<Row[]>([]);
-  const [categorias, setCategorias] = useState<Row[]>([]);
-  const [contatos, setContatos] = useState<Row[]>([]);
-  const [contasPR, setContasPR] = useState<Row[]>([]);
-  const [lancamentos, setLancamentos] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { getEffectiveUserId } = useImpersonation()
+  const userId = getEffectiveUserId()
 
-  const fetchAll = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    const uid = effectiveUserId || user.id;
-    const [cc, cb, cat, con, cpr, lan] = await Promise.all([
-      supabase.from("centros_custo").select("*").eq("user_id", uid).order("created_at"),
-      supabase.from("contas_bancarias").select("*").eq("user_id", uid).order("created_at"),
-      supabase.from("categorias_financeiras").select("*").eq("user_id", uid).order("nome"),
-      supabase.from("contatos_financeiros").select("*").eq("user_id", uid).order("nome"),
-      supabase.from("contas_pr").select("*").eq("user_id", uid).order("data_vencimento", { ascending: true }),
-      supabase.from("lancamentos").select("*").eq("user_id", uid).order("data", { ascending: false }),
-    ]);
+  const [centrosCusto,   setCentrosCusto]   = useState<CentroCusto[]>([])
+  const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([])
+  const [categorias,     setCategorias]     = useState<CategoriaFinanceira[]>([])
+  const [contatos,       setContatos]       = useState<ContatoFinanceiro[]>([])
+  const [loading,        setLoading]        = useState(true)
+  const [tick,           setTick]           = useState(0)
 
-    // Seed default cost centers if empty
-    let centrosData: Row[];
-    if (cc.data && cc.data.length === 0) {
-      const inserts = DEFAULT_CENTROS.map(c => ({ ...c, user_id: user.id }));
-      const { data: seeded } = await supabase.from("centros_custo").insert(inserts).select();
-      centrosData = seeded || [];
-    } else {
-      centrosData = cc.data || [];
+  const reload = useCallback(() => setTick(t => t + 1), [])
+
+  useEffect(() => {
+    if (!userId) return
+
+    let cancelled = false
+
+    async function load() {
+      setLoading(true)
+      try {
+        const [centrosRes, contasRes, categoriasRes, contatosRes] = await Promise.all([
+          supabase.from('centros_custo').select('*').eq('user_id', userId).order('nome'),
+          supabase.from('contas_bancarias').select('*').eq('user_id', userId).order('nome'),
+          supabase.from('categorias_financeiras').select('*').eq('user_id', userId).order('nome'),
+          supabase.from('contatos_financeiros').select('*').eq('user_id', userId).order('nome'),
+        ])
+
+        if (cancelled) return
+
+        const centros = (centrosRes.data ?? []) as CentroCusto[]
+
+        // Auto-seed default cost centers on first load
+        if (centros.length === 0) {
+          const seeds = DEFAULT_CENTROS.map(c => ({
+            user_id: userId,
+            nome: c.nome,
+            cor: c.cor,
+            icone: null,
+            ativo: true,
+          }))
+          const { data: seeded } = await supabase
+            .from('centros_custo')
+            .insert(seeds)
+            .select('*')
+          if (!cancelled) {
+            setCentrosCusto((seeded ?? []) as CentroCusto[])
+          }
+        } else {
+          setCentrosCusto(centros)
+        }
+
+        if (!cancelled) {
+          setContasBancarias((contasRes.data ?? []) as ContaBancaria[])
+          setCategorias((categoriasRes.data ?? []) as CategoriaFinanceira[])
+          setContatos((contatosRes.data ?? []) as ContatoFinanceiro[])
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
 
-    const contasBData = cb.data || [];
-    const catsData = cat.data || [];
-    const contData = con.data || [];
-
-    // Enrich contas_pr with relation names
-    const cprEnriched = (cpr.data || []).map(r => ({
-      ...r,
-      contato: contData.find(c => c.id === r.contato_id),
-      categoria: catsData.find(c => c.id === r.categoria_id),
-      centro: centrosData.find(c => c.id === r.centro_custo_id),
-      conta: contasBData.find(c => c.id === r.conta_bancaria_id),
-    }));
-
-    // Enrich lancamentos with relation names
-    const lanEnriched = (lan.data || []).map(l => ({
-      ...l,
-      categoria: catsData.find(c => c.id === l.categoria_id),
-      centro: centrosData.find(c => c.id === l.centro_custo_id),
-      conta: contasBData.find(c => c.id === l.conta_bancaria_id),
-      conta_dest: contasBData.find(c => c.id === l.conta_destino_id),
-      contato: contData.find(c => c.id === l.contato_id),
-    }));
-
-    setCentrosCusto(centrosData);
-    setContasBancarias(contasBData);
-    setCategorias(catsData);
-    setContatos(contData);
-    setContasPR(cprEnriched);
-    setLancamentos(lanEnriched);
-    setLoading(false);
-  }, [user, effectiveUserId]);
-
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+    load()
+    return () => { cancelled = true }
+  }, [userId, tick])
 
   return (
-    <FinanceiroContext.Provider value={{ centrosCusto, contasBancarias, categorias, contatos, contasPR, lancamentos, loading, reload: fetchAll }}>
+    <FinanceiroContext.Provider value={{
+      centrosCusto,
+      contasBancarias,
+      categorias,
+      contatos,
+      loading,
+      reload,
+    }}>
       {children}
     </FinanceiroContext.Provider>
-  );
+  )
 }
 
+// ─── Hook ────────────────────────────────────────────────────────────────────
+
 export function useFinanceiro() {
-  const ctx = useContext(FinanceiroContext);
-  if (!ctx) throw new Error("useFinanceiro must be used within FinanceiroProvider");
-  return ctx;
+  const ctx = useContext(FinanceiroContext)
+  if (!ctx) throw new Error('useFinanceiro must be used inside FinanceiroProvider')
+  return ctx
 }

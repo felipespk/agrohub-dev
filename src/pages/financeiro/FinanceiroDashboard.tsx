@@ -1,406 +1,437 @@
-import { useMemo, useState } from "react";
-import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Landmark, TrendingUp, TrendingDown, Scale, Clock, CheckCircle, ArrowDown, ArrowUp, ArrowRight } from "lucide-react";
-import { useFinanceiro } from "@/contexts/FinanceiroContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { formatarMoeda, formatarData } from "@/lib/format";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
-import { getGreeting } from "@/lib/greeting";
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useImpersonation } from '@/contexts/ImpersonationContext'
+import { useFinanceiro } from '@/contexts/FinanceiroContext'
+import { useCountUp } from '@/hooks/useCountUp'
+import { formatCurrency, formatDate } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import {
+  TrendingUp, TrendingDown, DollarSign, AlertTriangle, Calendar, ArrowUpCircle, ArrowDownCircle,
+} from 'lucide-react'
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  AreaChart, Area, CartesianGrid, Legend,
+} from 'recharts'
+import { format, subMonths, startOfMonth, endOfMonth, parseISO, addDays, startOfYear } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
-type PeriodoKey = "mes" | "3meses" | "6meses" | "ano" | "personalizado";
-
-function getPeriodoRange(key: PeriodoKey, customStart?: string, customEnd?: string): { start: string; end: string; label: string } {
-  const now = new Date();
-  const fmt = (d: Date) => d.toISOString().split("T")[0];
-  const todayStr = fmt(now);
-  if (key === "personalizado") {
-    return { start: customStart || fmt(new Date(now.getFullYear(), 0, 1)), end: customEnd || todayStr, label: "Personalizado" };
-  }
-  switch (key) {
-    case "mes": { const s = new Date(now.getFullYear(), now.getMonth(), 1); return { start: fmt(s), end: todayStr, label: "Este Mês" }; }
-    case "3meses": { const s = new Date(now.getFullYear(), now.getMonth() - 2, 1); return { start: fmt(s), end: todayStr, label: "Últimos 3 Meses" }; }
-    case "6meses": { const s = new Date(now.getFullYear(), now.getMonth() - 5, 1); return { start: fmt(s), end: todayStr, label: "Últimos 6 Meses" }; }
-    case "ano": { const s = new Date(now.getFullYear(), 0, 1); return { start: fmt(s), end: todayStr, label: "Este Ano" }; }
-  }
+interface Lancamento {
+  id: string
+  tipo: 'receita' | 'despesa' | 'transferencia'
+  valor: number
+  data: string
+  descricao: string | null
+  categoria_id: string | null
+  centro_custo_id: string | null
+  conta_bancaria_id: string | null
 }
 
-export default function FinanceiroDashboard() {
-  const { centrosCusto, contasBancarias, contasPR, lancamentos, loading } = useFinanceiro();
-  const { user } = useAuth();
-  const [ccFiltro, setCcFiltro] = useState("todos");
-  const [periodo, setPeriodo] = useState<PeriodoKey>("mes");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
-  const navigate = useNavigate();
+interface ContaPR {
+  id: string
+  tipo: string
+  descricao: string
+  valor_total: number
+  valor_pago: number
+  data_vencimento: string
+  status: string
+  categoria_id: string | null
+  contato_id: string | null
+}
 
-  const { greeting } = getGreeting(null, user?.email);
+type Periodo = 'mes' | '3meses' | '6meses' | 'ano' | 'personalizado'
 
-  const today = new Date().toISOString().split("T")[0];
-  const { start: periodoStart, end: periodoEnd, label: periodoLabel } = getPeriodoRange(periodo, customStart, customEnd);
+const TOOLTIP_STYLE = {
+  contentStyle: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: '8px',
+    fontSize: '12px',
+    boxShadow: 'var(--shadow-2)',
+  },
+}
 
-  const lancFiltrados = useMemo(() => {
-    let l = lancamentos.filter(x => x.data >= periodoStart && x.data <= periodoEnd);
-    if (ccFiltro !== "todos") l = l.filter(x => x.centro_custo_id === ccFiltro);
-    return l;
-  }, [lancamentos, periodoStart, periodoEnd, ccFiltro]);
+const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
-  const prevPeriodLanc = useMemo(() => {
-    const startDate = new Date(periodoStart);
-    const endDate = new Date(periodoEnd);
-    const diff = endDate.getTime() - startDate.getTime();
-    const prevEnd = new Date(startDate.getTime() - 1);
-    const prevStart = new Date(prevEnd.getTime() - diff);
-    const ps = prevStart.toISOString().split("T")[0];
-    const pe = prevEnd.toISOString().split("T")[0];
-    let l = lancamentos.filter(x => x.data >= ps && x.data <= pe);
-    if (ccFiltro !== "todos") l = l.filter(x => x.centro_custo_id === ccFiltro);
-    return l;
-  }, [lancamentos, periodoStart, periodoEnd, ccFiltro]);
+export function FinanceiroDashboard() {
+  const { getEffectiveUserId } = useImpersonation()
+  const userId = getEffectiveUserId()
+  const { centrosCusto, contasBancarias, loading: ctxLoading } = useFinanceiro()
 
-  const saldoTotal = contasBancarias.reduce((s, c) => s + Number(c.saldo_atual || 0), 0);
-  const receitasMes = lancFiltrados.filter(l => l.tipo === "receita").reduce((s, l) => s + Number(l.valor), 0);
-  const despesasMes = lancFiltrados.filter(l => l.tipo === "despesa").reduce((s, l) => s + Number(l.valor), 0);
-  const resultado = receitasMes - despesasMes;
+  const [periodo, setPeriodo] = useState<Periodo>('mes')
+  const [centroCustoFiltro, setCentroCustoFiltro] = useState<string>('todos')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
+  const [lancamentos, setLancamentos] = useState<Lancamento[]>([])
+  const [contasVencidas, setContasVencidas] = useState<ContaPR[]>([])
+  const [proximosVencimentos, setProximosVencimentos] = useState<ContaPR[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const prevReceitas = prevPeriodLanc.filter(l => l.tipo === "receita").reduce((s, l) => s + Number(l.valor), 0);
-  const prevDespesas = prevPeriodLanc.filter(l => l.tipo === "despesa").reduce((s, l) => s + Number(l.valor), 0);
-
-  const calcVar = (curr: number, prev: number) => {
-    if (prev === 0) return null;
-    return ((curr - prev) / prev) * 100;
-  };
-
-  const contasVencidas = useMemo(() => {
-    let items = contasPR.filter(c => c.status === "vencido" || (c.status === "aberto" && c.data_vencimento < today));
-    if (ccFiltro !== "todos") items = items.filter(c => c.centro_custo_id === ccFiltro);
-    return items;
-  }, [contasPR, today, ccFiltro]);
-
-  const proxVencimentos = useMemo(() => {
-    const d7 = new Date(); d7.setDate(d7.getDate() + 7);
-    const d7s = d7.toISOString().split("T")[0];
-    let items = contasPR.filter(c => c.status === "aberto" && c.data_vencimento >= today && c.data_vencimento <= d7s);
-    if (ccFiltro !== "todos") items = items.filter(c => c.centro_custo_id === ccFiltro);
-    return items;
-  }, [contasPR, today, ccFiltro]);
-
-  const proxPagar = proxVencimentos.filter(c => c.tipo === "pagar").slice(0, 3);
-  const proxReceber = proxVencimentos.filter(c => c.tipo === "receber").slice(0, 3);
-
-  const chartData = useMemo(() => {
-    const months: { mes: string; receitas: number; despesas: number }[] = [];
-    const startD = new Date(periodoStart + "T12:00:00");
-    const endD = new Date(periodoEnd + "T12:00:00");
-    const cur = new Date(startD.getFullYear(), startD.getMonth(), 1);
-    const endMonth = new Date(endD.getFullYear(), endD.getMonth(), 1);
-    while (cur <= endMonth) {
-      const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
-      const label = cur.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
-      let lans = lancamentos.filter(l => l.data?.startsWith(key));
-      if (ccFiltro !== "todos") lans = lans.filter(l => l.centro_custo_id === ccFiltro);
-      months.push({
-        mes: label.charAt(0).toUpperCase() + label.slice(1),
-        receitas: lans.filter(l => l.tipo === "receita").reduce((s, l) => s + Number(l.valor), 0),
-        despesas: lans.filter(l => l.tipo === "despesa").reduce((s, l) => s + Number(l.valor), 0),
-      });
-      cur.setMonth(cur.getMonth() + 1);
+  const getDateRange = useCallback(() => {
+    const hoje = new Date()
+    if (periodo === 'mes') {
+      return { from: format(startOfMonth(hoje), 'yyyy-MM-dd'), to: format(endOfMonth(hoje), 'yyyy-MM-dd') }
+    } else if (periodo === '3meses') {
+      return { from: format(startOfMonth(subMonths(hoje, 2)), 'yyyy-MM-dd'), to: format(endOfMonth(hoje), 'yyyy-MM-dd') }
+    } else if (periodo === '6meses') {
+      return { from: format(startOfMonth(subMonths(hoje, 5)), 'yyyy-MM-dd'), to: format(endOfMonth(hoje), 'yyyy-MM-dd') }
+    } else if (periodo === 'ano') {
+      return { from: format(startOfYear(hoje), 'yyyy-MM-dd'), to: format(endOfMonth(hoje), 'yyyy-MM-dd') }
+    } else {
+      return { from: dataInicio || format(startOfMonth(hoje), 'yyyy-MM-dd'), to: dataFim || format(endOfMonth(hoje), 'yyyy-MM-dd') }
     }
-    return months;
-  }, [lancamentos, ccFiltro, periodoStart, periodoEnd]);
+  }, [periodo, dataInicio, dataFim])
 
-  const resultadoPorCentro = useMemo(() => {
-    return centrosCusto.filter(c => c.ativo).map(cc => {
-      const lans = lancFiltrados.filter(l => l.centro_custo_id === cc.id);
-      const rec = lans.filter(l => l.tipo === "receita").reduce((s, l) => s + Number(l.valor), 0);
-      const desp = lans.filter(l => l.tipo === "despesa").reduce((s, l) => s + Number(l.valor), 0);
-      return { id: cc.id, nome: cc.nome, cor: cc.cor || "#6B7280", resultado: rec - desp };
-    });
-  }, [centrosCusto, lancFiltrados]);
+  const fetchData = useCallback(async () => {
+    if (!userId) return
+    setLoading(true)
+    try {
+      const { from, to } = getDateRange()
+      const hoje = format(new Date(), 'yyyy-MM-dd')
+      const em7Dias = format(addDays(new Date(), 7), 'yyyy-MM-dd')
 
-  const fluxo30d = useMemo(() => {
-    const data: { dia: string; saldo: number }[] = [];
-    const entries: Record<string, number> = {};
-    lancamentos.forEach(l => {
-      const delta = l.tipo === "receita" ? Number(l.valor) : l.tipo === "despesa" ? -Number(l.valor) : 0;
-      entries[l.data] = (entries[l.data] || 0) + delta;
-    });
-    const todayD = new Date();
-    let reversal = 0;
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(todayD); d.setDate(d.getDate() - i);
-      const ds = d.toISOString().split("T")[0];
-      reversal += (entries[ds] || 0);
+      let query = supabase
+        .from('lancamentos')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('data', from)
+        .lte('data', to)
+
+      if (centroCustoFiltro !== 'todos') {
+        query = query.eq('centro_custo_id', centroCustoFiltro)
+      }
+
+      const [lancRes, vencidasRes, proximasRes] = await Promise.all([
+        query,
+        supabase.from('contas_pr').select('*').eq('user_id', userId).eq('status', 'aberto').lt('data_vencimento', hoje),
+        supabase.from('contas_pr').select('*').eq('user_id', userId).eq('status', 'aberto')
+          .gte('data_vencimento', hoje).lte('data_vencimento', em7Dias),
+      ])
+
+      setLancamentos((lancRes.data ?? []) as Lancamento[])
+      setContasVencidas((vencidasRes.data ?? []) as ContaPR[])
+      setProximosVencimentos((proximasRes.data ?? []) as ContaPR[])
+    } finally {
+      setLoading(false)
     }
-    let running = saldoTotal - reversal;
+  }, [userId, getDateRange, centroCustoFiltro])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  // ─── KPIs ─────────────────────────────────────────────────────────────────
+  const saldoContas = contasBancarias.filter(c => c.ativa).reduce((s, c) => s + (c.saldo_atual ?? 0), 0)
+  const receitas = lancamentos.filter(l => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0)
+  const despesas = lancamentos.filter(l => l.tipo === 'despesa').reduce((s, l) => s + l.valor, 0)
+  const resultado = receitas - despesas
+
+  const countedSaldo    = useCountUp(saldoContas)
+  const countedReceitas = useCountUp(receitas)
+  const countedDespesas = useCountUp(despesas)
+  const countedResultado = useCountUp(Math.abs(resultado))
+
+  // ─── BarChart: receitas vs despesas por mês ────────────────────────────────
+  const barData = Array.from({ length: 6 }, (_, i) => {
+    const ref = subMonths(new Date(), 5 - i)
+    const mesStr = format(ref, 'yyyy-MM')
+    const rec = lancamentos.filter(l => l.tipo === 'receita' && l.data.startsWith(mesStr)).reduce((s, l) => s + l.valor, 0)
+    const desp = lancamentos.filter(l => l.tipo === 'despesa' && l.data.startsWith(mesStr)).reduce((s, l) => s + l.valor, 0)
+    return { mes: MESES_PT[ref.getMonth()], Receitas: rec, Despesas: desp }
+  })
+
+  // ─── Resultado por atividade ───────────────────────────────────────────────
+  const atividadeData = centrosCusto.map(cc => {
+    const rec = lancamentos.filter(l => l.tipo === 'receita' && l.centro_custo_id === cc.id).reduce((s, l) => s + l.valor, 0)
+    const desp = lancamentos.filter(l => l.tipo === 'despesa' && l.centro_custo_id === cc.id).reduce((s, l) => s + l.valor, 0)
+    return { ...cc, resultado: rec - desp }
+  }).filter(a => a.resultado !== 0).sort((a, b) => b.resultado - a.resultado)
+
+  // ─── Fluxo de caixa (últimos 30 dias) ─────────────────────────────────────
+  const fluxoData = (() => {
+    const hoje = new Date()
+    const dias: { data: string; saldo: number; receita: number; despesa: number }[] = []
+    let saldoAcc = 0
     for (let i = 29; i >= 0; i--) {
-      const d = new Date(todayD); d.setDate(d.getDate() - i);
-      const ds = d.toISOString().split("T")[0];
-      running += (entries[ds] || 0);
-      data.push({ dia: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), saldo: running });
+      const d = addDays(hoje, -i)
+      const dStr = format(d, 'yyyy-MM-dd')
+      const rec = lancamentos.filter(l => l.tipo === 'receita' && l.data === dStr).reduce((s, l) => s + l.valor, 0)
+      const desp = lancamentos.filter(l => l.tipo === 'despesa' && l.data === dStr).reduce((s, l) => s + l.valor, 0)
+      saldoAcc += rec - desp
+      dias.push({ data: format(d, 'dd/MM'), saldo: saldoAcc, receita: rec, despesa: desp })
     }
-    return data;
-  }, [lancamentos, saldoTotal]);
+    return dias
+  })()
 
-  if (loading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Carregando...</div>;
+  // ─── Loading state ─────────────────────────────────────────────────────────
+  if (loading || ctxLoading) return (
+    <div className="space-y-5">
+      <div className="flex justify-between"><Skeleton className="h-8 w-48" /><Skeleton className="h-9 w-40" /></div>
+      <div className="grid grid-cols-4 gap-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}</div>
+      <div className="grid grid-cols-2 gap-4"><Skeleton className="h-64 rounded-xl" /><Skeleton className="h-64 rounded-xl" /></div>
+      <Skeleton className="h-48 rounded-xl" />
+    </div>
+  )
 
   return (
-    <div className="animate-fade-in space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+    <div className="space-y-5 animate-fade-up">
+      {/* Header + Filters */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-[28px] font-bold text-foreground">{greeting}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Aqui está o resumo financeiro da sua fazenda.</p>
+          <h1 className="t-heading-lg text-t1">Dashboard Financeiro</h1>
+          <p className="text-sm text-t3 mt-0.5">Visão geral das suas finanças</p>
         </div>
-        <div className="flex gap-3">
-          <Select value={ccFiltro} onValueChange={setCcFiltro}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Centro de Custo" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os Centros</SelectItem>
-              {centrosCusto.filter(c => c.ativo).map(c => (
-                <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={periodo} onValueChange={v => setPeriodo(v as PeriodoKey)}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={periodo} onValueChange={v => setPeriodo(v as Periodo)}>
+            <SelectTrigger className="w-40 h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="mes">Este Mês</SelectItem>
-              <SelectItem value="3meses">Últimos 3 Meses</SelectItem>
-              <SelectItem value="6meses">Últimos 6 Meses</SelectItem>
-              <SelectItem value="ano">Este Ano</SelectItem>
+              <SelectItem value="3meses">3 Meses</SelectItem>
+              <SelectItem value="6meses">6 Meses</SelectItem>
+              <SelectItem value="ano">Ano</SelectItem>
               <SelectItem value="personalizado">Personalizado</SelectItem>
             </SelectContent>
           </Select>
-          {periodo === "personalizado" && (
-            <div className="flex items-center gap-2 animate-fade-in">
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">De</span>
-                <Input type="date" className="w-[150px] h-9" value={customStart} onChange={e => setCustomStart(e.target.value)} />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">Até</span>
-                <Input type="date" className="w-[150px] h-9" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
-              </div>
-            </div>
+          {periodo === 'personalizado' && (
+            <>
+              <Input type="date" className="h-9 w-36 text-sm" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
+              <span className="text-t3 text-sm">até</span>
+              <Input type="date" className="h-9 w-36 text-sm" value={dataFim} onChange={e => setDataFim(e.target.value)} />
+            </>
           )}
+          <Select value={centroCustoFiltro} onValueChange={setCentroCustoFiltro}>
+            <SelectTrigger className="w-44 h-9 text-sm">
+              <SelectValue placeholder="Centro de Custo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Centros</SelectItem>
+              {centrosCusto.map(cc => (
+                <SelectItem key={cc.id} value={cc.id}>{cc.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Saldo - gradient */}
-        <div className="rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]" style={{ background: "linear-gradient(135deg, #16A34A, #166534)" }}>
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-white/20">
-              <Landmark className="h-5 w-5 text-white" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card style={{ animationDelay: '0ms' } as React.CSSProperties} className="animate-fade-up">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-t3 uppercase tracking-wider">Saldo em Contas</span>
+              <div className="w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center">
+                <DollarSign size={15} className="text-blue-600" />
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white/70 uppercase tracking-wide">Saldo em Contas</p>
-              <p className="text-[32px] font-bold leading-tight mt-1 text-white">{formatarMoeda(saldoTotal)}</p>
+            <p className="t-display-sm tabular text-t1">{formatCurrency(countedSaldo)}</p>
+            <p className="text-xs text-t3 mt-1">{contasBancarias.filter(c => c.ativa).length} conta(s) ativa(s)</p>
+          </CardContent>
+        </Card>
+
+        <Card style={{ animationDelay: '50ms' } as React.CSSProperties} className="animate-fade-up">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-t3 uppercase tracking-wider">Receitas</span>
+              <div className="w-8 h-8 rounded-md bg-emerald-50 flex items-center justify-center">
+                <TrendingUp size={15} className="text-emerald-600" />
+              </div>
             </div>
-          </div>
-        </div>
-        <KpiCard icon={TrendingUp} label="Receitas no Período" value={formatarMoeda(receitasMes)} color="#16A34A" positive variation={calcVar(receitasMes, prevReceitas)} />
-        <KpiCard icon={TrendingDown} label="Despesas no Período" value={formatarMoeda(despesasMes)} color="#EF4444" positive={false} variation={calcVar(despesasMes, prevDespesas)} invertVariation />
-        <KpiCard icon={Scale} label="Resultado" value={formatarMoeda(resultado)} color={resultado >= 0 ? "#16A34A" : "#EF4444"} positive={resultado >= 0} variation={null} />
+            <p className="t-display-sm tabular text-emerald-600">{formatCurrency(countedReceitas)}</p>
+            <p className="text-xs text-t3 mt-1">No período selecionado</p>
+          </CardContent>
+        </Card>
+
+        <Card style={{ animationDelay: '100ms' } as React.CSSProperties} className="animate-fade-up">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-t3 uppercase tracking-wider">Despesas</span>
+              <div className="w-8 h-8 rounded-md bg-red-50 flex items-center justify-center">
+                <TrendingDown size={15} className="text-red-600" />
+              </div>
+            </div>
+            <p className="t-display-sm tabular text-red-600">{formatCurrency(countedDespesas)}</p>
+            <p className="text-xs text-t3 mt-1">No período selecionado</p>
+          </CardContent>
+        </Card>
+
+        <Card style={{ animationDelay: '150ms' } as React.CSSProperties} className="animate-fade-up">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-t3 uppercase tracking-wider">Resultado</span>
+              <div className={`w-8 h-8 rounded-md flex items-center justify-center ${resultado >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                {resultado >= 0
+                  ? <ArrowUpCircle size={15} className="text-emerald-600" />
+                  : <ArrowDownCircle size={15} className="text-red-600" />}
+              </div>
+            </div>
+            <p className={`t-display-sm tabular ${resultado >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {resultado < 0 ? '-' : ''}{formatCurrency(countedResultado)}
+            </p>
+            <p className="text-xs text-t3 mt-1">{resultado >= 0 ? 'Superávit' : 'Déficit'} no período</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Chart + Result by Activity */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="font-bold text-lg text-foreground">Receitas vs Despesas</h2>
-              <p className="text-xs text-muted-foreground">{periodoLabel}</p>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "hsl(142, 76%, 36%)" }} />Receitas</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "hsl(0, 84%, 60%)" }} />Despesas</span>
-            </div>
-          </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Bar chart: Receitas vs Despesas */}
+        <Card>
+          <CardHeader className="pb-2 pt-4 px-5">
+            <CardTitle className="text-sm font-semibold text-t1">Receitas vs Despesas</CardTitle>
+            <p className="text-xs text-t3">Últimos 6 meses</p>
+          </CardHeader>
+          <CardContent className="px-5 pb-4">
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={barData} barGap={2}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="mes" tick={{ fontSize: 11, fill: 'var(--t3)' }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10, fill: 'var(--t3)' }} axisLine={false} tickLine={false} width={55} />
+                <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => formatCurrency(v)} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="Receitas" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Despesas" fill="#ef4444" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Area chart: Fluxo de caixa */}
+        <Card>
+          <CardHeader className="pb-2 pt-4 px-5">
+            <CardTitle className="text-sm font-semibold text-t1">Fluxo de Caixa</CardTitle>
+            <p className="text-xs text-t3">Saldo acumulado — últimos 30 dias</p>
+          </CardHeader>
+          <CardContent className="px-5 pb-4">
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={fluxoData}>
                 <defs>
-                  <linearGradient id="gradReceitas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#16A34A" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#16A34A" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gradDespesas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                  <linearGradient id="gradSaldo" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                <XAxis dataKey="mes" fontSize={11} tick={{ fill: "#94A3B8" }} />
-                <YAxis fontSize={11} tick={{ fill: "#94A3B8" }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
-                <Tooltip formatter={(value: number) => formatarMoeda(value)} contentStyle={{ borderRadius: 12, border: "1px solid hsl(220, 13%, 91%)", fontSize: 13 }} />
-                <Area type="monotone" dataKey="receitas" name="Receitas" stroke="#16A34A" fill="url(#gradReceitas)" strokeWidth={2} />
-                <Area type="monotone" dataKey="despesas" name="Despesas" stroke="#EF4444" fill="url(#gradDespesas)" strokeWidth={2} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="data" tick={{ fontSize: 10, fill: 'var(--t3)' }} axisLine={false} tickLine={false} interval={4} />
+                <YAxis tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10, fill: 'var(--t3)' }} axisLine={false} tickLine={false} width={55} />
+                <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => formatCurrency(v)} />
+                <Area type="monotone" dataKey="saldo" stroke="#6366f1" fill="url(#gradSaldo)" strokeWidth={2} name="Saldo Acumulado" />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <h2 className="font-bold text-lg text-foreground mb-4">Resultado por Atividade</h2>
-          <div className="space-y-3">
-            {resultadoPorCentro.map(cc => (
-              <div key={cc.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-muted/30">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: cc.cor }} />
-                  <span className="text-sm font-medium text-foreground">{cc.nome}</span>
-                </div>
-                <span className={`text-sm font-bold ${cc.resultado >= 0 ? "text-[hsl(160,84%,39%)]" : "text-[hsl(0,84%,60%)]"}`}>
-                  {formatarMoeda(cc.resultado)}
-                </span>
-              </div>
-            ))}
-            {resultadoPorCentro.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum centro de custo</p>}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Overdue + Upcoming */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-lg text-foreground flex items-center gap-2">
-              Contas Vencidas
+      {/* Resultado por Atividade */}
+      {atividadeData.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2 pt-4 px-5">
+            <CardTitle className="text-sm font-semibold text-t1">Resultado por Centro de Custo</CardTitle>
+            <p className="text-xs text-t3">Receitas menos despesas por atividade no período</p>
+          </CardHeader>
+          <CardContent className="px-5 pb-4 space-y-3">
+            {atividadeData.map(cc => {
+              const max = Math.max(...atividadeData.map(a => Math.abs(a.resultado)))
+              const pct = max > 0 ? (Math.abs(cc.resultado) / max) * 100 : 0
+              return (
+                <div key={cc.id} className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cc.cor }} />
+                  <span className="text-sm text-t2 w-36 flex-shrink-0 truncate">{cc.nome}</span>
+                  <div className="flex-1 bg-[var(--surface-raised)] rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%`, background: cc.resultado >= 0 ? '#22c55e' : '#ef4444' }}
+                    />
+                  </div>
+                  <span className={`text-sm font-medium tabular w-28 text-right ${cc.resultado >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {formatCurrency(cc.resultado)}
+                  </span>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Contas Vencidas + Próximos 7 Dias */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Contas Vencidas */}
+        <Card>
+          <CardHeader className="pb-2 pt-4 px-5">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} className="text-red-500" />
+              <CardTitle className="text-sm font-semibold text-t1">Contas Vencidas</CardTitle>
               {contasVencidas.length > 0 && (
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold" style={{ backgroundColor: "hsl(0, 84%, 60%)", color: "white" }}>{contasVencidas.length}</span>
+                <Badge className="bg-red-50 text-red-600 border-red-100 text-xs">{contasVencidas.length}</Badge>
               )}
-            </h2>
-            {contasVencidas.length > 0 && (
-              <button onClick={() => navigate("/financeiro/contas-pagar")} className="text-xs text-primary hover:underline flex items-center gap-1">
-                Ver todas <ArrowRight className="h-3 w-3" />
-              </button>
-            )}
-          </div>
-          {contasVencidas.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <CheckCircle className="h-10 w-10 text-primary mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhuma conta vencida</p>
             </div>
-          ) : (
-            <div className="space-y-1">
-              {contasVencidas.slice(0, 5).map(c => {
-                const dias = Math.ceil((new Date().getTime() - new Date(c.data_vencimento + "T12:00:00").getTime()) / 86400000);
-                return (
-                  <div key={c.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-muted/30">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{c.descricao}</p>
-                      <p className="text-xs text-muted-foreground">{c.contato?.nome || "—"}</p>
+          </CardHeader>
+          <CardContent className="px-5 pb-4">
+            {contasVencidas.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-t3">Nenhuma conta vencida. </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {contasVencidas.slice(0, 5).map(c => (
+                  <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-[var(--border)] last:border-0">
+                    <div>
+                      <p className="text-sm font-medium text-t1 truncate max-w-[180px]">{c.descricao}</p>
+                      <p className="text-xs text-red-500">Venceu em {formatDate(c.data_vencimento)}</p>
                     </div>
-                    <div className="text-right shrink-0 ml-3">
-                      <p className="text-sm font-bold" style={{ color: "hsl(0, 84%, 60%)" }}>{formatarMoeda(Number(c.valor_total) - Number(c.valor_pago))}</p>
-                      <p className="text-xs font-semibold" style={{ color: "hsl(0, 70%, 65%)" }}>{dias}d atraso</p>
+                    <span className="text-sm font-semibold text-red-600">{formatCurrency(c.valor_total - c.valor_pago)}</span>
+                  </div>
+                ))}
+                {contasVencidas.length > 5 && (
+                  <p className="text-xs text-t3 text-center pt-1">+{contasVencidas.length - 5} outras contas vencidas</p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Próximos 7 Dias */}
+        <Card>
+          <CardHeader className="pb-2 pt-4 px-5">
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-amber-500" />
+              <CardTitle className="text-sm font-semibold text-t1">Próximos 7 Dias</CardTitle>
+              {proximosVencimentos.length > 0 && (
+                <Badge className="bg-amber-50 text-amber-600 border-amber-100 text-xs">{proximosVencimentos.length}</Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="px-5 pb-4">
+            {proximosVencimentos.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-t3">Nenhum vencimento nos próximos 7 dias.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {proximosVencimentos.map(c => (
+                  <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-[var(--border)] last:border-0">
+                    <div>
+                      <p className="text-sm font-medium text-t1 truncate max-w-[180px]">{c.descricao}</p>
+                      <p className="text-xs text-t3">Vence em {formatDate(c.data_vencimento)}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-semibold text-t1">{formatCurrency(c.valor_total - c.valor_pago)}</span>
+                      <Badge className={`ml-2 text-xs ${c.tipo === 'pagar' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                        {c.tipo === 'pagar' ? 'Pagar' : 'Receber'}
+                      </Badge>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-lg text-foreground flex items-center gap-2">
-              Próximos 7 Dias
-              {proxVencimentos.length > 0 && (
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold" style={{ backgroundColor: "hsl(217, 91%, 60%)", color: "white" }}>{proxVencimentos.length}</span>
-              )}
-            </h2>
-          </div>
-          {proxVencimentos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Clock className="h-10 w-10 text-muted-foreground/40 mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhuma conta nos próximos 7 dias</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {proxPagar.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">A Pagar</p>
-                  {proxPagar.map(c => (
-                    <div key={c.id} className="flex items-center gap-2.5 py-2 px-3 rounded-xl hover:bg-muted/30">
-                      <ArrowDown className="h-4 w-4 shrink-0" style={{ color: "hsl(0, 84%, 60%)" }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{c.descricao}</p>
-                      </div>
-                      <span className="text-sm font-semibold text-foreground">{formatarMoeda(Number(c.valor_total))}</span>
-                      <span className="text-xs text-muted-foreground">{formatarData(c.data_vencimento)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {proxReceber.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">A Receber</p>
-                  {proxReceber.map(c => (
-                    <div key={c.id} className="flex items-center gap-2.5 py-2 px-3 rounded-xl hover:bg-muted/30">
-                      <ArrowUp className="h-4 w-4 shrink-0" style={{ color: "hsl(160, 84%, 39%)" }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{c.descricao}</p>
-                      </div>
-                      <span className="text-sm font-semibold text-foreground">{formatarMoeda(Number(c.valor_total))}</span>
-                      <span className="text-xs text-muted-foreground">{formatarData(c.data_vencimento)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Cash Flow Summary */}
-      <div className="bg-card rounded-2xl border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-        <h2 className="font-bold text-lg text-foreground mb-4">Fluxo de Caixa — Últimos 30 dias</h2>
-        <div className="h-56">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={fluxo30d}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-              <XAxis dataKey="dia" fontSize={10} tick={{ fill: "#94A3B8" }} interval={Math.max(1, Math.floor(fluxo30d.length / 8))} />
-              <YAxis fontSize={10} tick={{ fill: "#94A3B8" }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
-              <Tooltip formatter={(value: number) => formatarMoeda(value)} contentStyle={{ borderRadius: 12, border: "1px solid hsl(220, 13%, 91%)", fontSize: 13 }} />
-              <defs>
-                <linearGradient id="saldoGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#16A34A" stopOpacity={0.15} />
-                  <stop offset="100%" stopColor="#16A34A" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Area type="monotone" dataKey="saldo" name="Saldo" stroke="#16A34A" fill="url(#saldoGrad)" strokeWidth={2} dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
-  );
-}
-
-function KpiCard({ icon: Icon, label, value, color, positive, variation, invertVariation }: {
-  icon: any; label: string; value: string; color: string; positive: boolean; variation: number | null; invertVariation?: boolean;
-}) {
-  const varPositive = variation !== null ? (invertVariation ? variation < 0 : variation > 0) : true;
-  return (
-    <div className="bg-card rounded-2xl border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-      <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: color + "1A" }}>
-          <Icon className="h-5 w-5" style={{ color }} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
-          <p className={`text-[28px] font-bold leading-tight mt-1 ${positive ? "text-foreground" : "text-[hsl(0,84%,60%)]"}`}>{value}</p>
-          {variation !== null && (
-            <span className={`inline-flex items-center gap-1 mt-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${varPositive ? "bg-[hsl(160,84%,39%)]/10 text-[hsl(160,84%,39%)]" : "bg-[hsl(0,84%,60%)]/10 text-[hsl(0,84%,60%)]"}`}>
-              {varPositive ? "↑" : "↓"} {Math.abs(variation).toFixed(1)}% vs anterior
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  )
 }

@@ -1,119 +1,144 @@
+import { NavLink, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft,
-  Warehouse, Truck, FileBarChart, AlertTriangle, Users, LogOut, ArrowLeft, Settings, Wheat
-} from "lucide-react";
-import { NavLink } from "@/components/NavLink";
-import { useAuth } from "@/contexts/AuthContext";
-import { useFarm } from "@/contexts/FarmContext";
-import { useNavigate } from "react-router-dom";
-import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+  Home, Warehouse, DollarSign, Beef, Wheat, Map, ShieldCheck,
+} from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
-const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Recebimento", url: "/recebimento", icon: ArrowDownToLine },
-  { title: "Saída (Venda)", url: "/saida-venda", icon: ArrowUpFromLine },
-  { title: "Saída Geral", url: "/saida-geral", icon: ArrowRightLeft },
-  { title: "Armazenamento", url: "/armazenamento", icon: Warehouse },
-  { title: "Expedição", url: "/expedicao", icon: Truck },
-  { title: "Relatório", url: "/relatorio", icon: FileBarChart },
-  { title: "Quebra Técnica", url: "/quebra-tecnica", icon: AlertTriangle },
-  { title: "Cadastro", url: "/cadastro", icon: Users },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
-];
+const mainNav = [
+  { to: '/hub',        icon: Home,       label: 'Hub' },
+  { to: '/secador',    icon: Warehouse,  label: 'Secador / Silo' },
+  { to: '/financeiro', icon: DollarSign, label: 'Financeiro' },
+  { to: '/gado',       icon: Beef,       label: 'Pecuária' },
+  { to: '/lavoura',    icon: Wheat,      label: 'Lavoura' },
+]
+
+const bottomNav = [
+  { to: '/mapa', icon: Map, label: 'Mapa da Fazenda' },
+]
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
-  const { signOut, user } = useAuth();
-  const { getFarmName } = useFarm();
-  const navigate = useNavigate();
+  const location = useLocation()
+  const { profile } = useAuth()
 
-  const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "U";
+  function isActive(to: string) {
+    if (to === '/hub') return location.pathname === '/hub'
+    return location.pathname.startsWith(to)
+  }
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent className="flex flex-col h-full bg-[hsl(var(--sidebar-background))]">
-        {/* Logo */}
-        <div className={`px-5 pt-5 pb-3 ${collapsed ? "items-center flex flex-col px-2" : ""}`}>
-          <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : ""}`}>
-            <Wheat className="h-[22px] w-[22px] text-white/90 shrink-0" />
-            {!collapsed && <span className="text-[18px] font-bold text-white tracking-tight">AgroHub</span>}
+    <TooltipProvider delayDuration={300}>
+      <aside className="fixed left-0 top-0 h-screen w-16 bg-[#111110] border-r border-white/[0.08] flex flex-col items-center py-4 z-40">
+        {/* Logo mark */}
+        <div className="mb-5 flex items-center justify-center w-10 h-10">
+          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center shadow-elev-1 transition-transform duration-200 hover:scale-110">
+            <span className="text-[#111110] font-black text-xs leading-none tracking-tight">AG</span>
           </div>
-          {!collapsed && (
-            <button
-              onClick={() => navigate("/conta")}
-              className="text-[12px] text-white/40 hover:text-white/70 transition-colors truncate mt-1 text-left block"
-            >
-              {getFarmName("secador") || "Configurar Fazenda"}
-            </button>
+        </div>
+
+        {/* Divider */}
+        <div className="w-6 h-px bg-white/10 mb-3" />
+
+        {/* Main navigation */}
+        <nav className="flex-1 flex flex-col items-center gap-0.5 w-full px-2">
+          {mainNav.map(({ to, icon: Icon, label }) => {
+            const active = isActive(to)
+            return (
+              <Tooltip key={to}>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to={to}
+                    className={cn(
+                      'relative w-full flex items-center justify-center h-9 rounded-md',
+                      'transition-all duration-150',
+                      active
+                        ? 'text-white bg-white/[0.10]'
+                        : 'text-white/50 hover:text-white/80 hover:bg-white/[0.07]'
+                    )}
+                  >
+                    {/* Active left bar — animates in */}
+                    {active && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-[var(--primary)] animate-scale-in-x" />
+                    )}
+                    {/* Icon with hover scale */}
+                    <span className={cn(
+                      'transition-transform duration-150',
+                      !active && 'group-hover:scale-110',
+                    )}>
+                      <Icon
+                        size={17}
+                        strokeWidth={active ? 2.2 : 1.8}
+                        className={cn('transition-transform duration-150', !active && 'hover:scale-110')}
+                      />
+                    </span>
+                  </NavLink>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="font-medium animate-fade-in">
+                  {label}
+                </TooltipContent>
+              </Tooltip>
+            )
+          })}
+        </nav>
+
+        {/* Bottom navigation */}
+        <div className="flex flex-col items-center gap-0.5 w-full px-2">
+          {bottomNav.map(({ to, icon: Icon, label }) => {
+            const active = isActive(to)
+            return (
+              <Tooltip key={to}>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to={to}
+                    className={cn(
+                      'relative w-full flex items-center justify-center h-9 rounded-md',
+                      'transition-all duration-150',
+                      active
+                        ? 'text-white bg-white/[0.10]'
+                        : 'text-white/50 hover:text-white/80 hover:bg-white/[0.07]'
+                    )}
+                  >
+                    {active && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-[var(--primary)] animate-scale-in-x" />
+                    )}
+                    <Icon
+                      size={17}
+                      strokeWidth={1.8}
+                      className="transition-transform duration-150 hover:scale-110"
+                    />
+                  </NavLink>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="font-medium">{label}</TooltipContent>
+              </Tooltip>
+            )
+          })}
+
+          {profile?.is_admin && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NavLink
+                  to="/admin"
+                  className={cn(
+                    'relative w-full flex items-center justify-center h-9 rounded-md',
+                    'transition-all duration-150',
+                    isActive('/admin')
+                      ? 'text-amber-400 bg-white/[0.10]'
+                      : 'text-white/50 hover:text-amber-400 hover:bg-white/[0.07]'
+                  )}
+                >
+                  <ShieldCheck
+                    size={17}
+                    strokeWidth={1.8}
+                    className="transition-transform duration-150 hover:scale-110"
+                  />
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="font-medium">Painel Admin</TooltipContent>
+            </Tooltip>
           )}
         </div>
-
-        {/* Back to Hub */}
-        <div className={`px-3 pb-3 ${collapsed ? "flex justify-center" : ""}`}>
-          <button
-            onClick={() => navigate("/hub")}
-            className={`flex items-center gap-2.5 text-[14px] text-white/60 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.08] w-full ${collapsed ? "justify-center" : ""}`}
-          >
-            <ArrowLeft className="h-[18px] w-[18px] shrink-0" />
-            {!collapsed && <span>Voltar ao Hub</span>}
-          </button>
-        </div>
-
-        <div className="mx-4 border-t border-white/[0.06]" />
-
-        {/* Menu */}
-        <SidebarGroup className="flex-1 pt-0">
-          <SidebarGroupLabel className="text-white/30 uppercase text-[11px] tracking-[1.5px] font-semibold px-5 mt-4 mb-1">
-            {!collapsed && "Secador"}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className="flex items-center gap-3 px-5 py-2.5 text-[14px] text-white/60 hover:bg-white/[0.06] transition-colors font-normal rounded-lg mx-2"
-                      activeClassName="bg-white/[0.1] text-white font-medium border-l-[3px] border-[hsl(142,76%,36%)] !pl-[17px]"
-                    >
-                      <item.icon className="h-[22px] w-[22px] shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Footer */}
-        <div className="mx-4 border-t border-white/[0.06]" />
-        <div className={`px-3 py-4 ${collapsed ? "flex flex-col items-center" : ""}`}>
-          <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-semibold shrink-0">
-              {initials}
-            </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] text-white/60 truncate">{user?.email}</p>
-              </div>
-            )}
-            <button
-              onClick={signOut}
-              className="p-1.5 rounded-lg hover:bg-white/[0.08] transition-colors shrink-0"
-              title="Sair"
-            >
-              <LogOut className="h-[18px] w-[18px] text-white/40 hover:text-red-400 transition-colors" />
-            </button>
-          </div>
-        </div>
-      </SidebarContent>
-    </Sidebar>
-  );
+      </aside>
+    </TooltipProvider>
+  )
 }

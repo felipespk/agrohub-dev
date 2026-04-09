@@ -1,1 +1,0 @@
-ALTER TABLE public.recebimentos ADD COLUMN valor_armazenamento numeric NOT NULL DEFAULT 0.15;

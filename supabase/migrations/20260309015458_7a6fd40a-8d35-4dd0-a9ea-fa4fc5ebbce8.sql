@@ -1,1 +1,0 @@
-ALTER TABLE public.saidas ADD COLUMN umidade_saida NUMERIC NOT NULL DEFAULT 0;

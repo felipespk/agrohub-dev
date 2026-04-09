@@ -1,30 +1,30 @@
-import { useImpersonation } from "@/contexts/ImpersonationContext";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { AlertTriangle, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useImpersonation } from '@/contexts/ImpersonationContext'
 
 export function ImpersonationBanner() {
-  const { isImpersonating, impersonatedEmail, stopImpersonation } = useImpersonation();
-  const navigate = useNavigate();
+  const { isImpersonating, impersonatedEmail, stopImpersonation } = useImpersonation()
 
-  if (!isImpersonating) return null;
+  if (!isImpersonating) return null
 
   return (
-    <div
-      className="fixed top-0 left-0 right-0 z-[9999] flex items-center justify-center gap-3 text-white text-sm font-medium"
-      style={{ backgroundColor: "#DC2626", height: 40 }}
-    >
-      <span>Visualizando como: {impersonatedEmail}</span>
-      <span>—</span>
-      <button
-        onClick={() => {
-          stopImpersonation();
-          navigate("/admin");
-        }}
-        className="flex items-center gap-1.5 px-3 py-1 rounded border border-white/60 hover:bg-white/20 transition-colors text-xs font-semibold"
+    <div className="fixed top-0 left-0 right-0 z-50 h-10 bg-[var(--danger)] flex items-center justify-between px-5">
+      <div className="flex items-center gap-2 text-[#111110] text-sm font-semibold">
+        <AlertTriangle size={14} />
+        <span>
+          Visualizando como: <strong>{impersonatedEmail}</strong>
+          <span className="font-normal ml-2 opacity-70">— somente leitura</span>
+        </span>
+      </div>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-7 text-[#111110] hover:bg-black/10 hover:text-[#111110] gap-1.5"
+        onClick={stopImpersonation}
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Voltar para Admin
-      </button>
+        <X size={13} />
+        Sair
+      </Button>
     </div>
-  );
+  )
 }
