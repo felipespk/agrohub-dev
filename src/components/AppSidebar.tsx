@@ -1,8 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import {
-  Home, Warehouse, DollarSign, Beef, Wheat, Map, ShieldCheck,
+  Home, Warehouse, DollarSign, Beef, Wheat, Map, ShieldCheck, LogOut,
 } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -20,125 +19,146 @@ const bottomNav = [
 
 export function AppSidebar() {
   const location = useLocation()
-  const { profile } = useAuth()
+  const { profile, signOut, session } = useAuth()
 
   function isActive(to: string) {
     if (to === '/hub') return location.pathname === '/hub'
     return location.pathname.startsWith(to)
   }
 
+  const email = session?.user?.email ?? ''
+
   return (
-    <TooltipProvider delayDuration={300}>
-      <aside className="fixed left-0 top-0 h-screen w-16 bg-[#111110] border-r border-white/[0.08] flex flex-col items-center py-4 z-40">
-        {/* Logo mark */}
-        <div className="mb-5 flex items-center justify-center w-10 h-10">
-          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center shadow-elev-1 transition-transform duration-200 hover:scale-110">
-            <span className="text-[#111110] font-black text-xs leading-none tracking-tight">AG</span>
-          </div>
+    <aside className={cn(
+      'group fixed left-0 top-0 h-screen z-40',
+      'w-[60px] hover:w-[240px]',
+      'transition-[width] duration-200 ease-in-out',
+      'overflow-hidden',
+      'bg-[#111110]',
+      'border-r border-white/[0.08]',
+      'shadow-[4px_0_16px_rgba(0,0,0,0.18)]',
+      'flex flex-col',
+    )}>
+
+      {/* Logo / Header */}
+      <div className="flex items-center h-14 px-[18px] gap-3 flex-shrink-0 border-b border-white/[0.06]">
+        <div className="w-7 h-7 rounded-lg bg-[var(--primary)] flex items-center justify-center flex-shrink-0 transition-transform duration-200 hover:scale-110">
+          <span className="text-[#111110] font-black text-[10px] leading-none">AG</span>
         </div>
-
-        {/* Divider */}
-        <div className="w-6 h-px bg-white/10 mb-3" />
-
-        {/* Main navigation */}
-        <nav className="flex-1 flex flex-col items-center gap-0.5 w-full px-2">
-          {mainNav.map(({ to, icon: Icon, label }) => {
-            const active = isActive(to)
-            return (
-              <Tooltip key={to}>
-                <TooltipTrigger asChild>
-                  <NavLink
-                    to={to}
-                    className={cn(
-                      'relative w-full flex items-center justify-center h-9 rounded-md',
-                      'transition-all duration-150',
-                      active
-                        ? 'text-white bg-white/[0.10]'
-                        : 'text-white/50 hover:text-white/80 hover:bg-white/[0.07]'
-                    )}
-                  >
-                    {/* Active left bar — animates in */}
-                    {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-[var(--primary)] animate-scale-in-x" />
-                    )}
-                    {/* Icon with hover scale */}
-                    <span className={cn(
-                      'transition-transform duration-150',
-                      !active && 'group-hover:scale-110',
-                    )}>
-                      <Icon
-                        size={17}
-                        strokeWidth={active ? 2.2 : 1.8}
-                        className={cn('transition-transform duration-150', !active && 'hover:scale-110')}
-                      />
-                    </span>
-                  </NavLink>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="font-medium animate-fade-in">
-                  {label}
-                </TooltipContent>
-              </Tooltip>
-            )
-          })}
-        </nav>
-
-        {/* Bottom navigation */}
-        <div className="flex flex-col items-center gap-0.5 w-full px-2">
-          {bottomNav.map(({ to, icon: Icon, label }) => {
-            const active = isActive(to)
-            return (
-              <Tooltip key={to}>
-                <TooltipTrigger asChild>
-                  <NavLink
-                    to={to}
-                    className={cn(
-                      'relative w-full flex items-center justify-center h-9 rounded-md',
-                      'transition-all duration-150',
-                      active
-                        ? 'text-white bg-white/[0.10]'
-                        : 'text-white/50 hover:text-white/80 hover:bg-white/[0.07]'
-                    )}
-                  >
-                    {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-[var(--primary)] animate-scale-in-x" />
-                    )}
-                    <Icon
-                      size={17}
-                      strokeWidth={1.8}
-                      className="transition-transform duration-150 hover:scale-110"
-                    />
-                  </NavLink>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="font-medium">{label}</TooltipContent>
-              </Tooltip>
-            )
-          })}
-
-          {profile?.is_admin && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <NavLink
-                  to="/admin"
-                  className={cn(
-                    'relative w-full flex items-center justify-center h-9 rounded-md',
-                    'transition-all duration-150',
-                    isActive('/admin')
-                      ? 'text-amber-400 bg-white/[0.10]'
-                      : 'text-white/50 hover:text-amber-400 hover:bg-white/[0.07]'
-                  )}
-                >
-                  <ShieldCheck
-                    size={17}
-                    strokeWidth={1.8}
-                    className="transition-transform duration-150 hover:scale-110"
-                  />
-                </NavLink>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="font-medium">Painel Admin</TooltipContent>
-            </Tooltip>
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden">
+          <p className="text-white font-bold text-[15px] leading-tight whitespace-nowrap">Agrix</p>
+          {profile?.farm_name && (
+            <p className="text-white/40 text-[11px] leading-tight whitespace-nowrap truncate max-w-[160px]">
+              {profile.farm_name}
+            </p>
           )}
         </div>
-      </aside>
-    </TooltipProvider>
+      </div>
+
+      {/* Main nav */}
+      <nav className="flex-1 flex flex-col gap-0.5 px-2 py-3 overflow-y-auto scrollbar-none">
+        {mainNav.map(({ to, icon: Icon, label }) => {
+          const active = isActive(to)
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className={cn(
+                'relative flex items-center h-10 rounded-md',
+                'px-[14px] gap-3',
+                'transition-colors duration-150',
+                active
+                  ? 'bg-white/[0.10] text-white'
+                  : 'text-white/50 hover:bg-white/[0.05] hover:text-white/80',
+              )}
+            >
+              {active && (
+                <span className="absolute left-0 top-[6px] bottom-[6px] w-[3px] bg-[#78FC90] rounded-r-full" />
+              )}
+              <Icon size={18} strokeWidth={active ? 2.1 : 1.8} className="flex-shrink-0" />
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-sm font-medium whitespace-nowrap">
+                {label}
+              </span>
+            </NavLink>
+          )
+        })}
+      </nav>
+
+      {/* Divider */}
+      <div className="mx-4 h-px bg-white/[0.08]" />
+
+      {/* Bottom nav */}
+      <div className="flex flex-col gap-0.5 px-2 py-3">
+        {bottomNav.map(({ to, icon: Icon, label }) => {
+          const active = isActive(to)
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className={cn(
+                'relative flex items-center h-10 rounded-md',
+                'px-[14px] gap-3',
+                'transition-colors duration-150',
+                active
+                  ? 'bg-white/[0.10] text-white'
+                  : 'text-white/50 hover:bg-white/[0.05] hover:text-white/80',
+              )}
+            >
+              {active && (
+                <span className="absolute left-0 top-[6px] bottom-[6px] w-[3px] bg-[#78FC90] rounded-r-full" />
+              )}
+              <Icon size={18} strokeWidth={1.8} className="flex-shrink-0" />
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-sm font-medium whitespace-nowrap">
+                {label}
+              </span>
+            </NavLink>
+          )
+        })}
+
+        {profile?.is_admin && (
+          <NavLink
+            to="/admin"
+            className={cn(
+              'relative flex items-center h-10 rounded-md',
+              'px-[14px] gap-3',
+              'transition-colors duration-150',
+              isActive('/admin')
+                ? 'bg-white/[0.10] text-amber-400'
+                : 'text-white/50 hover:bg-white/[0.05] hover:text-amber-400',
+            )}
+          >
+            {isActive('/admin') && (
+              <span className="absolute left-0 top-[6px] bottom-[6px] w-[3px] bg-amber-400 rounded-r-full" />
+            )}
+            <ShieldCheck size={18} strokeWidth={1.8} className="flex-shrink-0" />
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-sm font-medium whitespace-nowrap">
+              Painel Admin
+            </span>
+          </NavLink>
+        )}
+      </div>
+
+      {/* Footer — user + logout */}
+      <div className="border-t border-white/[0.06] px-2 py-3">
+        <div className="flex items-center h-10 px-[14px] gap-3">
+          {/* Avatar */}
+          <div className="w-[18px] h-[18px] rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center">
+            <span className="text-[#111110] font-black text-[9px]">
+              {email.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-1 min-w-0">
+            <p className="text-white/50 text-[11px] truncate whitespace-nowrap">{email}</p>
+          </div>
+          <button
+            onClick={signOut}
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-white/40 hover:text-white/80 flex-shrink-0"
+            title="Sair"
+          >
+            <LogOut size={14} strokeWidth={1.8} />
+          </button>
+        </div>
+      </div>
+    </aside>
   )
 }

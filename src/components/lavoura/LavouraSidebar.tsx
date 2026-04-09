@@ -25,10 +25,10 @@ export function LavouraSidebar() {
   const location = useLocation()
 
   return (
-    <nav className="bg-[var(--surface)] border-b border-[var(--border)] px-5 overflow-x-auto scrollbar-none">
+    <nav className="bg-[var(--surface)] border-b border-[var(--border)] px-4 overflow-x-auto scrollbar-none">
       <div className="flex items-center gap-0.5 h-11">
         {navItems.map(({ to, icon: Icon, label }) => {
-          const active = location.pathname === to
+          const active = location.pathname === to || location.pathname.startsWith(to + '/')
           return (
             <NavLink
               key={to}
@@ -39,7 +39,7 @@ export function LavouraSidebar() {
                 'transition-colors duration-150',
                 active
                   ? 'bg-[#111110] text-white'
-                  : 'text-[#6B7280] hover:text-[#111110] hover:bg-[var(--surface-raised)]'
+                  : 'text-[#6B7280] hover:text-[#111110] hover:bg-[#F6F6F6]'
               )}
             >
               <Icon size={14} strokeWidth={active ? 2.2 : 1.8} />
