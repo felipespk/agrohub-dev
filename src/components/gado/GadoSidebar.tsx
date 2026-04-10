@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, PawPrint, MapPin, Weight, Syringe,
-  ArrowLeftRight, Heart, Dna, Settings,
+  ArrowLeftRight, Heart, Dna, Settings, Map,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -14,6 +14,7 @@ const navItems = [
   { to: '/gado/movimentacoes',  icon: ArrowLeftRight,  label: 'Movimentações' },
   { to: '/gado/reproducao',     icon: Heart,           label: 'Reprodução' },
   { to: '/gado/racas',          icon: Dna,             label: 'Raças' },
+  { to: '/gado/mapa',           icon: Map,             label: 'Mapa' },
   { to: '/gado/configuracoes',  icon: Settings,        label: 'Configurações' },
 ]
 

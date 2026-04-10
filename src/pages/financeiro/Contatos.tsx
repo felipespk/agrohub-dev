@@ -31,7 +31,7 @@ const EMPTY_FORM = {
 }
 
 export function Contatos() {
-  const { getEffectiveUserId } = useImpersonation()
+  const { getEffectiveUserId, isImpersonating } = useImpersonation()
   const userId = getEffectiveUserId()
   const { contatos, loading, reload } = useFinanceiro()
 
@@ -64,6 +64,10 @@ export function Contatos() {
   }
 
   async function handleSave() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!form.nome.trim()) {
       toast.error('Nome obrigatório'); return
     }
@@ -93,6 +97,10 @@ export function Contatos() {
   }
 
   async function handleDelete() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!deleteTarget) return
     setDeleting(true)
     try {

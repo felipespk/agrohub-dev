@@ -1,5 +1,4 @@
 import { Outlet } from 'react-router-dom'
-import { AppSidebar } from './AppSidebar'
 import { ImpersonationBanner } from './ImpersonationBanner'
 import { PageTransition } from './PageTransition'
 import { useImpersonation } from '@/contexts/ImpersonationContext'
@@ -10,7 +9,6 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-t1">
       <ImpersonationBanner />
-      <AppSidebar />
       <main
         className="min-h-screen"
         style={{ paddingTop: isImpersonating ? '40px' : '0' }}

@@ -1,18 +1,22 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { LavouraSidebar } from './LavouraSidebar'
 import { ProfileDropdown } from '@/components/ProfileDropdown'
 import { PageTransition } from '@/components/PageTransition'
-import { Wheat } from 'lucide-react'
+import { Wheat, ChevronLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function LavouraLayout() {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const farmName = profile?.farm_name_lavoura || profile?.farm_name
 
   return (
-    <div className="flex flex-col min-h-screen ml-16">
+    <div className="flex flex-col min-h-screen">
       <header className="h-14 flex items-center justify-between px-5 glass-header sticky top-0 z-30">
         <div className="flex items-center gap-2.5">
+          <button onClick={() => navigate('/hub')} className="text-t3 hover:text-t1 transition-colors mr-1">
+            <ChevronLeft size={18} />
+          </button>
           <div className="w-6 h-6 rounded-md bg-yellow-500/12 flex items-center justify-center">
             <Wheat size={13} className="text-yellow-400" strokeWidth={2} />
           </div>

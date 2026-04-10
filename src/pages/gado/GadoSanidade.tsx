@@ -455,7 +455,7 @@ export function GadoSanidade() {
 
       {/* Vacinação em Lote Dialog */}
       <Dialog open={loteDialogOpen} onOpenChange={setLoteDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto glass-card">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Vacinação em Lote</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">

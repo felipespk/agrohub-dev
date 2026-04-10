@@ -23,7 +23,7 @@ const PRESET_COLORS = [
 const EMPTY_FORM = { nome: '', cor: '#22c55e', ativo: true }
 
 export function CentrosCusto() {
-  const { getEffectiveUserId } = useImpersonation()
+  const { getEffectiveUserId, isImpersonating } = useImpersonation()
   const userId = getEffectiveUserId()
   const { centrosCusto, loading, reload } = useFinanceiro()
 
@@ -45,6 +45,10 @@ export function CentrosCusto() {
   }
 
   async function handleSave() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!form.nome.trim()) {
       toast.error('Nome obrigatório'); return
     }
@@ -66,12 +70,20 @@ export function CentrosCusto() {
   }
 
   async function handleToggleAtivo(c: CentroCusto) {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     const { error } = await supabase.from('centros_custo').update({ ativo: !c.ativo }).eq('id', c.id)
     if (error) toast.error('Erro ao atualizar')
     else reload()
   }
 
   async function handleDelete() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!deleteTarget) return
     setDeleting(true)
     try {

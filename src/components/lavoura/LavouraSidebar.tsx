@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, SquareDashed, CalendarDays, BookOpen,
   Package, Truck, Scissors, Bug, ShoppingCart, FileBarChart,
-  Sprout, Settings,
+  Sprout, Settings, Map,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -18,6 +18,7 @@ const navItems = [
   { to: '/lavoura/comercializacao', icon: ShoppingCart,    label: 'Comercialização' },
   { to: '/lavoura/relatorios',      icon: FileBarChart,    label: 'Relatórios' },
   { to: '/lavoura/culturas',        icon: Sprout,          label: 'Culturas' },
+  { to: '/lavoura/mapa',            icon: Map,             label: 'Mapa' },
   { to: '/lavoura/configuracoes',   icon: Settings,        label: 'Configurações' },
 ]
 

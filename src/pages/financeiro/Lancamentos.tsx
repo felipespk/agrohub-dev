@@ -60,7 +60,7 @@ const EMPTY_FORM = {
 }
 
 export function Lancamentos() {
-  const { getEffectiveUserId } = useImpersonation()
+  const { getEffectiveUserId, isImpersonating } = useImpersonation()
   const userId = getEffectiveUserId()
   const { categorias, centrosCusto, contatos, contasBancarias, reload: ctxReload } = useFinanceiro()
 
@@ -114,6 +114,10 @@ export function Lancamentos() {
   function openCreate() { setForm({ ...EMPTY_FORM }); setShowModal(true) }
 
   async function handleSave() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!form.valor || !form.data || !form.conta_bancaria_id) {
       toast.error('Campos obrigatórios', { description: 'Preencha valor, data e conta bancária.' })
       return
@@ -158,6 +162,10 @@ export function Lancamentos() {
   }
 
   async function handleDelete() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!deleteTarget) return
     setDeleting(true)
     try {

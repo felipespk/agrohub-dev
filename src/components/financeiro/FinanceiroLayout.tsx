@@ -1,19 +1,23 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { FinanceiroSidebar } from './FinanceiroSidebar'
 import { ProfileDropdown } from '@/components/ProfileDropdown'
 import { PageTransition } from '@/components/PageTransition'
 import { FinanceiroProvider } from '@/contexts/FinanceiroContext'
-import { DollarSign } from 'lucide-react'
+import { DollarSign, ChevronLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 function FinanceiroLayoutInner() {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const farmName = profile?.farm_name_financeiro || profile?.farm_name
 
   return (
-    <div className="flex flex-col min-h-screen ml-16">
+    <div className="flex flex-col min-h-screen">
       <header className="h-14 flex items-center justify-between px-5 glass-header sticky top-0 z-30">
         <div className="flex items-center gap-2.5">
+          <button onClick={() => navigate('/hub')} className="text-t3 hover:text-t1 transition-colors mr-1">
+            <ChevronLeft size={18} />
+          </button>
           <div className="w-6 h-6 rounded-md bg-emerald-500/12 flex items-center justify-center">
             <DollarSign size={13} className="text-emerald-400" strokeWidth={2} />
           </div>

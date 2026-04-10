@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Warehouse, DollarSign, Beef, Wheat, Map, ShieldCheck, LogOut, ArrowRight } from 'lucide-react'
+import { Warehouse, DollarSign, Beef, Wheat, ShieldCheck, LogOut, ArrowRight, MapPin } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getGreeting, getFirstName } from '@/lib/utils'
 
@@ -38,6 +38,15 @@ const modules = [
     iconBg: 'bg-yellow-50',
   },
 ]
+
+const adminCard = {
+  to: '/admin',
+  icon: ShieldCheck,
+  label: 'Painel Admin',
+  description: 'Gerenciamento de usuários e configurações',
+  accent: 'text-amber-500',
+  iconBg: 'bg-amber-50',
+}
 
 function LiveClock() {
   const [time, setTime] = useState(() =>
@@ -84,7 +93,7 @@ export function Hub() {
 
       {/* Main */}
       <main className="flex-1 flex flex-col items-center justify-center px-8 py-16">
-        {/* Greeting */}
+        {/* Logo + Greeting */}
         <div
           className="text-center mb-10 animate-fade-up"
           style={{ animationDelay: '0ms' }}
@@ -92,11 +101,14 @@ export function Hub() {
           <div className="mb-5 inline-block">
             <img src="/logo-agrix.png" alt="Agrix" className="h-40 object-contain animate-logo-float" />
           </div>
+          <h1 className="text-2xl font-bold text-t1">
+            {getGreeting(firstName)}
+          </h1>
         </div>
 
         {/* Module grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full max-w-4xl">
-          {modules.map(({ to, icon: Icon, label, description, accent, iconBg }, i) => (
+          {[...modules, ...(profile?.is_admin ? [adminCard] : [])].map(({ to, icon: Icon, label, description, accent, iconBg }, i) => (
             <button
               key={to}
               onClick={() => navigate(to)}
@@ -120,29 +132,6 @@ export function Hub() {
               />
             </button>
           ))}
-        </div>
-
-        {/* Secondary actions */}
-        <div
-          className="flex items-center gap-2 mt-6 animate-fade-up"
-          style={{ animationDelay: '360ms' }}
-        >
-          <button
-            onClick={() => navigate('/mapa')}
-            className="flex items-center gap-2 rounded-lg glass-card border-[#78FC90]/40 px-4 py-2.5 text-sm text-[var(--primary-dark)] font-medium hover:bg-[#78FC90]/10 hover:border-[#78FC90]/60 transition-all duration-150 active:scale-[0.97]"
-          >
-            <Map size={15} />
-            Mapa da Fazenda
-          </button>
-          {profile?.is_admin && (
-            <button
-              onClick={() => navigate('/admin')}
-              className="flex items-center gap-2 rounded-lg border border-[var(--warning)]/30 bg-[var(--warning-bg)] px-4 py-2.5 text-sm text-[var(--warning)] hover:border-[var(--warning)]/50 hover:shadow-lg transition-all duration-150 active:scale-[0.97]"
-            >
-              <ShieldCheck size={15} />
-              Painel Admin
-            </button>
-          )}
         </div>
       </main>
 

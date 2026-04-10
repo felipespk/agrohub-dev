@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -243,11 +244,16 @@ export function Talhoes() {
               </div>
               <div className="space-y-1.5">
                 <Label>Tipo de Solo</Label>
-                <Input
-                  placeholder="Ex: Argiloso"
-                  value={form.tipo_solo}
-                  onChange={e => setForm(f => ({ ...f, tipo_solo: e.target.value }))}
-                />
+                <Select value={form.tipo_solo} onValueChange={v => setForm(f => ({ ...f, tipo_solo: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Não informado</SelectItem>
+                    <SelectItem value="argiloso">Argiloso</SelectItem>
+                    <SelectItem value="arenoso">Arenoso</SelectItem>
+                    <SelectItem value="misto">Misto</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="flex items-center gap-2">

@@ -34,7 +34,7 @@ const EMPTY_FORM = {
 }
 
 export function ContasBancarias() {
-  const { getEffectiveUserId } = useImpersonation()
+  const { getEffectiveUserId, isImpersonating } = useImpersonation()
   const userId = getEffectiveUserId()
   const { contasBancarias, loading, reload } = useFinanceiro()
 
@@ -64,6 +64,10 @@ export function ContasBancarias() {
   }
 
   async function handleSave() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!form.nome.trim() || !form.tipo) {
       toast.error('Campos obrigatórios', { description: 'Preencha o nome e tipo da conta.' })
       return
@@ -97,6 +101,10 @@ export function ContasBancarias() {
   }
 
   async function handleToggleAtiva(c: ContaBancaria) {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     const { error } = await supabase.from('contas_bancarias').update({ ativa: !c.ativa }).eq('id', c.id)
     if (error) {
       toast.error('Erro ao atualizar')
@@ -106,6 +114,10 @@ export function ContasBancarias() {
   }
 
   async function handleDelete() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!deleteTarget) return
     setDeleting(true)
     try {

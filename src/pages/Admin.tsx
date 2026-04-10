@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
-import { ShieldCheck, Users, Search, Eye, Loader2 } from 'lucide-react'
+import { ShieldCheck, Users, Search, Eye, Loader2, UserPlus, UserMinus, MapPin, Beef } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useImpersonation } from '@/contexts/ImpersonationContext'
@@ -24,6 +24,11 @@ function AdminSkeleton() {
   return (
     <div className="space-y-5">
       <Skeleton className="h-8 w-48" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
       <Skeleton className="h-10 w-64" />
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -36,11 +41,13 @@ function AdminSkeleton() {
 
 export function Admin() {
   const { profile, loading: authLoading } = useAuth()
-  const { startImpersonating } = useImpersonation()
+  const { startImpersonation } = useImpersonation()
 
   const [loading, setLoading] = useState(true)
   const [users, setUsers] = useState<UserProfile[]>([])
   const [search, setSearch] = useState('')
+  const [totalAnimals, setTotalAnimals] = useState(0)
+  const [totalFields, setTotalFields] = useState(0)
 
   if (authLoading) return <AdminSkeleton />
   if (!profile?.is_admin) return <Navigate to="/hub" replace />
@@ -48,16 +55,19 @@ export function Admin() {
   const loadUsers = useCallback(async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, email, display_name, farm_name, is_admin, created_at')
-        .order('created_at', { ascending: false })
+      const [usersRes, animalsRes, fieldsRes] = await Promise.all([
+        supabase.from('profiles').select('user_id, email, display_name, farm_name, is_admin, created_at').order('created_at', { ascending: false }),
+        supabase.from('animais').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
+        supabase.from('talhoes').select('id', { count: 'exact', head: true }).eq('ativo', true),
+      ])
 
-      if (error) {
-        toast.error('Erro ao carregar usuários', { description: error.message })
+      if (usersRes.error) {
+        toast.error('Erro ao carregar usuários', { description: usersRes.error.message })
         return
       }
-      setUsers((data ?? []) as UserProfile[])
+      setUsers((usersRes.data ?? []) as UserProfile[])
+      setTotalAnimals(animalsRes.count ?? 0)
+      setTotalFields(fieldsRes.count ?? 0)
     } finally {
       setLoading(false)
     }
@@ -75,10 +85,38 @@ export function Admin() {
     )
   })
 
+  const activeUsers = users.filter(u => {
+    if (!u.created_at) return false
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    return new Date(u.created_at) >= thirtyDaysAgo
+  })
+
   function handleImpersonate(userId: string, email: string) {
-    startImpersonating(userId)
+    startImpersonation(userId, email)
     toast.success('Impersonando', { description: `Você está vendo como ${email}` })
   }
+
+  async function toggleAdmin(userId: string, currentIsAdmin: boolean) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_admin: !currentIsAdmin })
+      .eq('user_id', userId)
+
+    if (error) {
+      toast.error('Erro ao alterar permissão', { description: error.message })
+    } else {
+      toast.success(currentIsAdmin ? 'Admin removido' : 'Admin concedido')
+      loadUsers()
+    }
+  }
+
+  const kpis = [
+    { label: 'Total Usuários', value: users.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Ativos (30d)', value: activeUsers.length, icon: Users, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Total Animais', value: totalAnimals, icon: Beef, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Total Talhões', value: totalFields, icon: MapPin, color: 'text-purple-600', bg: 'bg-purple-50' },
+  ]
 
   return (
     <div className="space-y-5">
@@ -96,6 +134,21 @@ export function Admin() {
           <Loader2 size={13} className={loading ? 'animate-spin' : ''} />
           Atualizar
         </Button>
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {kpis.map((kpi, i) => (
+          <div key={kpi.label} className="rounded-xl glass-card p-4 animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-7 h-7 rounded-lg ${kpi.bg} flex items-center justify-center`}>
+                <kpi.icon size={14} className={kpi.color} />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-t1 tabular">{kpi.value}</p>
+            <p className="text-xs text-t3 mt-0.5">{kpi.label}</p>
+          </div>
+        ))}
       </div>
 
       <div className="relative max-w-xs">
@@ -145,15 +198,28 @@ export function Admin() {
                   </td>
                   <td className="px-4 py-3">
                     {u.user_id !== profile.user_id && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleImpersonate(u.user_id, u.email)}
-                        className="gap-1 text-xs text-t3 hover:text-t1 h-7"
-                      >
-                        <Eye size={12} />
-                        Ver como
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleImpersonate(u.user_id, u.email)}
+                          className="gap-1 text-xs text-t3 hover:text-t1 h-7"
+                          title="Ver como este usuário"
+                        >
+                          <Eye size={12} />
+                          Ver como
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => toggleAdmin(u.user_id, u.is_admin)}
+                          className={`gap-1 text-xs h-7 ${u.is_admin ? 'text-red-500 hover:text-red-700' : 'text-amber-600 hover:text-amber-800'}`}
+                          title={u.is_admin ? 'Remover Admin' : 'Tornar Admin'}
+                        >
+                          {u.is_admin ? <UserMinus size={12} /> : <UserPlus size={12} />}
+                          {u.is_admin ? 'Remover' : 'Tornar Admin'}
+                        </Button>
+                      </div>
                     )}
                   </td>
                 </tr>

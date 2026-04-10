@@ -58,7 +58,7 @@ const EMPTY_RECEBER = {
 }
 
 export function ContasReceber() {
-  const { getEffectiveUserId } = useImpersonation()
+  const { getEffectiveUserId, isImpersonating } = useImpersonation()
   const userId = getEffectiveUserId()
   const { categorias, centrosCusto, contatos, contasBancarias, reload: ctxReload } = useFinanceiro()
 
@@ -137,6 +137,10 @@ export function ContasReceber() {
   }
 
   async function handleSave() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!form.descricao.trim() || !form.valor_total || !form.data_vencimento) {
       toast.error('Campos obrigatórios', { description: 'Preencha descrição, valor e vencimento.' })
       return
@@ -184,6 +188,10 @@ export function ContasReceber() {
   }
 
   async function handleReceber() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!receberModal) return
     if (!receberForm.conta_bancaria_id || !receberForm.valor_pago) {
       toast.error('Campos obrigatórios', { description: 'Informe a conta bancária e o valor.' })
@@ -239,6 +247,10 @@ export function ContasReceber() {
   }
 
   async function handleCancel(c: ContaPR) {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     const { error } = await supabase.from('contas_pr').update({ status: 'cancelado' }).eq('id', c.id)
     if (error) {
       toast.error('Erro ao cancelar')
@@ -249,6 +261,10 @@ export function ContasReceber() {
   }
 
   async function handleDelete() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!deleteTarget) return
     setDeleting(true)
     try {

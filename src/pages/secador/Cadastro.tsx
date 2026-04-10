@@ -120,6 +120,7 @@ function TiposTab({ userId, writeId }: { userId: string; writeId: string }) {
       {tipos.length === 0 ? (
         <EmptyState icon={Wheat} title="Nenhum tipo de grão cadastrado" compact />
       ) : (
+        <>
         <ConfirmDialog
           open={!!deleteTipoId}
           onClose={() => setDeleteTipoId(null)}
@@ -182,6 +183,7 @@ function TiposTab({ userId, writeId }: { userId: string; writeId: string }) {
             )
           })}
         </div>
+        </>
       )}
     </div>
   )

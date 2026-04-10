@@ -24,7 +24,7 @@ const grupoTipos: { tipo: CategoriaFinanceira['tipo']; label: string; color: str
 const EMPTY_FORM = { nome: '', tipo: 'despesa' as CategoriaFinanceira['tipo'] }
 
 export function Categorias() {
-  const { getEffectiveUserId } = useImpersonation()
+  const { getEffectiveUserId, isImpersonating } = useImpersonation()
   const userId = getEffectiveUserId()
   const { categorias, loading, reload } = useFinanceiro()
 
@@ -48,6 +48,10 @@ export function Categorias() {
   }
 
   async function handleSave() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!form.nome.trim()) {
       toast.error('Nome obrigatório'); return
     }
@@ -69,6 +73,10 @@ export function Categorias() {
   }
 
   async function handleDelete() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!deleteTarget) return
     setDeleting(true)
     try {

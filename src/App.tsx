@@ -67,8 +67,11 @@ import { Quebra } from '@/pages/secador/Quebra'
 import { Cadastro } from '@/pages/secador/Cadastro'
 import { SecadorConfiguracoes } from '@/pages/secador/SecadorConfiguracoes'
 
+// Module maps
+import { GadoMapa } from '@/pages/gado/GadoMapa'
+import { LavouraMapa } from '@/pages/lavoura/LavouraMapa'
+
 // Other
-import { Mapa } from '@/pages/Mapa'
 import { Admin } from '@/pages/Admin'
 import { Loader2 } from 'lucide-react'
 import { Outlet } from 'react-router-dom'
@@ -117,7 +120,6 @@ function AppRoutes() {
       {/* Protected standalone (no sidebar) */}
       <Route element={<ProtectedRoute><ImpersonationBannerWrapper /></ProtectedRoute>}>
         <Route path="/hub" element={<Hub />} />
-        <Route path="/mapa" element={<Mapa />} />
         <Route path="/admin" element={<AdminGuard><Admin /></AdminGuard>} />
       </Route>
 
@@ -136,6 +138,7 @@ function AppRoutes() {
           <Route path="movimentacoes" element={<GadoMovimentacoes />} />
           <Route path="reproducao" element={<GadoReproducao />} />
           <Route path="racas" element={<GadoRacas />} />
+          <Route path="mapa" element={<GadoMapa />} />
           <Route path="configuracoes" element={<GadoConfiguracoes />} />
         </Route>
 
@@ -168,6 +171,7 @@ function AppRoutes() {
           <Route path="comercializacao" element={<Comercializacao />} />
           <Route path="relatorios" element={<Relatorios />} />
           <Route path="culturas" element={<Culturas />} />
+          <Route path="mapa" element={<LavouraMapa />} />
           <Route path="configuracoes" element={<LavouraConfiguracoes />} />
         </Route>
 

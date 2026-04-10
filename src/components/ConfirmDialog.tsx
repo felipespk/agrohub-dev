@@ -14,7 +14,7 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({ open, onClose, onConfirm, title, description, confirmLabel = 'Excluir', loading }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="glass-card-strong">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

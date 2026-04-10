@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useImpersonation } from '@/contexts/ImpersonationContext'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,7 @@ import { Loader2, Settings, Info, CreditCard } from 'lucide-react'
 
 export function FinanceiroConfiguracoes() {
   const { user, profile, refreshProfile } = useAuth()
+  const { isImpersonating } = useImpersonation()
   const [farmName, setFarmName] = useState('')
   const [saving, setSaving]     = useState(false)
   const [loaded, setLoaded]     = useState(false)
@@ -24,6 +26,10 @@ export function FinanceiroConfiguracoes() {
   }, [profile])
 
   async function handleSave() {
+    if (isImpersonating) {
+      toast.error('Ação bloqueada', { description: 'Modo de impersonação ativo.' })
+      return
+    }
     if (!user?.id) return
     setSaving(true)
     try {
