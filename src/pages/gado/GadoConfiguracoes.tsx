@@ -57,7 +57,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 export function GadoConfiguracoes() {
-  const { session } = useAuth()
+  const { session, refreshProfile } = useAuth()
   const { getEffectiveUserId, isImpersonating } = useImpersonation()
 
   const [loading, setLoading] = useState(true)
@@ -126,6 +126,7 @@ export function GadoConfiguracoes() {
         exibir_conversao: form.exibir_conversao,
       })
       if (error) throw error
+      await refreshProfile()
       toast.success('Configurações salvas!')
     } catch (e: unknown) {
       toast.error('Erro ao salvar', { description: (e as Error).message })

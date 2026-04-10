@@ -21,7 +21,7 @@ export function GadoSidebar() {
   const location = useLocation()
 
   return (
-    <nav className="bg-[var(--surface)] border-b border-[var(--border)] px-4 overflow-x-auto scrollbar-none">
+    <nav className="glass-tabs px-4 overflow-x-auto scrollbar-none">
       <div className="flex items-center gap-0.5 h-11">
         {navItems.map(({ to, icon: Icon, label }) => {
           const active = location.pathname === to || location.pathname.startsWith(to + '/')

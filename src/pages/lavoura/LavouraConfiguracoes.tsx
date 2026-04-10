@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export function LavouraConfiguracoes() {
-  const { session } = useAuth()
+  const { session, refreshProfile } = useAuth()
   const { getEffectiveUserId, isImpersonating } = useImpersonation()
   const userId = getEffectiveUserId()
 
@@ -37,6 +37,7 @@ export function LavouraConfiguracoes() {
         .update({ farm_name_lavoura: farmName || null })
         .eq('user_id', uid)
       if (error) throw error
+      await refreshProfile()
       toast.success('Configurações salvas!')
     } catch (e: unknown) {
       toast.error('Erro ao salvar', { description: (e as Error).message })

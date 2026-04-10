@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Download, BookOpen } from 'lucide-react'
+import { Plus, Download, BookOpen, CalendarDays } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -26,7 +26,7 @@ interface Maquina { id: string; nome: string; custo_hora: number | null }
 interface SafraTalhao { id: string; safra_id: string; talhao_id: string; cultura_id: string }
 interface AtividadeCampo {
   id: string; safra_talhao_id: string; tipo: string; data: string
-  area_coberta: number | null; insumo_id: string | null; quantidade_insumo: number | null
+  area_coberta_ha: number | null; insumo_id: string | null; quantidade_insumo: number | null
   maquina_id: string | null; horas_maquina: number | null; operador: string | null
   custo_total: number | null; condicao_clima: string | null; observacao: string | null
 }
@@ -182,7 +182,7 @@ export function CadernoCampo() {
         safra_talhao_id: form.safra_talhao_id,
         tipo: form.tipo,
         data: form.data,
-        area_coberta: form.area_coberta ? parseFloat(form.area_coberta) : null,
+        area_coberta_ha: form.area_coberta ? parseFloat(form.area_coberta) : null,
         insumo_id: form.insumo_id || null,
         quantidade_insumo: form.quantidade_insumo ? parseFloat(form.quantidade_insumo) : null,
         maquina_id: form.maquina_id || null,
@@ -350,6 +350,17 @@ export function CadernoCampo() {
           <DialogHeader>
             <DialogTitle>Nova Atividade de Campo</DialogTitle>
           </DialogHeader>
+          {safras.length === 0 ? (
+            <div className="py-6 flex flex-col items-center gap-3 text-center">
+              <CalendarDays className="w-10 h-10 text-t3" />
+              <p className="text-sm font-medium text-t1">Nenhuma safra encontrada</p>
+              <p className="text-sm text-t3">Crie uma safra antes de registrar atividades de campo.</p>
+              <Button size="sm" onClick={() => { setDialogOpen(false); window.location.href = '/lavoura/safras' }}>
+                Ir para Safras
+              </Button>
+            </div>
+          ) : (
+          <>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -452,6 +463,8 @@ export function CadernoCampo() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Registrar'}</Button>
           </DialogFooter>
+          </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

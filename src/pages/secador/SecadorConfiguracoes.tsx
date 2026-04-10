@@ -11,13 +11,13 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface ProfileSecador {
-  farm_name_secador: string | null
+  farm_name: string | null
   fazenda_lat_secador: number | null
   fazenda_lng_secador: number | null
 }
 
 export function SecadorConfiguracoes() {
-  const { session } = useAuth()
+  const { session, refreshProfile } = useAuth()
   const { isImpersonating } = useImpersonation()
   const userId = session?.user?.id
 
@@ -33,11 +33,11 @@ export function SecadorConfiguracoes() {
     setLoading(true)
     const { data } = await supabase
       .from('profiles')
-      .select('farm_name_secador, fazenda_lat_secador, fazenda_lng_secador')
+      .select('farm_name, fazenda_lat_secador, fazenda_lng_secador')
       .eq('user_id', userId)
       .single()
     if (data) {
-      setFarmName(data.farm_name_secador ?? '')
+      setFarmName(data.farm_name ?? '')
       setLat(data.fazenda_lat_secador != null ? String(data.fazenda_lat_secador) : '')
       setLng(data.fazenda_lng_secador != null ? String(data.fazenda_lng_secador) : '')
     }
@@ -54,7 +54,7 @@ export function SecadorConfiguracoes() {
     if (!userId) return
     setSaving(true)
     const { error } = await supabase.from('profiles').update({
-      farm_name_secador: farmName || null,
+      farm_name: farmName || null,
       fazenda_lat_secador: lat ? parseFloat(lat) : null,
       fazenda_lng_secador: lng ? parseFloat(lng) : null,
     }).eq('user_id', userId)
@@ -62,6 +62,7 @@ export function SecadorConfiguracoes() {
     if (error) {
       toast.error('Erro ao salvar', { description: error.message })
     } else {
+      await refreshProfile()
       toast.success('Configurações salvas!')
     }
   }

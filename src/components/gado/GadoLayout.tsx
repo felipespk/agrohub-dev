@@ -11,7 +11,8 @@ import { supabase } from '@/lib/supabase'
 import { reclassificarAnimais } from '@/lib/reclassificar-animais'
 
 export function GadoLayout() {
-  const { session } = useAuth()
+  const { session, profile } = useAuth()
+  const farmName = profile?.farm_name_gado || profile?.farm_name
   const { getEffectiveUserId } = useImpersonation()
   useEffect(() => {
     const userId = getEffectiveUserId()
@@ -42,12 +43,18 @@ export function GadoLayout() {
 
   return (
     <div className="flex flex-col min-h-screen ml-16">
-      <header className="h-14 flex items-center justify-between px-5 border-b border-[var(--border)] bg-[var(--surface)] sticky top-0 z-30">
+      <header className="h-14 flex items-center justify-between px-5 glass-header sticky top-0 z-30">
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-md bg-[var(--primary-bg)] flex items-center justify-center">
             <Beef size={13} className="text-[var(--primary)]" strokeWidth={2} />
           </div>
           <span className="text-md font-semibold text-t1 tracking-tight">Pecuária</span>
+          {farmName && (
+            <>
+              <span className="text-t3 font-normal mx-1">·</span>
+              <span className="text-sm text-t3 font-normal truncate max-w-[200px]">{farmName}</span>
+            </>
+          )}
         </div>
         <ProfileDropdown settingsPath="/gado/configuracoes" />
       </header>

@@ -50,47 +50,30 @@ export function Login() {
   return (
     <div className="min-h-screen bg-[var(--bg)] flex">
       {/* Left — hero panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#0a0a09]">
-        {/* Subtle grid */}
-        <div
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage:
-              'linear-gradient(var(--border-strong) 1px, transparent 1px), linear-gradient(90deg, var(--border-strong) 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-          }}
-        />
-        {/* Green glow */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-[var(--primary)]/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+      <div
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
+        style={{
+          backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.3) 100%), url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=1920&q=80')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="relative z-10 flex flex-col justify-end p-12 w-full">
           <div>
-            <img src="/logo-agrix.png" alt="Agrix" className="h-8 object-contain brightness-0 invert" />
-          </div>
-
-          {/* Quote + stats */}
-          <div>
-            <blockquote className="text-white/60 text-lg leading-relaxed italic max-w-xs mb-8">
-              "Gestão rural moderna, do campo ao financeiro, em uma plataforma só."
-            </blockquote>
-            {/* design.md: 2-col stat grid */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Produtores',        value: '1.200+' },
-                { label: 'Animais rastreados', value: '180k+' },
-                { label: 'Safras geridas',     value: '3.400+' },
-                { label: 'Toneladas processadas', value: '2,1M+' },
-              ].map(({ label, value }) => (
-                <div
-                  key={label}
-                  className="rounded-lg border border-white/10 bg-white/[0.06] p-4"
-                >
-                  {/* design.md: display-lg for hero numbers */}
-                  <p className="t-display-sm text-[var(--primary)]">{value}</p>
-                  <p className="text-xs text-white/50 mt-1">{label}</p>
-                </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+              Gestão rural moderna,<br />do campo ao financeiro.
+            </h2>
+            <p className="text-sm text-white/60 mt-2 max-w-md">
+              Controle completo de secador, pecuária, lavoura e financeiro em uma única plataforma.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-6">
+              {['Secador / Silo', 'Pecuária', 'Lavoura', 'Financeiro'].map(mod => (
+                <span key={mod} className="px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-white/80 border border-white/20 backdrop-blur-sm">
+                  {mod}
+                </span>
               ))}
             </div>
+            <p className="text-xs text-white/30 mt-8">© {new Date().getFullYear()} Agrix. Todos os direitos reservados.</p>
           </div>
         </div>
       </div>
@@ -98,13 +81,11 @@ export function Login() {
       {/* Right — form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-sm animate-fade-up">
-          {/* Logo */}
           <div className="mb-8">
-            <img src="/logo-agrix.png" alt="Agrix" className="h-10 object-contain" />
-            <p className="text-sm text-t3 mt-1">Gestão Rural Inteligente</p>
+            <img src="/logo-agrix.png" alt="Agrix" className="h-24 object-contain animate-logo-float" />
           </div>
 
-          {/* design.md: display-sm for auth page headings */}
+          <div className="w-10 h-1 rounded-full bg-[var(--primary)] mb-4" />
           <div className="mb-7">
             <h1 className="t-display-sm text-t1">Bem-vindo de volta</h1>
             <p className="text-sm text-t3 mt-1.5">Entre na sua conta para continuar</p>
@@ -121,6 +102,7 @@ export function Login() {
                 onChange={e => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                className="glass-input"
               />
             </div>
             <div className="space-y-1.5">
@@ -142,7 +124,7 @@ export function Login() {
                   onChange={e => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="pr-10"
+                  className="pr-10 glass-input"
                 />
                 <button
                   type="button"
@@ -154,7 +136,7 @@ export function Login() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full mt-1" disabled={loading}>
+            <Button type="submit" className="w-full mt-1 h-11 text-sm font-semibold" disabled={loading}>
               {loading ? <Loader2 size={15} className="animate-spin" /> : 'Entrar'}
             </Button>
           </form>
