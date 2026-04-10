@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Weight } from 'lucide-react'
+import { ArrowLeft, Weight, Syringe, ArrowLeftRight } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 import {
   differenceInDays, differenceInMonths, parseISO, format,
 } from 'date-fns'
@@ -202,7 +203,7 @@ export function GadoAnimalFicha() {
       </div>
 
       {/* Header */}
-      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-elev-1 p-5">
+      <div className="glass-card rounded-xl p-5">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -256,7 +257,7 @@ export function GadoAnimalFicha() {
       </div>
 
       {/* Weight chart */}
-      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-elev-1 p-5">
+      <div className="glass-card rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-t1">Evolução de Peso</h2>
           <span className="text-xs text-t3">{pesagens.length} pesagem(ns)</span>
@@ -294,13 +295,13 @@ export function GadoAnimalFicha() {
       </div>
 
       {/* Health history */}
-      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-elev-1 overflow-hidden">
+      <div className="glass-card rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
           <h2 className="text-sm font-semibold text-t1">Histórico Sanitário</h2>
           <span className="text-xs text-t3">{aplicacoes.length} aplicação(ões)</span>
         </div>
         {aplicacoes.length === 0 ? (
-          <div className="flex items-center justify-center py-10 text-sm text-t3">Nenhuma aplicação registrada</div>
+          <EmptyState icon={Syringe} title="Nenhuma aplicação registrada" compact />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -331,13 +332,13 @@ export function GadoAnimalFicha() {
       </div>
 
       {/* Movement history */}
-      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-elev-1 overflow-hidden">
+      <div className="glass-card rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
           <h2 className="text-sm font-semibold text-t1">Histórico de Movimentações</h2>
           <span className="text-xs text-t3">{movimentos.length} registro(s)</span>
         </div>
         {movimentos.length === 0 ? (
-          <div className="flex items-center justify-center py-10 text-sm text-t3">Nenhuma movimentação registrada</div>
+          <EmptyState icon={ArrowLeftRight} title="Nenhuma movimentação registrada" compact />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -410,7 +411,7 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 
 function StatCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-elev-1 p-4">
+    <div className="glass-card rounded-xl p-4">
       <p className="text-xs text-t3 mb-1">{label}</p>
       <p className={`text-lg font-bold tabular-nums ${highlight ? 'text-[var(--primary-dark)]' : 'text-t1'}`}>{value}</p>
     </div>

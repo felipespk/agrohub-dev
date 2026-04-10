@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from '@/components/ui/dialog'
-import { Loader2, Plus, Trash2, Search, X, Download, ArrowUpCircle, ArrowDownCircle, ArrowLeftRight } from 'lucide-react'
+import { Loader2, Plus, Trash2, Search, X, Download, ArrowUpCircle, ArrowDownCircle, ArrowLeftRight, FileText } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 import { format } from 'date-fns'
 
 interface Lancamento {
@@ -270,10 +271,7 @@ export function Lancamentos() {
       <Card>
         <CardContent className="p-0">
           {filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-t3 text-sm">Nenhum lançamento encontrado.</p>
-              <Button variant="ghost" size="sm" className="mt-2 text-t3" onClick={openCreate}><Plus size={13} className="mr-1" /> Criar primeiro lançamento</Button>
-            </div>
+            <EmptyState icon={FileText} title="Nenhum lançamento encontrado" compact />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

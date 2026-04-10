@@ -125,7 +125,7 @@ export function SaidaGeral() {
         </Button>
       </div>
 
-      <Card className="shadow-elev-1">
+      <Card className="glass-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-t2">Histórico de Saídas</CardTitle>
         </CardHeader>

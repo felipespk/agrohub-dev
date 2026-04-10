@@ -14,6 +14,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from '@/components/ui/dialog'
 import { Loader2, Plus, Pencil, Trash2, Search, X, Users } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 
 const tipoColors: Record<string, string> = {
   fornecedor: 'bg-amber-50 text-amber-600 border-amber-100',
@@ -134,11 +135,7 @@ export function Contatos() {
       <Card>
         <CardContent className="p-0">
           {filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <Users size={32} className="text-t3 mx-auto mb-3" />
-              <p className="text-t3 text-sm">Nenhum contato encontrado.</p>
-              <Button variant="ghost" size="sm" className="mt-2" onClick={openCreate}><Plus size={13} className="mr-1" /> Criar primeiro contato</Button>
-            </div>
+            <EmptyState icon={Users} title="Nenhum contato encontrado" />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

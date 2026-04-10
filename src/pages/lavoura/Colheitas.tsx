@@ -56,7 +56,7 @@ function TableSkeleton() {
         <div className="space-y-2"><Skeleton className="h-6 w-28" /><Skeleton className="h-4 w-48" /></div>
         <Skeleton className="h-9 w-36 rounded-md" />
       </div>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+      <div className="rounded-xl glass-card overflow-hidden">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex gap-4 px-4 py-3 border-b border-[var(--border)]">
             <Skeleton className="h-4 w-20" /><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-16" />
@@ -226,7 +226,7 @@ export function Colheitas() {
           <Button size="sm" variant="outline" onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }}>Registrar Colheita</Button>
         </div>
       ) : (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-x-auto">
+        <div className="rounded-xl glass-card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-t3 text-xs font-medium border-b border-[var(--border)]">

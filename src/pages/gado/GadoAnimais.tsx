@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Plus, Search, Trash2, Eye, PawPrint,
+  Plus, Search, Trash2, Eye, PawPrint, Download,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase, Animal, Pasto, Raca } from '@/lib/supabase'
@@ -20,6 +20,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import { formatNumber, formatCurrency } from '@/lib/utils'
+import { exportToExcel } from '@/lib/export-excel'
 
 const CATEGORIA_COLORS: Record<string, string> = {
   vaca: 'bg-pink-100 text-pink-700',
@@ -226,10 +227,35 @@ export function GadoAnimais() {
           <h1 className="text-xl font-semibold text-t1">Animais</h1>
           <p className="text-sm text-t3">{animais.filter(a => a.status === 'ativo').length} animais ativos no rebanho</p>
         </div>
-        <Button onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }} className="gap-1.5">
-          <Plus size={14} />
-          Novo Animal
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => exportToExcel('animais', 'Animais', [
+            { key: 'brinco', header: 'Brinco' },
+            { key: 'categoria', header: 'Categoria' },
+            { key: 'sexo', header: 'Sexo' },
+            { key: 'raca', header: 'Raça' },
+            { key: 'pasto', header: 'Pasto' },
+            { key: 'peso_kg', header: 'Peso (kg)', type: 'number' },
+            { key: 'peso_arroba', header: 'Peso (@)', type: 'number' },
+            { key: 'valor_estimado', header: 'Valor Est.', type: 'currency' },
+            { key: 'status', header: 'Status' },
+          ], filtered.map(a => ({
+            brinco: a.brinco,
+            categoria: a.categoria,
+            sexo: a.sexo === 'M' ? 'Macho' : 'Fêmea',
+            raca: racas.find(r => r.id === a.raca_id)?.nome ?? '',
+            pasto: pastos.find(p => p.id === a.pasto_id)?.nome ?? '',
+            peso_kg: a.peso_atual ?? 0,
+            peso_arroba: calcArroba(a.peso_atual) ?? 0,
+            valor_estimado: calcValor(a.peso_atual) ?? 0,
+            status: a.status,
+          })))} className="gap-1.5 text-xs">
+            <Download size={12} /> Excel
+          </Button>
+          <Button onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }} className="gap-1.5">
+            <Plus size={14} />
+            Novo Animal
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -273,7 +299,7 @@ export function GadoAnimais() {
         </Select>
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+      <div className="rounded-xl glass-card overflow-hidden">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <div className="w-12 h-12 rounded-xl bg-[var(--surface-raised)] border border-[var(--border)] flex items-center justify-center animate-float">

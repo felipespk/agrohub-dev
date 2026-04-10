@@ -3,6 +3,7 @@ import { Plus, ChevronDown, ChevronRight, Pencil, Trash2, Wheat, PlusCircle } fr
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useImpersonation } from '@/contexts/ImpersonationContext'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -54,7 +55,7 @@ function TableSkeleton() {
         <div className="space-y-2"><Skeleton className="h-6 w-24" /><Skeleton className="h-4 w-48" /></div>
         <Skeleton className="h-9 w-32 rounded-md" />
       </div>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+      <div className="rounded-xl glass-card overflow-hidden">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-[var(--border)]">
             <Skeleton className="h-4 w-32" /><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-24" />
@@ -79,6 +80,8 @@ export function Safras() {
   const [variedades, setVariedades] = useState<Variedade[]>([])
   const [safTalhoes, setSafTalhoes] = useState<SafraTalhao[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteStId, setDeleteStId] = useState<string | null>(null)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -214,7 +217,7 @@ export function Safras() {
           <Button size="sm" variant="outline" onClick={openCreate}>Criar Safra</Button>
         </div>
       ) : (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+        <div className="rounded-xl glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-t3 text-xs font-medium border-b border-[var(--border)]">
@@ -254,7 +257,7 @@ export function Safras() {
                           <button onClick={() => openEdit(s)} className="p-1.5 rounded text-t3 hover:text-t1 hover:bg-[var(--surface-raised)] transition-colors">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => handleDeleteSafra(s.id)} className="p-1.5 rounded text-t3 hover:text-red-500 hover:bg-red-50 transition-colors">
+                          <button onClick={() => setDeleteId(s.id)} className="p-1.5 rounded text-t3 hover:text-red-500 hover:bg-red-50 transition-colors">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -299,7 +302,7 @@ export function Safras() {
                                         <td className="py-1.5 pr-4 text-t2">{st.data_colheita_prevista ? formatDate(st.data_colheita_prevista) : '–'}</td>
                                         <td className="py-1.5 pr-4 text-t2">{st.meta_produtividade ?? '–'}</td>
                                         <td className="py-1.5">
-                                          <button onClick={() => handleRemoveST(st.id)} className="p-1 rounded text-t3 hover:text-red-500 transition-colors">
+                                          <button onClick={() => setDeleteStId(st.id)} className="p-1 rounded text-t3 hover:text-red-500 transition-colors">
                                             <Trash2 className="w-3 h-3" />
                                           </button>
                                         </td>
@@ -359,6 +362,22 @@ export function Safras() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => { handleDeleteSafra(deleteId!); setDeleteId(null) }}
+        title="Confirmar exclusão"
+        description="Tem certeza que deseja excluir esta safra? Esta ação não pode ser desfeita."
+      />
+
+      <ConfirmDialog
+        open={!!deleteStId}
+        onClose={() => setDeleteStId(null)}
+        onConfirm={() => { handleRemoveST(deleteStId!); setDeleteStId(null) }}
+        title="Confirmar exclusão"
+        description="Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita."
+      />
 
       <Dialog open={stDialogOpen} onOpenChange={setStDialogOpen}>
         <DialogContent className="max-w-xl">

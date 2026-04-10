@@ -14,7 +14,7 @@ export function Placeholder({ title, description, cta }: PlaceholderProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
       {/* Floating icon */}
-      <div className="w-16 h-16 rounded-2xl bg-[var(--surface-raised)] border border-[var(--border)] flex items-center justify-center mb-5 shadow-elev-1 animate-float">
+      <div className="w-16 h-16 rounded-2xl bg-[var(--surface-raised)] border border-[var(--border)] flex items-center justify-center mb-5 glass-card animate-float">
         <Construction size={24} className="text-t4" />
       </div>
 

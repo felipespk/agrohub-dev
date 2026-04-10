@@ -16,6 +16,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from '@/components/ui/dialog'
 import { Loader2, Plus, Pencil, Trash2, DollarSign, Landmark } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 
 const tipoLabels: Record<string, string> = {
   corrente: 'Conta Corrente', poupanca: 'Poupança', investimento: 'Investimento',
@@ -161,11 +162,7 @@ export function ContasBancarias() {
 
       {/* Cards Grid */}
       {contasBancarias.length === 0 ? (
-        <div className="text-center py-16">
-          <Landmark size={32} className="text-t3 mx-auto mb-3" />
-          <p className="text-t3 text-sm">Nenhuma conta bancária cadastrada.</p>
-          <Button variant="ghost" size="sm" className="mt-2" onClick={openCreate}><Plus size={13} className="mr-1" /> Criar primeira conta</Button>
-        </div>
+        <EmptyState icon={Landmark} title="Nenhuma conta bancária cadastrada" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {contasBancarias.map(c => (

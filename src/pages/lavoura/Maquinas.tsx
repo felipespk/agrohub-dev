@@ -202,7 +202,7 @@ export function Maquinas() {
               {maquinas.map((m, i) => (
                 <div
                   key={m.id}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1 animate-fade-up"
+                  className="rounded-xl glass-card p-5 animate-fade-up"
                   style={{ animationDelay: `${i * 40}ms` }}
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -255,7 +255,7 @@ export function Maquinas() {
               <p className="text-sm text-t3">Nenhuma manutenção registrada</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-x-auto">
+            <div className="rounded-xl glass-card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-t3 text-xs font-medium border-b border-[var(--border)]">

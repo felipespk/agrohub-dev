@@ -252,7 +252,7 @@ export function GadoPastos() {
           {pastos.map((p, i) => (
             <div
               key={p.id}
-              className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-elev-1 p-5 flex flex-col gap-4 animate-fade-up"
+              className="glass-card rounded-xl p-5 flex flex-col gap-4 animate-fade-up"
               style={{ animationDelay: `${i * 50}ms` }}
             >
               <div className="flex items-start justify-between">

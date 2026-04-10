@@ -13,6 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from '@/components/ui/dialog'
 import { Loader2, Plus, Pencil, Trash2, Tag } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 
 const grupoTipos: { tipo: CategoriaFinanceira['tipo']; label: string; color: string }[] = [
   { tipo: 'receita', label: 'Receita', color: 'text-emerald-600' },
@@ -111,13 +112,7 @@ export function Categorias() {
               </CardHeader>
               <CardContent className="px-5 pb-4">
                 {items.length === 0 ? (
-                  <div className="text-center py-4">
-                    <Tag size={20} className="text-t3 mx-auto mb-2" />
-                    <p className="text-xs text-t3">Nenhuma categoria</p>
-                    <Button variant="ghost" size="sm" className="mt-1 text-xs h-7" onClick={() => openCreate(tipo)}>
-                      <Plus size={11} className="mr-1" /> Adicionar
-                    </Button>
-                  </div>
+                  <EmptyState icon={Tag} title="Nenhuma categoria cadastrada" compact />
                 ) : (
                   <div className="space-y-1">
                     {items.map(c => (

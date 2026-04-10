@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   Wheat, Users, Store, ChevronDown, ChevronRight, Plus, Pencil, Trash2, X,
 } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useImpersonation } from '@/contexts/ImpersonationContext'
@@ -46,6 +48,8 @@ function TiposTab({ userId, writeId }: { userId: string; writeId: string }) {
   const [newVarNomes, setNewVarNomes] = useState<Record<string, string>>({})
   const [savingTipo, setSavingTipo] = useState(false)
   const [savingVar, setSavingVar] = useState<string | null>(null)
+  const [deleteTipoId, setDeleteTipoId] = useState<string | null>(null)
+  const [deleteVarId, setDeleteVarId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -114,8 +118,24 @@ function TiposTab({ userId, writeId }: { userId: string; writeId: string }) {
       </div>
 
       {tipos.length === 0 ? (
-        <div className="py-8 text-center text-t3 text-sm">Nenhum tipo de grão cadastrado</div>
+        <EmptyState icon={Wheat} title="Nenhum tipo de grão cadastrado" compact />
       ) : (
+        <ConfirmDialog
+          open={!!deleteTipoId}
+          onClose={() => setDeleteTipoId(null)}
+          onConfirm={() => { deleteTipo(deleteTipoId!); setDeleteTipoId(null) }}
+          title="Confirmar exclusão"
+          description="Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita."
+        />
+
+        <ConfirmDialog
+          open={!!deleteVarId}
+          onClose={() => setDeleteVarId(null)}
+          onConfirm={() => { deleteVariedade(deleteVarId!); setDeleteVarId(null) }}
+          title="Confirmar exclusão"
+          description="Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita."
+        />
+
         <div className="space-y-2">
           {tipos.map(t => {
             const vars = variedades.filter(v => v.tipo_grao_id === t.id)
@@ -126,7 +146,7 @@ function TiposTab({ userId, writeId }: { userId: string; writeId: string }) {
                   {isOpen ? <ChevronDown size={14} className="text-t3" /> : <ChevronRight size={14} className="text-t3" />}
                   <span className="flex-1 text-sm font-medium text-t1">{t.nome}</span>
                   <span className="text-xs text-t3">{vars.length} variedade{vars.length !== 1 ? 's' : ''}</span>
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-t3 hover:text-red-500" onClick={e => { e.stopPropagation(); deleteTipo(t.id) }}>
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-t3 hover:text-red-500" onClick={e => { e.stopPropagation(); setDeleteTipoId(t.id) }}>
                     <Trash2 size={12} />
                   </Button>
                 </div>
@@ -150,7 +170,7 @@ function TiposTab({ userId, writeId }: { userId: string; writeId: string }) {
                       vars.map(v => (
                         <div key={v.id} className="flex items-center justify-between px-2 py-1 rounded bg-[var(--surface)] border border-[var(--border)] text-xs">
                           <span className="text-t1">{v.nome}</span>
-                          <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-t3 hover:text-red-500" onClick={() => deleteVariedade(v.id)}>
+                          <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-t3 hover:text-red-500" onClick={() => setDeleteVarId(v.id)}>
                             <X size={10} />
                           </Button>
                         </div>
@@ -180,6 +200,7 @@ function ProdutoresTab({ userId, writeId }: { userId: string; writeId: string })
   const [editing, setEditing] = useState<Produtor | null>(null)
   const [form, setForm] = useState(EMPTY_PROD)
   const [saving, setSaving] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -229,7 +250,7 @@ function ProdutoresTab({ userId, writeId }: { userId: string; writeId: string })
         <Button size="sm" onClick={openNew} className="gap-1"><Plus size={13} />Novo Produtor</Button>
       </div>
       {rows.length === 0 ? (
-        <div className="py-8 text-center text-t3 text-sm">Nenhum produtor cadastrado</div>
+        <EmptyState icon={Users} title="Nenhum produtor cadastrado" compact />
       ) : (
         <table className="w-full text-sm">
           <thead>
@@ -251,7 +272,7 @@ function ProdutoresTab({ userId, writeId }: { userId: string; writeId: string })
                 <td className="py-2.5 px-3 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEdit(p)}><Pencil size={12} /></Button>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600" onClick={() => handleDelete(p.id)}><Trash2 size={12} /></Button>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600" onClick={() => setDeleteId(p.id)}><Trash2 size={12} /></Button>
                   </div>
                 </td>
               </tr>
@@ -259,6 +280,14 @@ function ProdutoresTab({ userId, writeId }: { userId: string; writeId: string })
           </tbody>
         </table>
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => { handleDelete(deleteId!); setDeleteId(null) }}
+        title="Confirmar exclusão"
+        description="Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita."
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
@@ -312,6 +341,7 @@ function CompradoresTab({ userId, writeId }: { userId: string; writeId: string }
   const [editing, setEditing] = useState<Comprador | null>(null)
   const [form, setForm] = useState(EMPTY_COMP)
   const [saving, setSaving] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -361,7 +391,7 @@ function CompradoresTab({ userId, writeId }: { userId: string; writeId: string }
         <Button size="sm" onClick={openNew} className="gap-1"><Plus size={13} />Novo Comprador</Button>
       </div>
       {rows.length === 0 ? (
-        <div className="py-8 text-center text-t3 text-sm">Nenhum comprador cadastrado</div>
+        <EmptyState icon={Users} title="Nenhum comprador cadastrado" compact />
       ) : (
         <table className="w-full text-sm">
           <thead>
@@ -381,7 +411,7 @@ function CompradoresTab({ userId, writeId }: { userId: string; writeId: string }
                 <td className="py-2.5 px-3 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEdit(c)}><Pencil size={12} /></Button>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600" onClick={() => handleDelete(c.id)}><Trash2 size={12} /></Button>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600" onClick={() => setDeleteId(c.id)}><Trash2 size={12} /></Button>
                   </div>
                 </td>
               </tr>
@@ -389,6 +419,14 @@ function CompradoresTab({ userId, writeId }: { userId: string; writeId: string }
           </tbody>
         </table>
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => { handleDelete(deleteId!); setDeleteId(null) }}
+        title="Confirmar exclusão"
+        description="Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita."
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
@@ -434,7 +472,7 @@ export function Cadastro() {
         <p className="text-sm text-t3">Gerencie tipos de grão, variedades, produtores e compradores</p>
       </div>
 
-      <Card className="shadow-elev-1">
+      <Card className="glass-card">
         <CardContent className="pt-4">
           <Tabs defaultValue="tipos">
             <TabsList className="mb-5">

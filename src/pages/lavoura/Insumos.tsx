@@ -62,7 +62,7 @@ function PageSkeleton() {
       <div className="grid grid-cols-3 gap-3">
         {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
       </div>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+      <div className="rounded-xl glass-card overflow-hidden">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex gap-4 px-4 py-3 border-b border-[var(--border)]">
             <Skeleton className="h-4 w-28" /><Skeleton className="h-5 w-20 rounded-full" /><Skeleton className="h-4 w-16" /><Skeleton className="h-4 w-20" />
@@ -206,7 +206,7 @@ export function Insumos() {
           { label: 'Estoque Baixo', value: String(baixoAnim), sub: 'abaixo do mínimo', alert: emEstoqueBaixo > 0 },
           { label: 'Valor do Estoque', value: formatCurrency(valorEstoque), sub: 'valor total em estoque' },
         ].map((kpi, i) => (
-          <div key={i} className={`rounded-xl border bg-[var(--surface)] p-5 shadow-elev-1 ${kpi.alert ? 'border-yellow-300' : 'border-[var(--border)]'}`}>
+          <div key={i} className={`rounded-xl glass-card p-5 ${kpi.alert ? 'border-yellow-300' : 'border-[var(--border)]'}`}>
             <p className="text-2xl font-semibold text-t1">{kpi.value}</p>
             <p className="text-sm text-t2 mt-0.5">{kpi.label}</p>
             <p className="text-xs text-t3">{kpi.sub}</p>
@@ -221,7 +221,7 @@ export function Insumos() {
           <Button size="sm" variant="outline" onClick={openCreate}>Cadastrar Insumo</Button>
         </div>
       ) : (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-x-auto">
+        <div className="rounded-xl glass-card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-t3 text-xs font-medium border-b border-[var(--border)]">

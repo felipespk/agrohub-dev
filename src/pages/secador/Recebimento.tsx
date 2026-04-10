@@ -205,7 +205,7 @@ export function Recebimento() {
         <p className="text-sm text-t3">Registre entradas de grãos com descontos automáticos por umidade e impureza</p>
       </div>
 
-      <Card className="shadow-elev-1">
+      <Card className="glass-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-t2 flex items-center gap-2">
             <Plus size={14} />
@@ -310,7 +310,7 @@ export function Recebimento() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-elev-1">
+      <Card className="glass-card">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <CardTitle className="text-sm font-medium text-t2">Histórico de Recebimentos</CardTitle>

@@ -52,11 +52,11 @@
     --shadow-3: 0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
 
     /* ── Glassmorphism ── */
-    --glass:             rgba(255, 255, 255, 0.65);
+    --glass:             rgba(255, 255, 255, 0.55);
     --glass-strong:      rgba(255, 255, 255, 0.80);
     --glass-subtle:      rgba(255, 255, 255, 0.40);
-    --glass-border:      rgba(255, 255, 255, 0.45);
-    --glass-shadow:      0 8px 32px rgba(0, 0, 0, 0.08);
+    --glass-border:      rgba(255, 255, 255, 0.60);
+    --glass-shadow:      0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
     --glass-blur:        16px;
     --glass-blur-heavy:  24px;
 
@@ -185,7 +185,7 @@
   }
   .hover-3d:hover {
     transform: translateY(-4px) rotateX(2deg) rotateY(-1deg);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.10);
   }
 
   /* Subtle 3D tilt on hover (for smaller cards) */
@@ -435,8 +435,8 @@
 
   /* Logo floating glow */
   @keyframes logo-float {
-    0%, 100% { transform: translateY(0px); filter: drop-shadow(0 8px 24px rgba(120, 252, 144, 0.25)); }
-    50% { transform: translateY(-8px); filter: drop-shadow(0 16px 32px rgba(120, 252, 144, 0.35)); }
+    0%, 100% { transform: translateY(0px); filter: drop-shadow(0 8px 24px rgba(120, 252, 144, 0.35)) drop-shadow(0 4px 12px rgba(120, 252, 144, 0.20)); }
+    50% { transform: translateY(-8px); filter: drop-shadow(0 20px 40px rgba(120, 252, 144, 0.45)) drop-shadow(0 8px 20px rgba(120, 252, 144, 0.30)); }
   }
   .animate-logo-float { animation: logo-float 4s ease-in-out infinite; }
 

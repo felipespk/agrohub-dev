@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { FileBarChart, Download } from 'lucide-react'
+import { FileBarChart, Download, PackagePlus, ShoppingCart, Boxes } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { EmptyState } from '@/components/EmptyState'
 import { useImpersonation } from '@/contexts/ImpersonationContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -175,7 +176,7 @@ export function Relatorio() {
           </TabsList>
 
           <TabsContent value="produtor">
-            <Card className="shadow-elev-1">
+            <Card className="glass-card">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-t2 flex items-center gap-2">
@@ -190,7 +191,7 @@ export function Relatorio() {
               </CardHeader>
               <CardContent>
                 {recByProdutor.length === 0 ? (
-                  <p className="text-sm text-t3 py-6 text-center">Nenhum recebimento no período</p>
+                  <EmptyState icon={PackagePlus} title="Nenhum recebimento no período" compact />
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
@@ -226,7 +227,7 @@ export function Relatorio() {
           </TabsContent>
 
           <TabsContent value="comprador">
-            <Card className="shadow-elev-1">
+            <Card className="glass-card">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-t2 flex items-center gap-2">
@@ -241,7 +242,7 @@ export function Relatorio() {
               </CardHeader>
               <CardContent>
                 {expByComprador.length === 0 ? (
-                  <p className="text-sm text-t3 py-6 text-center">Nenhuma venda no período</p>
+                  <EmptyState icon={ShoppingCart} title="Nenhuma venda no período" compact />
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
@@ -277,7 +278,7 @@ export function Relatorio() {
           </TabsContent>
 
           <TabsContent value="balanco">
-            <Card className="shadow-elev-1">
+            <Card className="glass-card">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-t2 flex items-center gap-2">
@@ -292,7 +293,7 @@ export function Relatorio() {
               </CardHeader>
               <CardContent>
                 {balanceByTipo.length === 0 ? (
-                  <p className="text-sm text-t3 py-6 text-center">Nenhum movimento no período</p>
+                  <EmptyState icon={Boxes} title="Nenhum movimento no período" compact />
                 ) : (
                   <table className="w-full text-sm">
                     <thead>

@@ -49,7 +49,7 @@ function ToggleSwitch({ checked, onChange, id }: { checked: boolean; onChange: (
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-elev-1 p-6">
+    <div className="glass-card rounded-xl p-6">
       <h2 className="text-sm font-semibold text-t1 mb-4">{title}</h2>
       <div className="space-y-4">{children}</div>
     </div>

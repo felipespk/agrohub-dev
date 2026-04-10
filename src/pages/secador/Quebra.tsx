@@ -114,19 +114,19 @@ export function Quebra() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-elev-1">
+        <div className="rounded-xl glass-card p-4">
           <p className="text-xs text-t3 mb-1">Quebra Este Mês</p>
           <p className="text-2xl font-bold text-amber-500">{formatNumber(kpiMes / 1000, 2)} t</p>
           <p className="text-xs text-t4">{formatNumber(kpiMes, 0)} kg</p>
         </div>
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-elev-1">
+        <div className="rounded-xl glass-card p-4">
           <p className="text-xs text-t3 mb-1">Quebra Total (Geral)</p>
           <p className="text-2xl font-bold text-red-500">{formatNumber(kpiTotal / 1000, 2)} t</p>
           <p className="text-xs text-t4">{formatNumber(kpiTotal, 0)} kg</p>
         </div>
       </div>
 
-      <Card className="shadow-elev-1">
+      <Card className="glass-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-t2">Histórico de Quebras</CardTitle>
         </CardHeader>

@@ -66,7 +66,7 @@ function TableSkeleton() {
         <Skeleton className="h-9 w-36 rounded-md" />
       </div>
       <div className="flex gap-2"><Skeleton className="h-9 w-40 rounded-md" /><Skeleton className="h-9 w-40 rounded-md" /></div>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+      <div className="rounded-xl glass-card overflow-hidden">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-[var(--border)]">
             <Skeleton className="h-4 w-20" /><Skeleton className="h-4 w-24" /><Skeleton className="h-5 w-20 rounded-full" />
@@ -305,7 +305,7 @@ export function CadernoCampo() {
           <p className="text-sm text-t3">Nenhuma atividade registrada</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-x-auto">
+        <div className="rounded-xl glass-card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-t3 text-xs font-medium border-b border-[var(--border)]">

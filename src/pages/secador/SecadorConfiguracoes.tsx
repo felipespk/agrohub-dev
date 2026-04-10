@@ -81,7 +81,7 @@ export function SecadorConfiguracoes() {
         </div>
       ) : (
         <div className="space-y-4 max-w-2xl">
-          <Card className="shadow-elev-1">
+          <Card className="glass-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-t2 flex items-center gap-2">
                 <Settings size={14} />
@@ -122,7 +122,7 @@ export function SecadorConfiguracoes() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-elev-1">
+          <Card className="glass-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-t2 flex items-center gap-2">
                 <Info size={14} />

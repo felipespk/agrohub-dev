@@ -14,11 +14,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useImpersonation } from '@/contexts/ImpersonationContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCountUp } from '@/hooks/useCountUp'
 import { formatNumber } from '@/lib/utils'
+import { WeatherWidget } from '@/components/WeatherWidget'
 
-type Period = '1m' | '3m' | '6m' | '1y'
+type Period = '1m' | '3m' | '6m' | '1y' | 'personalizado'
 
 interface KPIs {
   estoqueAtual: number
@@ -46,6 +48,7 @@ const PERIOD_LABELS: Record<Period, string> = {
   '3m': '3 Meses',
   '6m': '6 Meses',
   '1y': 'Ano',
+  'personalizado': 'Personalizado',
 }
 
 function KPICard({
@@ -74,7 +77,7 @@ function KPICard({
   }
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
+    <div className="rounded-xl glass-card p-5">
       {loading ? (
         <>
           <Skeleton className="w-8 h-8 rounded-md mb-3" />
@@ -108,7 +111,7 @@ function DashboardSkeleton() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
+          <div key={i} className="rounded-xl glass-card p-5">
             <Skeleton className="w-8 h-8 rounded-md mb-3" />
             <Skeleton className="h-7 w-14 mb-2" />
             <Skeleton className="h-4 w-24" />
@@ -130,6 +133,8 @@ export function SecadorDashboard() {
 
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('1m')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
   const [kpis, setKpis] = useState<KPIs>({ estoqueAtual: 0, volumeBruto: 0, pesoAjustado: 0, expedido: 0, quebraTecnica: 0 })
   const [barData, setBarData] = useState<BarData[]>([])
   const [pieData, setPieData] = useState<PieData[]>([])
@@ -139,12 +144,14 @@ export function SecadorDashboard() {
     const now = new Date()
     const end = format(now, 'yyyy-MM-dd')
     let start: string
-    if (p === '1m') start = format(startOfMonth(now), 'yyyy-MM-dd')
+    if (p === 'personalizado') {
+      return { start: dataInicio || format(startOfMonth(now), 'yyyy-MM-dd'), end: dataFim || end }
+    } else if (p === '1m') start = format(startOfMonth(now), 'yyyy-MM-dd')
     else if (p === '3m') start = format(startOfMonth(subMonths(now, 2)), 'yyyy-MM-dd')
     else if (p === '6m') start = format(startOfMonth(subMonths(now, 5)), 'yyyy-MM-dd')
     else start = format(new Date(now.getFullYear(), 0, 1), 'yyyy-MM-dd')
     return { start, end }
-  }, [])
+  }, [dataInicio, dataFim])
 
   const loadData = useCallback(async () => {
     if (!userId) return
@@ -236,7 +243,7 @@ export function SecadorDashboard() {
           <h1 className="text-xl font-semibold text-t1">Dashboard · Secador / Silo</h1>
           <p className="text-sm text-t3">Estoque atual, volume recebido, expedido e quebra técnica</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="flex border border-[var(--border)] rounded-lg overflow-hidden text-xs">
             {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
               <button
@@ -248,12 +255,21 @@ export function SecadorDashboard() {
               </button>
             ))}
           </div>
+          {period === 'personalizado' && (
+            <>
+              <Input type="date" className="h-9 w-36 text-sm" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
+              <span className="text-t3 text-sm">até</span>
+              <Input type="date" className="h-9 w-36 text-sm" value={dataFim} onChange={e => setDataFim(e.target.value)} />
+            </>
+          )}
           <Button size="sm" variant="outline" onClick={loadData} className="gap-1.5">
             <RefreshCw size={13} />
             Atualizar
           </Button>
         </div>
       </div>
+
+      <WeatherWidget />
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KPICard icon={Warehouse} label="Estoque Atual" value={kpis.estoqueAtual} unit="t" color="bg-[var(--primary-dark)]" loading={false} accent />
@@ -264,7 +280,7 @@ export function SecadorDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="shadow-elev-1 lg:col-span-2">
+        <Card className="glass-card lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-t2 flex items-center gap-2">
               <Calendar size={14} />
@@ -287,7 +303,7 @@ export function SecadorDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-elev-1">
+        <Card className="glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-t2">Estoque por Tipo de Grão</CardTitle>
           </CardHeader>

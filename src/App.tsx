@@ -94,6 +94,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const { profile, loading } = useAuth()
+  if (loading) return (
+    <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+      <Loader2 size={24} className="animate-spin text-t3" />
+    </div>
+  )
+  if (!profile?.is_admin) return <Navigate to="/hub" replace />
+  return <>{children}</>
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -107,7 +118,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute><ImpersonationBannerWrapper /></ProtectedRoute>}>
         <Route path="/hub" element={<Hub />} />
         <Route path="/mapa" element={<Mapa />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin" element={<AdminGuard><Admin /></AdminGuard>} />
       </Route>
 
       {/* Protected with sidebar */}

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Syringe, Pill } from 'lucide-react'
+import { Plus, Syringe, Pill, Download, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase, Medicamento, AplicacaoSanitaria, Animal, Pasto } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -18,6 +18,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { formatDate } from '@/lib/utils'
+import { exportToExcel } from '@/lib/export-excel'
 
 const TIPO_COLORS: Record<string, string> = {
   vacina: 'bg-blue-100 text-blue-700',
@@ -71,11 +72,12 @@ export function GadoSanidade() {
   const [loteForm, setLoteForm] = useState({
     medicamento_id: '',
     data: format(new Date(), 'yyyy-MM-dd'),
-    dose: '', proxima_dose: '',
+    dose: '', proxima_dose: '', observacao: '',
     filtro_pasto: 'todos',
     filtro_categoria: 'todos',
     animal_ids: [] as string[],
   })
+  const [loteSearch, setLoteSearch] = useState('')
 
   const userId = getEffectiveUserId()
 
@@ -181,15 +183,17 @@ export function GadoSanidade() {
         data: loteForm.data,
         dose: loteForm.dose || null,
         proxima_dose: loteForm.proxima_dose || null,
+        observacao: loteForm.observacao || null,
       }))
       const { error } = await supabase.from('aplicacoes_sanitarias').insert(inserts)
       if (error) throw error
-      toast.success(`${loteForm.animal_ids.length} aplicação(ões) registrada(s)!`)
+      toast.success(`Vacinação aplicada em ${loteForm.animal_ids.length} animais`)
       setLoteDialogOpen(false)
       setLoteForm({
         medicamento_id: '', data: format(new Date(), 'yyyy-MM-dd'),
-        dose: '', proxima_dose: '', filtro_pasto: 'todos', filtro_categoria: 'todos', animal_ids: [],
+        dose: '', proxima_dose: '', observacao: '', filtro_pasto: 'todos', filtro_categoria: 'todos', animal_ids: [],
       })
+      setLoteSearch('')
       loadData()
     } catch (e: unknown) {
       toast.error('Erro ao salvar', { description: (e as Error).message })
@@ -204,6 +208,7 @@ export function GadoSanidade() {
   const animaisFiltradosLote = animais.filter(a => {
     if (loteForm.filtro_pasto !== 'todos' && a.pasto_id !== loteForm.filtro_pasto) return false
     if (loteForm.filtro_categoria !== 'todos' && a.categoria !== loteForm.filtro_categoria) return false
+    if (loteSearch && !a.brinco.toLowerCase().includes(loteSearch.toLowerCase())) return false
     return true
   })
 
@@ -236,14 +241,27 @@ export function GadoSanidade() {
 
         {/* Medicamentos Tab */}
         <TabsContent value="medicamentos" className="space-y-4 mt-4">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={() => exportToExcel('medicamentos', 'Medicamentos', [
+              { key: 'nome', header: 'Nome' },
+              { key: 'tipo', header: 'Tipo' },
+              { key: 'fabricante', header: 'Fabricante' },
+              { key: 'carencia_dias', header: 'Carência (dias)', type: 'number' },
+            ], medicamentos.map(m => ({
+              nome: m.nome,
+              tipo: m.tipo,
+              fabricante: m.fabricante ?? '',
+              carencia_dias: m.carencia_dias ?? 0,
+            })))} className="gap-1.5 text-xs">
+              <Download size={12} /> Excel
+            </Button>
             <Button onClick={() => setMedDialogOpen(true)} className="gap-1.5">
               <Plus size={14} />
               Novo Medicamento
             </Button>
           </div>
 
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+          <div className="rounded-xl glass-card overflow-hidden">
             {medicamentos.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <div className="w-12 h-12 rounded-xl bg-[var(--surface-raised)] border border-[var(--border)] flex items-center justify-center animate-float">
@@ -282,6 +300,23 @@ export function GadoSanidade() {
         {/* Aplicações Tab */}
         <TabsContent value="aplicacoes" className="space-y-4 mt-4">
           <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={() => exportToExcel('aplicacoes_sanitarias', 'Aplicações', [
+              { key: 'data', header: 'Data', type: 'date' },
+              { key: 'brinco', header: 'Brinco' },
+              { key: 'medicamento', header: 'Medicamento' },
+              { key: 'dose', header: 'Dose' },
+              { key: 'proxima_dose', header: 'Próxima Dose', type: 'date' },
+              { key: 'observacao', header: 'Observação' },
+            ], aplicacoes.map(ap => ({
+              data: ap.data,
+              brinco: animais.find(a => a.id === ap.animal_id)?.brinco ?? '',
+              medicamento: medicamentos.find(m => m.id === ap.medicamento_id)?.nome ?? '',
+              dose: ap.dose ?? '',
+              proxima_dose: ap.proxima_dose ?? '',
+              observacao: ap.observacao ?? '',
+            })))} className="gap-1.5 text-xs">
+              <Download size={12} /> Excel
+            </Button>
             <Button variant="outline" onClick={() => setLoteDialogOpen(true)} className="gap-1.5">
               <Syringe size={14} />
               Vacinação em Lote
@@ -292,7 +327,7 @@ export function GadoSanidade() {
             </Button>
           </div>
 
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+          <div className="rounded-xl glass-card overflow-hidden">
             {aplicacoes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <div className="w-12 h-12 rounded-xl bg-[var(--surface-raised)] border border-[var(--border)] flex items-center justify-center animate-float">
@@ -420,7 +455,7 @@ export function GadoSanidade() {
 
       {/* Vacinação em Lote Dialog */}
       <Dialog open={loteDialogOpen} onOpenChange={setLoteDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto glass-card">
           <DialogHeader><DialogTitle>Vacinação em Lote</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
@@ -445,6 +480,15 @@ export function GadoSanidade() {
             <div className="space-y-1.5">
               <Label>Próxima Dose</Label>
               <Input type="date" value={loteForm.proxima_dose} onChange={e => setLoteForm(f => ({ ...f, proxima_dose: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Observações</Label>
+              <textarea
+                value={loteForm.observacao}
+                onChange={e => setLoteForm(f => ({ ...f, observacao: e.target.value }))}
+                placeholder="Opcional"
+                className="w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2 text-sm min-h-[60px] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -472,19 +516,25 @@ export function GadoSanidade() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>{loteForm.animal_ids.length} selecionado(s)</Label>
+                <Label>{loteForm.animal_ids.length} animais selecionados</Label>
                 <div className="flex gap-2">
-                  <button className="text-xs text-t3 hover:text-t1" onClick={() => setLoteForm(f => ({ ...f, animal_ids: animaisFiltradosLote.map(a => a.id) }))}>
-                    Todos
+                  <button type="button" className="text-xs text-[var(--primary-dark)] hover:text-t1 font-medium" onClick={() => setLoteForm(f => ({ ...f, animal_ids: animaisFiltradosLote.map(a => a.id) }))}>
+                    Selecionar todos
                   </button>
-                  <button className="text-xs text-t3 hover:text-t1" onClick={() => setLoteForm(f => ({ ...f, animal_ids: [] }))}>
-                    Nenhum
+                  <button type="button" className="text-xs text-t3 hover:text-t1" onClick={() => setLoteForm(f => ({ ...f, animal_ids: [] }))}>
+                    Limpar seleção
                   </button>
                 </div>
               </div>
+              <Input
+                value={loteSearch}
+                onChange={e => setLoteSearch(e.target.value)}
+                placeholder="Buscar por brinco..."
+                className="h-8 text-sm"
+              />
               <div className="border border-[var(--border)] rounded-lg overflow-hidden max-h-52 overflow-y-auto">
                 {animaisFiltradosLote.length === 0 ? (
-                  <p className="text-xs text-t3 text-center py-4">Nenhum animal neste filtro</p>
+                  <p className="text-xs text-t3 text-center py-4">Nenhum animal encontrado</p>
                 ) : animaisFiltradosLote.map(a => (
                   <label key={a.id} className="flex items-center gap-3 px-3 py-2.5 border-b border-[var(--border)] last:border-0 cursor-pointer hover:bg-[var(--surface-raised)] transition-colors">
                     <input

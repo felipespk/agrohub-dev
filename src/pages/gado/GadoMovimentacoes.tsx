@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, ArrowLeftRight } from 'lucide-react'
+import { Plus, ArrowLeftRight, Download } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase, MovimentacaoGado, Animal, Pasto } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -17,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { formatDate, formatCurrency, formatNumber } from '@/lib/utils'
+import { exportToExcel } from '@/lib/export-excel'
 import {
   criarLancamentoReceita, criarContaPagar, criarContaReceber, buscarCentroCusto,
 } from '@/lib/financeiro-integration'
@@ -239,10 +240,31 @@ export function GadoMovimentacoes() {
           <h1 className="text-xl font-semibold text-t1">Movimentações</h1>
           <p className="text-sm text-t3">{movimentacoes.length} registro(s)</p>
         </div>
-        <Button onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }} className="gap-1.5">
-          <Plus size={14} />
-          Nova Movimentação
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => exportToExcel('movimentacoes', 'Movimentações', [
+            { key: 'data', header: 'Data', type: 'date' },
+            { key: 'tipo', header: 'Tipo' },
+            { key: 'brinco', header: 'Animal/Brinco' },
+            { key: 'quantidade', header: 'Qtd', type: 'number' },
+            { key: 'peso_kg', header: 'Peso (kg)', type: 'number' },
+            { key: 'valor_total', header: 'Valor Total', type: 'currency' },
+            { key: 'observacao', header: 'Observação' },
+          ], filtered.map(m => ({
+            data: m.data,
+            tipo: m.tipo,
+            brinco: animais.find(a => a.id === m.animal_id)?.brinco ?? m.brinco_bezerro ?? '',
+            quantidade: m.quantidade ?? 1,
+            peso_kg: m.peso_kg ?? 0,
+            valor_total: m.valor_total ?? 0,
+            observacao: m.observacao ?? '',
+          })))} className="gap-1.5 text-xs">
+            <Download size={12} /> Excel
+          </Button>
+          <Button onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }} className="gap-1.5">
+            <Plus size={14} />
+            Nova Movimentação
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -270,7 +292,7 @@ export function GadoMovimentacoes() {
         </div>
       )}
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+      <div className="rounded-xl glass-card overflow-hidden">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <div className="w-12 h-12 rounded-xl bg-[var(--surface-raised)] border border-[var(--border)] flex items-center justify-center animate-float">

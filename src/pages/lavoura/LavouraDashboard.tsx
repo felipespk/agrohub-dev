@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
-  Sprout, MapPin, Activity, TrendingUp, AlertTriangle, RefreshCw, Calendar,
+  Sprout, MapPin, Activity, TrendingUp, AlertTriangle, RefreshCw, Calendar, CheckCircle,
 } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell,
@@ -12,12 +13,14 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useImpersonation } from '@/contexts/ImpersonationContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { useCountUp } from '@/hooks/useCountUp'
 import { formatNumber, formatDate } from '@/lib/utils'
+import { WeatherWidget } from '@/components/WeatherWidget'
 
-type Period = '1m' | '3m' | '6m' | '12m'
+type Period = '1m' | '3m' | '6m' | '12m' | 'personalizado'
 
 interface KPIs {
   areaPlantada: number
@@ -39,7 +42,7 @@ const SEVERIDADE_COLOR: Record<string, string> = {
 
 const CULTURA_COLORS = ['#78FC90', '#34d399', '#60a5fa', '#f97316', '#a78bfa', '#f472b6']
 
-const PERIOD_MONTHS: Record<Period, number> = { '1m': 1, '3m': 3, '6m': 6, '12m': 12 }
+const PERIOD_MONTHS: Partial<Record<Period, number>> = { '1m': 1, '3m': 3, '6m': 6, '12m': 12 }
 
 function DashSkeleton() {
   return (
@@ -53,7 +56,7 @@ function DashSkeleton() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
+          <div key={i} className="rounded-xl glass-card p-5">
             <Skeleton className="w-8 h-8 rounded-md mb-3" />
             <Skeleton className="h-7 w-16 mb-2" />
             <Skeleton className="h-4 w-28" />
@@ -89,7 +92,7 @@ function KpiCard({ icon: Icon, label, value, sub, color, accent }: {
     )
   }
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
+    <div className="rounded-xl glass-card p-5">
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${color ?? 'bg-[var(--primary-bg)]'}`}>
         <Icon className="w-4 h-4 text-[var(--primary-dark)]" />
       </div>
@@ -107,6 +110,8 @@ export function LavouraDashboard() {
 
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('1m')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
   const [kpis, setKpis] = useState<KPIs>({ areaPlantada: 0, talhoesAtivos: 0, atividadesMes: 0, produtividadeMedia: 0 })
   const [prodTalhoes, setProdTalhoes] = useState<ProdTalhao[]>([])
   const [culturaDistrib, setCulturaDistrib] = useState<CulturaDistrib[]>([])
@@ -121,8 +126,13 @@ export function LavouraDashboard() {
     if (!userId) return
     setLoading(true)
     try {
-      const months = PERIOD_MONTHS[period]
-      const since = format(startOfMonth(subMonths(new Date(), months - 1)), 'yyyy-MM-dd')
+      let since: string
+      if (period === 'personalizado') {
+        since = dataInicio || format(startOfMonth(new Date()), 'yyyy-MM-dd')
+      } else {
+        const months = PERIOD_MONTHS[period] ?? 1
+        since = format(startOfMonth(subMonths(new Date(), months - 1)), 'yyyy-MM-dd')
+      }
 
       const [safrasRes, talhoesRes, atividadesRes, colheitasRes, safTalhoesRes, pragas] = await Promise.all([
         supabase.from('safras').select('*').eq('user_id', userId).eq('status', 'andamento'),
@@ -207,7 +217,7 @@ export function LavouraDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [userId, period])
+  }, [userId, period, dataInicio, dataFim])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -222,7 +232,7 @@ export function LavouraDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-[var(--border)] overflow-hidden">
-            {(['1m', '3m', '6m', '12m'] as Period[]).map(p => (
+            {(['1m', '3m', '6m', '12m', 'personalizado'] as Period[]).map(p => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
@@ -230,15 +240,24 @@ export function LavouraDashboard() {
                   ? 'bg-[var(--primary)] text-black'
                   : 'text-t2 hover:bg-[var(--surface-raised)]'}`}
               >
-                {p === '1m' ? 'Este Mês' : p === '3m' ? '3 Meses' : p === '6m' ? '6 Meses' : 'Ano'}
+                {p === '1m' ? 'Este Mês' : p === '3m' ? '3 Meses' : p === '6m' ? '6 Meses' : p === '12m' ? 'Ano' : 'Personalizado'}
               </button>
             ))}
           </div>
+          {period === 'personalizado' && (
+            <>
+              <Input type="date" className="h-9 w-36 text-sm" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
+              <span className="text-t3 text-sm">até</span>
+              <Input type="date" className="h-9 w-36 text-sm" value={dataFim} onChange={e => setDataFim(e.target.value)} />
+            </>
+          )}
           <Button variant="outline" size="sm" onClick={loadData}>
             <RefreshCw className="w-3.5 h-3.5 mr-1" /> Atualizar
           </Button>
         </div>
       </div>
+
+      <WeatherWidget />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard icon={MapPin} label="Área Plantada" value={`${formatNumber(areaPlantadaAnim, 0)} ha`} accent />
@@ -248,7 +267,7 @@ export function LavouraDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <Card className="lg:col-span-2 shadow-elev-1">
+        <Card className="lg:col-span-2 glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-t2">Produtividade por Talhão (sc/ha)</CardTitle>
           </CardHeader>
@@ -272,7 +291,7 @@ export function LavouraDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-elev-1">
+        <Card className="glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-t2">Distribuição de Culturas</CardTitle>
           </CardHeader>
@@ -315,14 +334,14 @@ export function LavouraDashboard() {
         </Card>
       </div>
 
-      <Card className="shadow-elev-1">
+      <Card className="glass-card">
         <CardHeader className="pb-2 flex flex-row items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-red-500" />
           <CardTitle className="text-sm font-medium text-t2">Alertas de Pragas e Doenças</CardTitle>
         </CardHeader>
         <CardContent>
           {alertas.length === 0 ? (
-            <p className="text-sm text-t3 py-2">Nenhum alerta de praga crítico ou alto.</p>
+            <EmptyState icon={CheckCircle} title="Nenhum alerta de praga" description="Sem ocorrências críticas ou altas" compact />
           ) : (
             <div className="space-y-2">
               {alertas.map((a) => (

@@ -163,7 +163,7 @@ export function Talhoes() {
           {talhoes.map((t, i) => (
             <div
               key={t.id}
-              className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1 animate-fade-up"
+              className="rounded-xl glass-card p-5 animate-fade-up"
               style={{ animationDelay: `${i * 40}ms` }}
             >
               <div className="flex items-start justify-between mb-3">

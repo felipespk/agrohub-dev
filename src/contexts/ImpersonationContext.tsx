@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react'
 import { useAuth } from './AuthContext'
+import { supabase } from '@/lib/supabase'
 
 interface ImpersonationContextValue {
   impersonatedUserId: string | null
@@ -20,11 +21,30 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
   function startImpersonation(userId: string, email: string) {
     setImpersonatedUserId(userId)
     setImpersonatedEmail(email)
+
+    try {
+      supabase.from('audit_log').insert({
+        admin_user_id: user?.id,
+        action: 'impersonation_start',
+        target_user_id: userId,
+        details: { timestamp: new Date().toISOString() },
+      }).then(() => {})
+    } catch { /* audit log is best-effort */ }
   }
 
   function stopImpersonation() {
+    const targetId = impersonatedUserId
     setImpersonatedUserId(null)
     setImpersonatedEmail(null)
+
+    try {
+      supabase.from('audit_log').insert({
+        admin_user_id: user?.id,
+        action: 'impersonation_stop',
+        target_user_id: targetId,
+        details: { timestamp: new Date().toISOString() },
+      }).then(() => {})
+    } catch { /* audit log is best-effort */ }
   }
 
   function getEffectiveUserId(): string {

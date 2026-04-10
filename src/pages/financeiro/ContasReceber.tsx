@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from '@/components/ui/dialog'
-import { Loader2, Plus, Pencil, Trash2, CheckCircle2, Search, X } from 'lucide-react'
+import { Loader2, Plus, Pencil, Trash2, CheckCircle2, Search, X, ArrowUpCircle } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 import { format } from 'date-fns'
 
 interface ContaPR {
@@ -311,12 +312,7 @@ export function ContasReceber() {
       <Card>
         <CardContent className="p-0">
           {filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-t3 text-sm">Nenhuma conta encontrada.</p>
-              <Button variant="ghost" size="sm" className="mt-2 text-t3" onClick={openCreate}>
-                <Plus size={13} className="mr-1" /> Criar primeira conta
-              </Button>
-            </div>
+            <EmptyState icon={ArrowUpCircle} title="Nenhuma conta encontrada" compact />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

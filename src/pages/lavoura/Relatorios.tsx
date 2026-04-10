@@ -212,7 +212,7 @@ export function Relatorios() {
           const state = states[report.key]
           const period = getPeriod(report.key)
           return (
-            <Card key={report.key} className="shadow-elev-1">
+            <Card key={report.key} className="glass-card">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>

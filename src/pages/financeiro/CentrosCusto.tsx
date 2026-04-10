@@ -13,6 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from '@/components/ui/dialog'
 import { Loader2, Plus, Pencil, Trash2, Layers } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 
 const PRESET_COLORS = [
   '#f97316', '#22c55e', '#eab308', '#6366f1',
@@ -101,11 +102,7 @@ export function CentrosCusto() {
       </div>
 
       {centrosCusto.length === 0 ? (
-        <div className="text-center py-16">
-          <Layers size={32} className="text-t3 mx-auto mb-3" />
-          <p className="text-t3 text-sm">Nenhum centro de custo cadastrado.</p>
-          <Button variant="ghost" size="sm" className="mt-2" onClick={openCreate}><Plus size={13} className="mr-1" /> Criar primeiro</Button>
-        </div>
+        <EmptyState icon={Layers} title="Nenhum centro de custo cadastrado" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {centrosCusto.map(c => (

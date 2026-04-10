@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   PawPrint, TrendingUp, Baby, Skull, AlertTriangle,
-  ChevronRight, RefreshCw, Calendar,
+  ChevronRight, RefreshCw, Calendar, Syringe, ArrowLeftRight,
 } from 'lucide-react'
-import { differenceInDays, formatDistanceToNow, parseISO } from 'date-fns'
+import { differenceInDays, formatDistanceToNow, parseISO, format, subMonths, startOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartTooltip,
@@ -13,9 +13,12 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useImpersonation } from '@/contexts/ImpersonationContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCountUp } from '@/hooks/useCountUp'
 import { formatNumber, formatCurrency, formatDate } from '@/lib/utils'
+import { WeatherWidget } from '@/components/WeatherWidget'
+import { EmptyState } from '@/components/EmptyState'
 import { useNavigate } from 'react-router-dom'
 
 // Chart colors — category differentiation
@@ -32,6 +35,12 @@ const CATEGORIA_COLORS: Record<string, string> = {
 const CATEGORIA_LABELS: Record<string, string> = {
   vaca: 'Vaca', touro: 'Touro', bezerro: 'Bezerro',
   bezerra: 'Bezerra', novilha: 'Novilha', garrote: 'Garrote', boi: 'Boi',
+}
+
+type Period = '1m' | '3m' | '6m' | '1y' | 'personalizado'
+
+const PERIOD_LABELS: Record<Period, string> = {
+  '1m': 'Este Mês', '3m': '3 Meses', '6m': '6 Meses', '1y': 'Ano', 'personalizado': 'Personalizado',
 }
 
 interface KPIData {
@@ -64,7 +73,7 @@ function DashboardSkeleton() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
+          <div key={i} className="rounded-xl glass-card p-5">
             <Skeleton className="w-8 h-8 rounded-md mb-3" />
             <Skeleton className="h-7 w-14 mb-2" />
             <Skeleton className="h-4 w-24 mb-1" />
@@ -95,6 +104,9 @@ export function GadoDashboard() {
   const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState<Period>('1m')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
   const [kpis, setKpis] = useState<KPIData>({
     totalCabecas: 0, pesoMedio: 0, nascimentos: 0, mortes: 0, valorEstimado: 0,
   })
@@ -138,13 +150,28 @@ export function GadoDashboard() {
         : 0
 
       const hoje = new Date()
-      const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+      let inicioFiltro: Date
+      if (period === 'personalizado') {
+        inicioFiltro = dataInicio ? new Date(dataInicio + 'T00:00:00') : new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+      } else if (period === '1m') {
+        inicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+      } else if (period === '3m') {
+        inicioFiltro = startOfMonth(subMonths(hoje, 2))
+      } else if (period === '6m') {
+        inicioFiltro = startOfMonth(subMonths(hoje, 5))
+      } else {
+        inicioFiltro = new Date(hoje.getFullYear(), 0, 1)
+      }
+      const fimFiltro = period === 'personalizado' && dataFim ? new Date(dataFim + 'T23:59:59') : hoje
+
       const nascimentos = animais.filter(a =>
         a.origem === 'nascido' && a.data_nascimento &&
-        new Date(a.data_nascimento + 'T00:00:00') >= inicioMes
+        new Date(a.data_nascimento + 'T00:00:00') >= inicioFiltro &&
+        new Date(a.data_nascimento + 'T00:00:00') <= fimFiltro
       ).length
       const mortesMes = movimentos.filter(m =>
-        m.tipo === 'morte' && new Date(m.data + 'T00:00:00') >= inicioMes
+        m.tipo === 'morte' && new Date(m.data + 'T00:00:00') >= inicioFiltro &&
+        new Date(m.data + 'T00:00:00') <= fimFiltro
       ).length
 
       const rendimento = prof?.rendimento_carcaca ?? 52
@@ -202,7 +229,7 @@ export function GadoDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [userId])
+  }, [userId, period, dataInicio, dataFim])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -222,11 +249,33 @@ export function GadoDashboard() {
             Atualizado {formatDistanceToNow(lastUpdated, { locale: ptBR, addSuffix: true })}
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={loadData} className="gap-1.5 text-t3 hover:text-t1">
-          <RefreshCw size={13} className="transition-transform duration-300 hover:rotate-180" />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex border border-[var(--border)] rounded-lg overflow-hidden text-xs">
+            {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 transition-colors ${period === p ? 'bg-[var(--primary)] text-black font-medium' : 'text-t2 hover:bg-[var(--surface-raised)]'}`}
+              >
+                {PERIOD_LABELS[p]}
+              </button>
+            ))}
+          </div>
+          {period === 'personalizado' && (
+            <>
+              <Input type="date" className="h-9 w-36 text-sm" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
+              <span className="text-t3 text-sm">até</span>
+              <Input type="date" className="h-9 w-36 text-sm" value={dataFim} onChange={e => setDataFim(e.target.value)} />
+            </>
+          )}
+          <Button variant="ghost" size="sm" onClick={loadData} className="gap-1.5 text-t3 hover:text-t1">
+            <RefreshCw size={13} className="transition-transform duration-300 hover:rotate-180" />
+            Atualizar
+          </Button>
+        </div>
       </div>
+
+      <WeatherWidget />
 
       {/* ── Arroba alert ── */}
       {arrobaOld && (
@@ -289,7 +338,7 @@ export function GadoDashboard() {
 
       {/* ── Herd value banner — with shimmer overlay ── */}
       <div
-        className="rounded-xl border border-[var(--primary)]/20 bg-[var(--surface)] shadow-elev-1 px-5 py-4 flex items-center justify-between overflow-hidden relative animate-fade-up"
+        className="rounded-xl border border-[var(--primary)]/20 glass-card px-5 py-4 flex items-center justify-between overflow-hidden relative animate-fade-up"
         style={{ animationDelay: '220ms' }}
       >
         {/* Subtle shimmer sweep — very gentle */}
@@ -371,7 +420,7 @@ export function GadoDashboard() {
                 </div>
               </>
             ) : (
-              <EmptyState message="Nenhum animal cadastrado" />
+              <EmptyState icon={PawPrint} title="Nenhum animal cadastrado" compact />
             )}
           </CardContent>
         </Card>
@@ -401,7 +450,7 @@ export function GadoDashboard() {
                 return (
                   <div
                     key={aplicacao.id}
-                    className={`flex items-center justify-between rounded-md border px-3 py-2.5 transition-all duration-150 hover:shadow-elev-1 animate-fade-up ${rowBg}`}
+                    className={`flex items-center justify-between rounded-md border px-3 py-2.5 transition-all duration-150 hover:shadow-lg animate-fade-up ${rowBg}`}
                     style={{ animationDelay: `${320 + i * 50}ms` }}
                   >
                     <div className="min-w-0">
@@ -425,7 +474,7 @@ export function GadoDashboard() {
                 )
               })
             ) : (
-              <EmptyState message="Nenhuma vacina nos próximos 30 dias" />
+              <EmptyState icon={Syringe} title="Nenhuma vacina nos próximos 30 dias" compact />
             )}
           </CardContent>
         </Card>
@@ -446,7 +495,7 @@ export function GadoDashboard() {
               recentMovimentos.map((m, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-2.5 transition-all duration-150 hover:bg-[var(--surface)] hover:shadow-elev-1 animate-fade-up"
+                  className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-2.5 transition-all duration-150 hover:bg-[var(--surface)] hover:shadow-lg animate-fade-up"
                   style={{ animationDelay: `${360 + i * 50}ms` }}
                 >
                   <div className="flex items-center gap-2.5">
@@ -472,7 +521,7 @@ export function GadoDashboard() {
                 </div>
               ))
             ) : (
-              <EmptyState message="Nenhuma movimentação registrada" />
+              <EmptyState icon={ArrowLeftRight} title="Nenhuma movimentação registrada" compact />
             )}
           </CardContent>
         </Card>
@@ -494,7 +543,7 @@ export function GadoDashboard() {
             onClick={() => navigate(to)}
             className={[
               'rounded-lg border border-[var(--border)] bg-[var(--surface)]',
-              'px-4 py-3.5 text-left shadow-elev-1',
+              'px-4 py-3.5 text-left glass-card',
               'transition-all duration-150 hover:-translate-y-px hover:bg-[var(--surface-raised)] hover:shadow-elev-2',
               'active:scale-[0.97]',
             ].join(' ')}
@@ -591,10 +640,3 @@ function MovimentoIcon({ tipo }: { tipo: string }) {
   )
 }
 
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex items-center justify-center py-8">
-      <p className="text-sm text-t4">{message}</p>
-    </div>
-  )
-}

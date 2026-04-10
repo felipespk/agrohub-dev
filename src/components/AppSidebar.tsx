@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { Map, ShieldCheck, LogOut, ChevronLeft } from 'lucide-react'
+import { Map, ShieldCheck, LogOut, ChevronLeft, Home, Warehouse, DollarSign, Beef, Wheat } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -58,7 +58,39 @@ export function AppSidebar() {
         </>
       ) : (
         /* ── Full nav on hub/mapa/admin ── */
-        <nav className="flex-1 flex flex-col gap-0.5 px-2 py-3 overflow-y-auto scrollbar-none" />
+        <nav className="flex-1 flex flex-col gap-0.5 px-2 py-3 overflow-y-auto scrollbar-none">
+          {[
+            { to: '/hub', icon: Home, label: 'Hub' },
+            { to: '/secador', icon: Warehouse, label: 'Secador / Silo' },
+            { to: '/financeiro', icon: DollarSign, label: 'Financeiro' },
+            { to: '/gado', icon: Beef, label: 'Pecuária' },
+            { to: '/lavoura', icon: Wheat, label: 'Lavoura' },
+          ].map(({ to, icon: Icon, label }) => {
+            const active = to === '/hub' ? location.pathname === '/hub' : location.pathname.startsWith(to)
+            return (
+              <NavLink
+                key={to}
+                to={to === '/hub' ? '/hub' : `${to}/dashboard`}
+                className={cn(
+                  'relative flex items-center h-10 rounded-md',
+                  'px-[14px] gap-3',
+                  'transition-colors duration-150',
+                  active
+                    ? 'bg-white/[0.10] text-white'
+                    : 'text-white/50 hover:bg-white/[0.05] hover:text-white/80',
+                )}
+              >
+                {active && (
+                  <span className="absolute left-0 top-[6px] bottom-[6px] w-1 bg-[#78FC90] rounded-r-full shadow-[0_0_8px_rgba(120,252,144,0.5)]" />
+                )}
+                <Icon size={18} strokeWidth={active ? 2.1 : 1.8} className="flex-shrink-0" style={active ? { filter: 'drop-shadow(0 0 6px rgba(120,252,144,0.25))' } : undefined} />
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-sm font-medium whitespace-nowrap">
+                  {label}
+                </span>
+              </NavLink>
+            )
+          })}
+        </nav>
       )}
 
       {/* Divider */}

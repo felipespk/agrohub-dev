@@ -50,7 +50,7 @@ export function LavouraConfiguracoes() {
     return (
       <div className="space-y-5">
         <div className="space-y-2"><Skeleton className="h-6 w-44" /><Skeleton className="h-4 w-64" /></div>
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-elev-1 max-w-lg space-y-4">
+        <div className="rounded-xl glass-card p-6 max-w-lg space-y-4">
           <Skeleton className="h-4 w-28" /><Skeleton className="h-9 w-full rounded-md" /><Skeleton className="h-9 w-24 rounded-md" />
         </div>
       </div>
@@ -64,7 +64,7 @@ export function LavouraConfiguracoes() {
         <p className="text-sm text-t3">Preferências do módulo de lavoura</p>
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-elev-1 max-w-lg">
+      <div className="rounded-xl glass-card p-6 max-w-lg">
         <div className="flex items-center gap-2 mb-5">
           <div className="w-8 h-8 rounded-lg bg-[var(--primary-bg)] flex items-center justify-center">
             <Settings className="w-4 h-4 text-[var(--primary-dark)]" />

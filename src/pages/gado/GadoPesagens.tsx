@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Search, Weight } from 'lucide-react'
+import { Plus, Search, Weight, Download } from 'lucide-react'
 import { differenceInDays, parseISO } from 'date-fns'
 import { format } from 'date-fns'
 import { supabase, Pesagem, Animal } from '@/lib/supabase'
@@ -18,6 +18,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { formatNumber, formatDate } from '@/lib/utils'
+import { exportToExcel } from '@/lib/export-excel'
 
 const CATEGORIA_COLORS: Record<string, string> = {
   vaca: 'bg-pink-100 text-pink-700',
@@ -195,10 +196,29 @@ export function GadoPesagens() {
           <h1 className="text-xl font-semibold text-t1">Pesagens</h1>
           <p className="text-sm text-t3">{rows.length} pesagem(ns) registrada(s)</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-1.5">
-          <Plus size={14} />
-          Nova Pesagem
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => exportToExcel('pesagens', 'Pesagens', [
+            { key: 'brinco', header: 'Brinco' },
+            { key: 'categoria', header: 'Categoria' },
+            { key: 'data', header: 'Data', type: 'date' },
+            { key: 'peso_kg', header: 'Peso (kg)', type: 'number' },
+            { key: 'gmd', header: 'GMD (kg/dia)', type: 'number' },
+            { key: 'observacao', header: 'Observação' },
+          ], filtered.map(r => ({
+            brinco: r.animal.brinco,
+            categoria: r.animal.categoria,
+            data: r.pesagem.data,
+            peso_kg: r.pesagem.peso_kg,
+            gmd: r.gmd ?? 0,
+            observacao: r.pesagem.observacao ?? '',
+          })))} className="gap-1.5 text-xs">
+            <Download size={12} /> Excel
+          </Button>
+          <Button onClick={() => setDialogOpen(true)} className="gap-1.5">
+            <Plus size={14} />
+            Nova Pesagem
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-xs">
@@ -211,7 +231,7 @@ export function GadoPesagens() {
         />
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+      <div className="rounded-xl glass-card overflow-hidden">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <div className="w-12 h-12 rounded-xl bg-[var(--surface-raised)] border border-[var(--border)] flex items-center justify-center animate-float">

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts'
@@ -212,7 +213,7 @@ export function FluxoCaixa() {
         </CardHeader>
         <CardContent className="p-0">
           {weeklyData.length === 0 ? (
-            <div className="text-center py-8"><p className="text-sm text-t3">Nenhum dado disponível.</p></div>
+            <EmptyState icon={TrendingUp} title="Nenhum dado disponível" compact />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

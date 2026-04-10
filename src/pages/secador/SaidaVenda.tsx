@@ -193,7 +193,7 @@ export function SaidaVenda() {
         </div>
       </div>
 
-      <Card className="shadow-elev-1">
+      <Card className="glass-card">
         <CardContent className="pt-4">
           {loading ? (
             <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>

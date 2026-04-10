@@ -14,6 +14,10 @@ export function Register() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [attempts, setAttempts] = useState(0)
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null)
+  const MAX_ATTEMPTS = 5
+  const LOCKOUT_MS = 60_000
   const redirectBaseUrl = (import.meta.env.VITE_PUBLIC_APP_URL as string | undefined) || window.location.origin
 
   async function handleSubmit(e: React.FormEvent) {
@@ -22,6 +26,15 @@ export function Register() {
       toast.error('Senha muito curta', { description: 'Use ao menos 6 caracteres.' })
       return
     }
+
+    if (lockedUntil && Date.now() < lockedUntil) {
+      const secondsLeft = Math.ceil((lockedUntil - Date.now()) / 1000)
+      toast.error('Muitas tentativas', {
+        description: `Aguarde ${secondsLeft}s antes de tentar novamente.`
+      })
+      return
+    }
+
     setLoading(true)
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -33,10 +46,22 @@ export function Register() {
     })
     if (error) {
       setLoading(false)
+      const newAttempts = attempts + 1
+      setAttempts(newAttempts)
+      if (newAttempts >= MAX_ATTEMPTS) {
+        setLockedUntil(Date.now() + LOCKOUT_MS)
+        setAttempts(0)
+        toast.error('Registro temporariamente bloqueado', {
+          description: 'Muitas tentativas. Tente novamente em 1 minuto.'
+        })
+        return
+      }
       toast.error('Erro ao criar conta', { description: error.message })
       return
     }
     setLoading(false)
+    setAttempts(0)
+    setLockedUntil(null)
     if (!data.session) {
       toast.success('Conta criada! Confirme seu e-mail', { description: `Enviamos um link de confirmação para ${email}.` })
       navigate('/login')
@@ -55,7 +80,7 @@ export function Register() {
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.3) 100%), url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=1920&q=80')`,
+          backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.3) 100%), url('/images/login-bg.jpg')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -138,9 +163,14 @@ export function Register() {
               </button>
             </div>
           </div>
-          <Button type="submit" className="w-full mt-1 h-11 text-sm font-semibold" disabled={loading}>
+          <Button type="submit" className="w-full mt-1 h-11 text-sm font-semibold" disabled={loading || (lockedUntil !== null && Date.now() < lockedUntil)}>
             {loading ? <Loader2 size={15} className="animate-spin" /> : 'Criar conta'}
           </Button>
+          {lockedUntil && Date.now() < lockedUntil && (
+            <p className="text-xs text-red-500 text-center mt-2">
+              Bloqueado por tentativas excessivas. Aguarde 1 minuto.
+            </p>
+          )}
         </form>
 
         <p className="text-center text-sm text-t3 mt-6">

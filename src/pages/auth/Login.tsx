@@ -13,6 +13,10 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [attempts, setAttempts] = useState(0)
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null)
+  const MAX_ATTEMPTS = 5
+  const LOCKOUT_MS = 60_000
   const redirectBaseUrl = (import.meta.env.VITE_PUBLIC_APP_URL as string | undefined) || window.location.origin
 
   async function resendConfirmationEmail() {
@@ -32,9 +36,30 @@ export function Login() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+
+    if (lockedUntil && Date.now() < lockedUntil) {
+      const secondsLeft = Math.ceil((lockedUntil - Date.now()) / 1000)
+      toast.error('Muitas tentativas', {
+        description: `Aguarde ${secondsLeft}s antes de tentar novamente.`
+      })
+      setLoading(false)
+      return
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (error) {
+      const newAttempts = attempts + 1
+      setAttempts(newAttempts)
+      if (newAttempts >= MAX_ATTEMPTS) {
+        setLockedUntil(Date.now() + LOCKOUT_MS)
+        setAttempts(0)
+        toast.error('Conta temporariamente bloqueada', {
+          description: 'Muitas tentativas incorretas. Tente novamente em 1 minuto.'
+        })
+        return
+      }
+
       const msg = error.message?.toLowerCase?.() ?? ''
       const isEmailNotConfirmed =
         msg.includes('email not confirmed') ||
@@ -43,6 +68,8 @@ export function Login() {
 
       toast.error('Erro ao entrar', { description: isEmailNotConfirmed ? 'Seu e-mail ainda não foi confirmado. Confirme pelo link enviado ou reenvie abaixo.' : error.message })
     } else {
+      setAttempts(0)
+      setLockedUntil(null)
       navigate('/hub')
     }
   }
@@ -53,7 +80,7 @@ export function Login() {
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.3) 100%), url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=1920&q=80')`,
+          backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.3) 100%), url('/images/login-bg.jpg')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -136,9 +163,14 @@ export function Login() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full mt-1 h-11 text-sm font-semibold" disabled={loading}>
+            <Button type="submit" className="w-full mt-1 h-11 text-sm font-semibold" disabled={loading || (lockedUntil !== null && Date.now() < lockedUntil)}>
               {loading ? <Loader2 size={15} className="animate-spin" /> : 'Entrar'}
             </Button>
+            {lockedUntil && Date.now() < lockedUntil && (
+              <p className="text-xs text-red-500 text-center mt-2">
+                Bloqueado por tentativas excessivas. Aguarde 1 minuto.
+              </p>
+            )}
           </form>
 
           <p className="text-center text-sm text-t3 mt-6">

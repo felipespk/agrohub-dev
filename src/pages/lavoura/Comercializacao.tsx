@@ -55,7 +55,7 @@ function PageSkeleton() {
       <div className="grid grid-cols-2 gap-3">
         <Skeleton className="h-20 rounded-xl" /><Skeleton className="h-20 rounded-xl" />
       </div>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden">
+      <div className="rounded-xl glass-card overflow-hidden">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex gap-4 px-4 py-3 border-b border-[var(--border)]">
             <Skeleton className="h-4 w-20" /><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-20" />
@@ -203,11 +203,11 @@ export function Comercializacao() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
+        <div className="rounded-xl glass-card p-5">
           <p className="text-2xl font-semibold text-t1">{formatCurrency(totalVendidoAnim)}</p>
           <p className="text-sm text-t2 mt-0.5">Total Vendido</p>
         </div>
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-elev-1">
+        <div className="rounded-xl glass-card p-5">
           <p className="text-2xl font-semibold text-t1">{formatNumber(qtdTotal, 0)}</p>
           <p className="text-sm text-t2 mt-0.5">Quantidade Total</p>
         </div>
@@ -241,7 +241,7 @@ export function Comercializacao() {
           <Button size="sm" variant="outline" onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }}>Registrar Venda</Button>
         </div>
       ) : (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-x-auto">
+        <div className="rounded-xl glass-card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-t3 text-xs font-medium border-b border-[var(--border)]">

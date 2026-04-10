@@ -4,6 +4,7 @@ import { useImpersonation } from '@/contexts/ImpersonationContext'
 import { useFinanceiro } from '@/contexts/FinanceiroContext'
 import { useCountUp } from '@/hooks/useCountUp'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { WeatherWidget } from '@/components/WeatherWidget'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,8 +12,9 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import {
-  TrendingUp, TrendingDown, DollarSign, AlertTriangle, Calendar, ArrowUpCircle, ArrowDownCircle,
+  TrendingUp, TrendingDown, DollarSign, AlertTriangle, Calendar, ArrowUpCircle, ArrowDownCircle, CheckCircle,
 } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   AreaChart, Area, CartesianGrid, Legend,
@@ -219,6 +221,8 @@ export function FinanceiroDashboard() {
         </div>
       </div>
 
+      <WeatherWidget />
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div
@@ -375,9 +379,7 @@ export function FinanceiroDashboard() {
           </CardHeader>
           <CardContent className="px-5 pb-4">
             {contasVencidas.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-sm text-t3">Nenhuma conta vencida. </p>
-              </div>
+              <EmptyState icon={CheckCircle} title="Nenhuma conta vencida" compact />
             ) : (
               <div className="space-y-2">
                 {contasVencidas.slice(0, 5).map(c => (
@@ -410,9 +412,7 @@ export function FinanceiroDashboard() {
           </CardHeader>
           <CardContent className="px-5 pb-4">
             {proximosVencimentos.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-sm text-t3">Nenhum vencimento nos próximos 7 dias.</p>
-              </div>
+              <EmptyState icon={CheckCircle} title="Nenhum vencimento nos próximos 7 dias" compact />
             ) : (
               <div className="space-y-2">
                 {proximosVencimentos.map(c => (

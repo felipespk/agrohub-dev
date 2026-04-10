@@ -120,7 +120,7 @@ export function Armazenamento() {
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {stocks.map(e => (
-              <div key={e.tipoGraoId} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-elev-1">
+              <div key={e.tipoGraoId} className="rounded-xl glass-card p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2.5 h-2.5 rounded-sm" style={{ background: e.color }} />
                   <span className="text-xs font-medium text-t2">{e.nome}</span>
@@ -134,7 +134,7 @@ export function Armazenamento() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="shadow-elev-1 lg:col-span-2">
+            <Card className="glass-card lg:col-span-2">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-t2">Balanço por Tipo de Grão</CardTitle>
               </CardHeader>
@@ -180,7 +180,7 @@ export function Armazenamento() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-elev-1">
+            <Card className="glass-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-t2">Distribuição do Estoque</CardTitle>
               </CardHeader>

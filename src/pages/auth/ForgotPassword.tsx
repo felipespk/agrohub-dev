@@ -31,7 +31,7 @@ export function ForgotPassword() {
     <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-8">
       <div className="w-full max-w-sm animate-fade-up">
         <div className="flex items-center gap-3 mb-10">
-          <div className="w-9 h-9 rounded-lg bg-[var(--primary)] flex items-center justify-center shadow-elev-1">
+          <div className="w-9 h-9 rounded-lg bg-[var(--primary)] flex items-center justify-center">
             <span className="text-[#111110] font-black text-sm">AG</span>
           </div>
           <span className="text-md font-semibold text-t1">Agrix</span>

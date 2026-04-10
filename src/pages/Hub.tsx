@@ -90,7 +90,7 @@ export function Hub() {
           style={{ animationDelay: '0ms' }}
         >
           <div className="mb-5 inline-block">
-            <img src="/logo-agrix.png" alt="Agrix" className="h-32 object-contain animate-logo-float" />
+            <img src="/logo-agrix.png" alt="Agrix" className="h-40 object-contain animate-logo-float" />
           </div>
         </div>
 
@@ -137,7 +137,7 @@ export function Hub() {
           {profile?.is_admin && (
             <button
               onClick={() => navigate('/admin')}
-              className="flex items-center gap-2 rounded-lg border border-[var(--warning)]/30 bg-[var(--warning-bg)] px-4 py-2.5 text-sm text-[var(--warning)] hover:border-[var(--warning)]/50 hover:shadow-elev-1 transition-all duration-150 active:scale-[0.97]"
+              className="flex items-center gap-2 rounded-lg border border-[var(--warning)]/30 bg-[var(--warning-bg)] px-4 py-2.5 text-sm text-[var(--warning)] hover:border-[var(--warning)]/50 hover:shadow-lg transition-all duration-150 active:scale-[0.97]"
             >
               <ShieldCheck size={15} />
               Painel Admin

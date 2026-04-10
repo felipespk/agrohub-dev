@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Plus, Trash2, ChevronDown, ChevronRight, Leaf } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useImpersonation } from '@/contexts/ImpersonationContext'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -46,6 +47,7 @@ export function Culturas() {
   const [form, setForm] = useState<CulturaForm>(EMPTY_CULTURA)
   const [newVariedades, setNewVariedades] = useState<Record<string, string>>({})
   const [confirmDeleteCultura, setConfirmDeleteCultura] = useState<string | null>(null)
+  const [confirmDeleteVariedade, setConfirmDeleteVariedade] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     if (!userId) return
@@ -144,7 +146,7 @@ export function Culturas() {
             return (
               <div
                 key={c.id}
-                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-elev-1 overflow-hidden animate-fade-up"
+                className="rounded-xl glass-card overflow-hidden animate-fade-up"
                 style={{ animationDelay: `${i * 40}ms` }}
               >
                 <div
@@ -182,7 +184,7 @@ export function Culturas() {
                           <div key={v.id} className="flex items-center justify-between py-1">
                             <span className="text-sm text-t1">{v.nome}</span>
                             <button
-                              onClick={() => handleDeleteVariedade(v.id)}
+                              onClick={() => setConfirmDeleteVariedade(v.id)}
                               className="p-1 rounded text-t3 hover:text-red-500 transition-colors"
                             >
                               <Trash2 className="w-3 h-3" />
@@ -236,6 +238,14 @@ export function Culturas() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmDeleteVariedade}
+        onClose={() => setConfirmDeleteVariedade(null)}
+        onConfirm={() => { handleDeleteVariedade(confirmDeleteVariedade!); setConfirmDeleteVariedade(null) }}
+        title="Confirmar exclusão"
+        description="Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita."
+      />
 
       <Dialog open={!!confirmDeleteCultura} onOpenChange={() => setConfirmDeleteCultura(null)}>
         <DialogContent>
