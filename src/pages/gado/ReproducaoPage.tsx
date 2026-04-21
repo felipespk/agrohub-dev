@@ -74,12 +74,13 @@ export default function ReproducaoPage() {
     const mae = animais.find(a => a.id === reg.femea_id);
     const brincoMae = mae?.brinco || reg.femea?.brinco || null;
     // Bezerro herda automaticamente o brinco da mãe (até virar adulto/desmame).
-    const brincoBezerro = (formParto.brinco_bezerro && formParto.brinco_bezerro.trim())
-      || brincoMae
-      || `BEZ-${Date.now().toString(36)}`;
+    const brincoCustom = formParto.brinco_bezerro && formParto.brinco_bezerro.trim();
+    const brincoBezerro = brincoCustom || brincoMae || `BEZ-${Date.now().toString(36)}`;
+    // Se herdou o brinco da mãe, já marca que precisa trocar (libera unique parcial).
+    const herdouDaMae = !brincoCustom && !!brincoMae && brincoBezerro === brincoMae;
 
     // Create bezerro
-    const { data: newAnimal } = await supabase.from("animais" as any).insert({
+    const { data: newAnimal, error: errAnimal } = await supabase.from("animais" as any).insert({
       brinco: brincoBezerro,
       sexo: formParto.sexo_bezerro, categoria: formParto.sexo_bezerro === "macho" ? "bezerro" : "bezerra",
       origem: "nascido", data_nascimento: formParto.data_parto_real, data_entrada: formParto.data_parto_real,
@@ -87,7 +88,9 @@ export default function ReproducaoPage() {
       pai_brinco: reg.macho?.brinco || null,
       peso_atual: formParto.peso_bezerro ? parseFloat(formParto.peso_bezerro) : null,
       user_id: user.id, status: "ativo",
+      precisa_trocar_brinco: herdouDaMae,
     } as any).select("id").single();
+    if (errAnimal) { toast.error(errAnimal.message); return; }
 
     await supabase.from("reproducao" as any).update({
       data_parto_real: formParto.data_parto_real, bezerro_id: (newAnimal as any)?.id || null,
