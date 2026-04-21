@@ -59,23 +59,37 @@ export default function AnimaisPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [a, r, p, l, prof] = await Promise.all([
+    const [a, r, p, l, prof, c] = await Promise.all([
       supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome)").eq("user_id", effectiveUserId).order("brinco"),
       supabase.from("racas" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("pastos" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("lotes" as any).select("id, nome, pasto_id").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", effectiveUserId).single(),
+      supabase.from("racas_cores" as any).select("raca_id, nome, principal").eq("user_id", effectiveUserId).order("nome"),
     ]);
     setAnimais((a.data as any) || []);
     setRacas((r.data as any) || []);
     setPastos((p.data as any) || []);
     setLotes((l.data as any) || []);
+    const cm: Record<string, { nome: string; principal: boolean }[]> = {};
+    ((c.data as any) || []).forEach((x: any) => {
+      if (!cm[x.raca_id]) cm[x.raca_id] = [];
+      cm[x.raca_id].push({ nome: x.nome, principal: x.principal });
+    });
+    setCoresPorRaca(cm);
     if (prof.data) {
       if (prof.data.rendimento_carcaca) setRendimento(Number(prof.data.rendimento_carcaca));
       if ((prof.data as any).valor_arroba) setValorArrobaConfig(Number((prof.data as any).valor_arroba));
     }
     setLoading(false);
-  }, [user]);
+  }, [user, effectiveUserId]);
+
+  // ao mudar de raça, sugerir a cor principal automaticamente
+  const handleRacaChange = (racaId: string) => {
+    const cores = coresPorRaca[racaId] || [];
+    const principal = cores.find(c => c.principal);
+    setForm(f => ({ ...f, raca_id: racaId, cor: principal ? principal.nome : "" }));
+  };
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
