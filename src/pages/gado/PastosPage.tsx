@@ -31,13 +31,13 @@ export default function PastosPage() {
   const [formEditPasto, setFormEditPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "" });
   const [formEditLote, setFormEditLote] = useState({ nome: "", pasto_id: "" });
 
-  // Move animals modal
+  // Move animals modal (by quantity)
   const [moveOpen, setMoveOpen] = useState(false);
   const [movePastoOrigemId, setMovePastoOrigemId] = useState("");
-  const [moveSelectedIds, setMoveSelectedIds] = useState<Set<string>>(new Set());
+  const [moveLoteOrigemId, setMoveLoteOrigemId] = useState("");
+  const [moveQtd, setMoveQtd] = useState("");
   const [movePastoDestino, setMovePastoDestino] = useState("");
   const [moveLoteDestino, setMoveLoteDestino] = useState("");
-  const [moveSearch, setMoveSearch] = useState("");
 
   // Profile config
   const [valorArroba, setValorArroba] = useState(300);
