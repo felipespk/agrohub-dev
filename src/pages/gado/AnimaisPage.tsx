@@ -56,6 +56,10 @@ export default function AnimaisPage() {
     pasto_id: "", lote_id: "", peso_atual: "",
   });
 
+  // Troca de brinco
+  const [trocaOpen, setTrocaOpen] = useState<any>(null);
+  const [novoBrinco, setNovoBrinco] = useState("");
+
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
