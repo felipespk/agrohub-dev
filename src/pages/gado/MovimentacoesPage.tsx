@@ -38,7 +38,7 @@ export default function MovimentacoesPage() {
   const [form, setForm] = useState<any>({
     tipo: "compra", animal_id: "", data: new Date().toISOString().split("T")[0],
     quantidade: "1", peso_kg: "", valor_unitario: "", valor_total: "",
-    causa_morte: "", pasto_destino_id: "", observacao: "",
+    causa_morte: "", pasto_destino_id: "", pasto_origem_id: "", observacao: "",
     // nascimento
     sexo_bezerro: "macho", brinco_bezerro: "",
     // venda payment type
