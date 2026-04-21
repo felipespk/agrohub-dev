@@ -276,12 +276,28 @@ export default function AnimaisPage() {
               </Select>
             </div>
             <div className="space-y-2"><Label>Raça</Label>
-              <Select value={form.raca_id || "__none__"} onValueChange={v => setForm({ ...form, raca_id: v === "__none__" ? "" : v })}>
+              <Select value={form.raca_id || "__none__"} onValueChange={v => handleRacaChange(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="__none__">Sem raça</SelectItem>{racas.map(r => <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label>Cor</Label><Input value={form.cor} onChange={e => setForm({ ...form, cor: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Cor</Label>
+              {form.raca_id && (coresPorRaca[form.raca_id]?.length ?? 0) > 0 ? (
+                <Select value={form.cor || "__none__"} onValueChange={v => setForm({ ...form, cor: v === "__none__" ? "" : v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {coresPorRaca[form.raca_id].map(c => (
+                      <SelectItem key={c.nome} value={c.nome}>
+                        {c.nome}{c.principal ? " ★" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input value={form.cor} onChange={e => setForm({ ...form, cor: e.target.value })} placeholder={form.raca_id ? "Sem cores cadastradas" : "Selecione uma raça"} />
+              )}
+            </div>
             <div className="space-y-2"><Label>Data de Nascimento</Label><Input type="date" value={form.data_nascimento} onChange={e => setForm({ ...form, data_nascimento: e.target.value })} /></div>
             <div className="space-y-2"><Label>Data de Entrada</Label><Input type="date" value={form.data_entrada} onChange={e => setForm({ ...form, data_entrada: e.target.value })} /></div>
             <div className="space-y-2"><Label>Origem</Label>
