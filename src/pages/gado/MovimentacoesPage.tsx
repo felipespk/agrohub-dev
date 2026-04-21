@@ -48,7 +48,7 @@ export default function MovimentacoesPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [m, a, p, prof] = await Promise.all([
-      supabase.from("movimentacoes_gado" as any).select("*, animal:animais!animal_id(brinco, categoria)").eq("user_id", effectiveUserId).order("data", { ascending: false }),
+      supabase.from("movimentacoes_gado" as any).select("*, animal:animais!animal_id(brinco, categoria), origem:pastos!pasto_origem_id(nome), destino:pastos!pasto_destino_id(nome)").eq("user_id", effectiveUserId).order("data", { ascending: false }),
       supabase.from("animais" as any).select("id, brinco, categoria, sexo, pasto_id, peso_atual").eq("user_id", effectiveUserId).eq("status", "ativo").order("brinco"),
       supabase.from("pastos" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", effectiveUserId).single(),
