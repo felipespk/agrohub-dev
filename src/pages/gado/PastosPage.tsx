@@ -120,9 +120,64 @@ export default function PastosPage() {
     const count = animais.filter(a => a.pasto_id === p.id).length;
     if (count > 0) { toast.error("Mova os animais para outro pasto antes de excluir."); return; }
     if (!confirm(`Tem certeza que deseja excluir o pasto "${p.nome}"?`)) return;
-    await supabase.from("pastos" as any).delete().eq("id", p.id);
+
+    // 1) Limpa referências em lotes (lotes podem ainda apontar para este pasto)
+    const { error: errLotes } = await supabase
+      .from("lotes" as any)
+      .update({ pasto_id: null } as any)
+      .eq("pasto_id", p.id);
+    if (errLotes) {
+      console.error("Erro ao desvincular lotes:", errLotes);
+      toast.error(`Não foi possível desvincular os lotes: ${errLotes.message}`);
+      return;
+    }
+
+    // 2) Limpa referências em animais inativos/históricos (status != ativo)
+    await supabase.from("animais" as any).update({ pasto_id: null } as any).eq("pasto_id", p.id);
+
+    // 3) Limpa referências em movimentações
+    await supabase.from("movimentacoes_gado" as any).update({ pasto_origem_id: null } as any).eq("pasto_origem_id", p.id);
+    await supabase.from("movimentacoes_gado" as any).update({ pasto_destino_id: null } as any).eq("pasto_destino_id", p.id);
+
+    // 4) Apaga o pasto e captura erro real
+    const { error } = await supabase.from("pastos" as any).delete().eq("id", p.id);
+    if (error) {
+      console.error("Erro ao excluir pasto:", error);
+      toast.error(`Falha ao excluir: ${error.message}`);
+      return;
+    }
+
     toast.success("Pasto excluído.");
     if (expanded === p.id) setExpanded(null);
+    // Atualização otimista + refetch
+    setPastos(prev => prev.filter(x => x.id !== p.id));
+    fetchAll();
+  };
+
+  // === Upload de foto do pasto ===
+  const handleUploadFoto = async (pastoId: string, file: File) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
+    if (!user) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem."); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem muito grande (máx 5MB)."); return; }
+
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${user.id}/${pastoId}-${Date.now()}.${ext}`;
+
+    const { error: upErr } = await supabase.storage.from("pasto-fotos").upload(path, file, { upsert: true });
+    if (upErr) { toast.error(`Erro no upload: ${upErr.message}`); return; }
+
+    const { data: pub } = supabase.storage.from("pasto-fotos").getPublicUrl(path);
+    const { error: updErr } = await supabase.from("pastos" as any).update({ foto_url: pub.publicUrl } as any).eq("id", pastoId);
+    if (updErr) { toast.error(`Erro ao salvar: ${updErr.message}`); return; }
+
+    toast.success("Foto atualizada!");
+    fetchAll();
+  };
+
+  const handleRemoveFoto = async (pastoId: string) => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
+    await supabase.from("pastos" as any).update({ foto_url: null } as any).eq("id", pastoId);
     fetchAll();
   };
 
