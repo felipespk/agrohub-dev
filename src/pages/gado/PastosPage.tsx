@@ -594,3 +594,53 @@ export default function PastosPage() {
     </div>
   );
 }
+
+// ===== Color Picker reutilizável =====
+const PRESET_COLORS = [
+  "#16A34A", // verde
+  "#22C55E", // verde claro
+  "#0EA5E9", // azul
+  "#6366F1", // índigo
+  "#A855F7", // roxo
+  "#EC4899", // rosa
+  "#EF4444", // vermelho
+  "#F97316", // laranja
+  "#EAB308", // amarelo
+  "#14B8A6", // teal
+  "#78716C", // cinza
+  "#1F2937", // grafite
+];
+
+function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
+  const safe = /^#[0-9A-Fa-f]{6}$/.test(value) ? value : "#16A34A";
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5">
+        {PRESET_COLORS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onChange(c)}
+            className={`h-7 w-7 rounded-md border-2 transition ${
+              safe.toLowerCase() === c.toLowerCase()
+                ? "border-foreground scale-110"
+                : "border-transparent hover:scale-105"
+            }`}
+            style={{ backgroundColor: c }}
+            aria-label={`Cor ${c}`}
+          />
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={safe}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-8 w-12 rounded border border-border cursor-pointer bg-transparent"
+          aria-label="Escolher cor personalizada"
+        />
+        <span className="text-xs text-muted-foreground font-mono uppercase">{safe}</span>
+      </div>
+    </div>
+  );
+}
