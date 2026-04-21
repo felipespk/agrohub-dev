@@ -158,7 +158,7 @@ export default function AnimaisPage() {
       peso_atual: form.peso_atual ? parseFloat(form.peso_atual) : null,
       raca_id: form.raca_id || null, pasto_id: form.pasto_id || null, lote_id: form.lote_id || null,
       data_nascimento: form.data_nascimento || null,
-      precisa_trocar_brinco: herdaBrincoDaMae && brincoFinal === brincoMaeInformado,
+      precisa_trocar_brinco: herdaBrincoDaMae,
     };
     const { data: inserted, error } = await (supabase.from("animais" as any).insert(payload).select("id").single() as any);
     if (error) { toast.error(error.message); return; }
@@ -354,11 +354,10 @@ export default function AnimaisPage() {
               <Input
                 value={form.brinco}
                 onChange={e => setForm({ ...form, brinco: e.target.value })}
-                placeholder={herdaBrincoDaMae ? `Automático: ${brincoMaeInformado}` : ""}
               />
-              {herdaBrincoDaMae && !form.brinco.trim() && (
+              {ehBezerroNascido && (
                 <p className="text-xs text-muted-foreground">
-                  Se deixar em branco, o sistema usará automaticamente o mesmo brinco da mãe.
+                  Brinco do bezerro e da mãe ficam sincronizados automaticamente.
                 </p>
               )}
             </div>
