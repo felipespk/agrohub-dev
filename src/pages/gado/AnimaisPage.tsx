@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Eye, Pencil, Trash2, AlertTriangle, Tag } from "lucide-react";
 import { toast } from "sonner";
 
 
@@ -55,6 +55,10 @@ export default function AnimaisPage() {
     categoria: "bezerro", origem: "nascido", pai_brinco: "", mae_brinco: "",
     pasto_id: "", lote_id: "", peso_atual: "",
   });
+
+  // Troca de brinco
+  const [trocaOpen, setTrocaOpen] = useState<any>(null);
+  const [novoBrinco, setNovoBrinco] = useState("");
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
@@ -152,6 +156,25 @@ export default function AnimaisPage() {
 
   const lotesFiltered = form.pasto_id ? lotes.filter(l => l.pasto_id === form.pasto_id) : lotes;
 
+  const handleTrocarBrinco = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
+    if (!trocaOpen || !novoBrinco.trim()) { toast.error("Informe o novo brinco."); return; }
+    const novo = novoBrinco.trim();
+    if (novo === trocaOpen.brinco) { toast.error("Informe um brinco diferente do atual."); return; }
+    const { error } = await supabase.from("animais" as any).update({
+      brinco: novo,
+      brinco_anterior: trocaOpen.brinco,
+      precisa_trocar_brinco: false,
+    } as any).eq("id", trocaOpen.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Brinco trocado de ${trocaOpen.brinco} para ${novo}.`);
+    setTrocaOpen(null);
+    setNovoBrinco("");
+    fetchAll();
+  };
+
+  const pendentesTroca = animais.filter(a => a.precisa_trocar_brinco && a.status === "ativo");
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -161,6 +184,21 @@ export default function AnimaisPage() {
         </div>
         <Button onClick={() => setOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Novo Animal</Button>
       </div>
+
+      {pendentesTroca.length > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-900">
+              {pendentesTroca.length} {pendentesTroca.length === 1 ? "animal precisa" : "animais precisam"} de troca de brinco
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              {pendentesTroca.slice(0, 5).map(a => a.brinco).join(", ")}
+              {pendentesTroca.length > 5 ? ` e mais ${pendentesTroca.length - 5}` : ""} — herdaram o brinco da mãe e agora chegaram ao momento configurado para receber identificação própria.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
@@ -220,7 +258,20 @@ export default function AnimaisPage() {
               <tbody>
                 {paged.map((a: any) => (
                   <tr key={a.id} className="border-b hover:bg-[#F8FAFC] transition-colors">
-                    <td className="px-4 py-3 font-mono font-bold">{a.brinco}</td>
+                    <td className="px-4 py-3 font-mono font-bold">
+                      <div className="flex items-center gap-2">
+                        <span>{a.brinco}</span>
+                        {a.precisa_trocar_brinco && (
+                          <button
+                            onClick={() => { setTrocaOpen(a); setNovoBrinco(""); }}
+                            className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 inline-flex items-center gap-1"
+                            title="Trocar brinco"
+                          >
+                            <AlertTriangle className="h-2.5 w-2.5" /> Trocar
+                          </button>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${CAT_BADGE[a.categoria] || ""}`}>{CAT_LABEL[a.categoria] || a.categoria}</span>
                       {a.categoria_atualizada_em && (Date.now() - new Date(a.categoria_atualizada_em).getTime()) < 7 * 86400000 && (
@@ -325,6 +376,28 @@ export default function AnimaisPage() {
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave}>Salvar Animal</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Trocar Brinco */}
+      <Dialog open={!!trocaOpen} onOpenChange={v => { if (!v) { setTrocaOpen(null); setNovoBrinco(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Trocar Brinco</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-md bg-muted/40 p-3 text-xs space-y-1">
+              <p>Brinco atual (herdado da mãe): <strong className="font-mono">{trocaOpen?.brinco}</strong></p>
+              {trocaOpen?.mae_brinco && <p className="text-muted-foreground">Mãe: {trocaOpen.mae_brinco}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Novo Brinco *</Label>
+              <Input value={novoBrinco} onChange={e => setNovoBrinco(e.target.value)} placeholder="Ex: 0123" autoFocus />
+            </div>
+            <p className="text-xs text-muted-foreground">O brinco anterior será preservado no histórico do animal.</p>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => { setTrocaOpen(null); setNovoBrinco(""); }}>Cancelar</Button>
+            <Button onClick={handleTrocarBrinco}>Trocar</Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -72,12 +72,18 @@ export default function ReproducaoPage() {
     if (!user || !openParto) return;
     const reg = openParto;
     const mae = animais.find(a => a.id === reg.femea_id);
+    const brincoMae = mae?.brinco || reg.femea?.brinco || null;
+    // Bezerro herda automaticamente o brinco da mãe (até virar adulto/desmame).
+    const brincoBezerro = (formParto.brinco_bezerro && formParto.brinco_bezerro.trim())
+      || brincoMae
+      || `BEZ-${Date.now().toString(36)}`;
+
     // Create bezerro
     const { data: newAnimal } = await supabase.from("animais" as any).insert({
-      brinco: formParto.brinco_bezerro || `BEZ-${Date.now().toString(36)}`,
+      brinco: brincoBezerro,
       sexo: formParto.sexo_bezerro, categoria: formParto.sexo_bezerro === "macho" ? "bezerro" : "bezerra",
       origem: "nascido", data_nascimento: formParto.data_parto_real, data_entrada: formParto.data_parto_real,
-      mae_brinco: mae?.brinco || reg.femea?.brinco || null,
+      mae_brinco: brincoMae,
       pai_brinco: reg.macho?.brinco || null,
       peso_atual: formParto.peso_bezerro ? parseFloat(formParto.peso_bezerro) : null,
       user_id: user.id, status: "ativo",
@@ -101,7 +107,8 @@ export default function ReproducaoPage() {
       } as any);
     }
 
-    toast.success("Parto registrado! Bezerro criado."); setOpenParto(null); fetchAll();
+    toast.success(`Parto registrado! Bezerro herdou o brinco ${brincoBezerro}.`);
+    setOpenParto(null); fetchAll();
   };
 
   const suggestParto = (dataCob: string) => {
@@ -239,7 +246,17 @@ export default function ReproducaoPage() {
               </Select>
             </div>
             <div className="space-y-2"><Label>Peso ao Nascer (KG)</Label><Input type="number" value={formParto.peso_bezerro} onChange={e => setFormParto({ ...formParto, peso_bezerro: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Brinco do Bezerro</Label><Input value={formParto.brinco_bezerro} onChange={e => setFormParto({ ...formParto, brinco_bezerro: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Brinco do Bezerro</Label>
+              <Input
+                value={formParto.brinco_bezerro}
+                onChange={e => setFormParto({ ...formParto, brinco_bezerro: e.target.value })}
+                placeholder={openParto?.femea?.brinco ? `Padrão: ${openParto.femea.brinco} (mesmo da mãe)` : "Mesmo da mãe"}
+              />
+              <p className="text-xs text-muted-foreground">
+                Se deixar vazio, o bezerro herda automaticamente o brinco da mãe. Você poderá trocar quando ele virar adulto/desmamar (alerta automático).
+              </p>
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2"><Button variant="outline" onClick={() => setOpenParto(null)}>Cancelar</Button><Button onClick={handleParto}>Salvar</Button></div>
         </DialogContent>

@@ -44,6 +44,7 @@ export default function GadoConfiguracoesPage() {
   const [idadeBezerro, setIdadeBezerro] = useState("8");
   const [idadeJovem, setIdadeJovem] = useState("24");
   const [reclassAuto, setReclassAuto] = useState(true);
+  const [momentoTrocaBrinco, setMomentoTrocaBrinco] = useState<"desmame" | "adulto">("adulto");
   const [savingFases, setSavingFases] = useState(false);
 
   const fetchRacas = useCallback(async () => {
@@ -59,7 +60,7 @@ export default function GadoConfiguracoesPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba, idade_bezerro_meses, idade_jovem_meses, reclassificacao_automatica").eq("user_id", effectiveUserId).single()
+    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba, idade_bezerro_meses, idade_jovem_meses, reclassificacao_automatica, momento_troca_brinco").eq("user_id", effectiveUserId).single()
       .then(({ data }) => {
         if (data) {
           if (data.rendimento_carcaca != null) setRendimento(String(data.rendimento_carcaca));
@@ -73,6 +74,7 @@ export default function GadoConfiguracoesPage() {
           if ((data as any).idade_bezerro_meses != null) setIdadeBezerro(String((data as any).idade_bezerro_meses));
           if ((data as any).idade_jovem_meses != null) setIdadeJovem(String((data as any).idade_jovem_meses));
           if ((data as any).reclassificacao_automatica != null) setReclassAuto((data as any).reclassificacao_automatica);
+          if ((data as any).momento_troca_brinco) setMomentoTrocaBrinco((data as any).momento_troca_brinco);
         }
       });
   }, [user]);
@@ -141,6 +143,7 @@ export default function GadoConfiguracoesPage() {
         idade_bezerro_meses: parseInt(idadeBezerro) || 8,
         idade_jovem_meses: parseInt(idadeJovem) || 24,
         reclassificacao_automatica: reclassAuto,
+        momento_troca_brinco: momentoTrocaBrinco,
       } as any).eq("user_id", effectiveUserId);
       toast.success("Fases de vida salvas!");
     } catch {
@@ -268,6 +271,20 @@ export default function GadoConfiguracoesPage() {
                 <Label className="cursor-pointer">Reclassificação automática</Label>
               </div>
               <p className="text-xs text-muted-foreground">Quando ativado, o sistema atualiza a categoria dos animais automaticamente ao abrir o módulo Gado.</p>
+
+              <div className="space-y-2 pt-2 border-t">
+                <Label>Quando alertar para trocar o brinco do bezerro</Label>
+                <Select value={momentoTrocaBrinco} onValueChange={(v: any) => setMomentoTrocaBrinco(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="desmame">No desmame (sai da fase Bezerro/Bezerra)</SelectItem>
+                    <SelectItem value="adulto">Ao virar adulto (Boi/Vaca)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Bezerros nascidos na fazenda herdam o brinco da mãe. O sistema gera um alerta no Dashboard e em Animais quando chegar o momento configurado para trocar.
+                </p>
+              </div>
               <Button onClick={handleSaveFases} disabled={savingFases} className="gap-2 w-full">
                 <Save className="h-4 w-4" /> {savingFases ? "Salvando..." : "Salvar Fases de Vida"}
               </Button>

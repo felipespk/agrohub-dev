@@ -5,7 +5,8 @@ import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { List, Scale, Baby, Skull, CheckCircle, AlertTriangle } from "lucide-react";
+import { List, Scale, Baby, Skull, CheckCircle, AlertTriangle, Tag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { getGreeting } from "@/lib/greeting";
 
