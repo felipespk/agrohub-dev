@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, Eye, Pencil, Trash2, AlertTriangle, Tag } from "lucide-react";
+import { Plus, Search, Eye, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 
@@ -36,7 +36,6 @@ export default function AnimaisPage() {
   const [coresPorRaca, setCoresPorRaca] = useState<Record<string, { nome: string; principal: boolean }[]>>({});
   const [pastos, setPastos] = useState<any[]>([]);
   const [lotes, setLotes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [rendimento, setRendimento] = useState(52);
   const [valorArrobaConfig, setValorArrobaConfig] = useState(300);
   const [open, setOpen] = useState(false);
@@ -63,7 +62,6 @@ export default function AnimaisPage() {
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
-    setLoading(true);
     const [a, r, p, l, prof, c] = await Promise.all([
       supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome)").eq("user_id", effectiveUserId).order("brinco"),
       supabase.from("racas" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
@@ -86,7 +84,6 @@ export default function AnimaisPage() {
       if (prof.data.rendimento_carcaca) setRendimento(Number(prof.data.rendimento_carcaca));
       if ((prof.data as any).valor_arroba) setValorArrobaConfig(Number((prof.data as any).valor_arroba));
     }
-    setLoading(false);
   }, [user, effectiveUserId]);
 
   // ao mudar de raça, sugerir a cor principal automaticamente
