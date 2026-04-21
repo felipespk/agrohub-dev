@@ -38,7 +38,7 @@ export default function MovimentacoesPage() {
   const [form, setForm] = useState<any>({
     tipo: "compra", animal_id: "", data: new Date().toISOString().split("T")[0],
     quantidade: "1", peso_kg: "", valor_unitario: "", valor_total: "",
-    causa_morte: "", pasto_destino_id: "", observacao: "",
+    causa_morte: "", pasto_destino_id: "", pasto_origem_id: "", observacao: "",
     // nascimento
     sexo_bezerro: "macho", brinco_bezerro: "",
     // venda payment type
@@ -48,7 +48,7 @@ export default function MovimentacoesPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [m, a, p, prof] = await Promise.all([
-      supabase.from("movimentacoes_gado" as any).select("*, animal:animais!animal_id(brinco, categoria)").eq("user_id", effectiveUserId).order("data", { ascending: false }),
+      supabase.from("movimentacoes_gado" as any).select("*, animal:animais!animal_id(brinco, categoria), origem:pastos!pasto_origem_id(nome), destino:pastos!pasto_destino_id(nome)").eq("user_id", effectiveUserId).order("data", { ascending: false }),
       supabase.from("animais" as any).select("id, brinco, categoria, sexo, pasto_id, peso_atual").eq("user_id", effectiveUserId).eq("status", "ativo").order("brinco"),
       supabase.from("pastos" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", effectiveUserId).single(),
@@ -159,14 +159,30 @@ export default function MovimentacoesPage() {
       } as any);
       await supabase.from("animais" as any).update({ status: "morto" } as any).eq("id", form.animal_id);
     } else if (form.tipo === "transferencia") {
-      if (!form.animal_id || !form.pasto_destino_id) { toast.error("Selecione animal e pasto destino."); return; }
-      const animal = animais.find(a => a.id === form.animal_id);
+      if (!form.pasto_origem_id || !form.pasto_destino_id) { toast.error("Selecione pasto de origem e destino."); return; }
+      if (form.pasto_origem_id === form.pasto_destino_id) { toast.error("Pasto origem e destino devem ser diferentes."); return; }
+      const qtd = parseInt(form.quantidade) || 0;
+      if (qtd <= 0) { toast.error("Informe a quantidade de animais."); return; }
+
+      // Pega N animais ativos do pasto de origem (ordem por brinco — qualquer um serve, são "iguais" para movimentação)
+      const disponiveis = animais.filter(a => a.pasto_id === form.pasto_origem_id);
+      if (disponiveis.length < qtd) {
+        toast.error(`Pasto de origem possui apenas ${disponiveis.length} animal(is) ativo(s).`);
+        return;
+      }
+      const selecionados = disponiveis.slice(0, qtd);
+
+      // Registra UMA movimentação consolidada (sem animal_id específico, com quantidade)
       await supabase.from("movimentacoes_gado" as any).insert({
-        tipo: "transferencia", animal_id: form.animal_id, data: form.data,
-        pasto_origem_id: animal?.pasto_id || null, pasto_destino_id: form.pasto_destino_id,
+        tipo: "transferencia", animal_id: null, data: form.data,
+        quantidade: qtd,
+        pasto_origem_id: form.pasto_origem_id, pasto_destino_id: form.pasto_destino_id,
         user_id: user.id, observacao: form.observacao || null,
       } as any);
-      await supabase.from("animais" as any).update({ pasto_id: form.pasto_destino_id } as any).eq("id", form.animal_id);
+
+      // Atualiza o pasto dos animais selecionados
+      const ids = selecionados.map(a => a.id);
+      await supabase.from("animais" as any).update({ pasto_id: form.pasto_destino_id } as any).in("id", ids);
     }
 
     toast.success("Movimentação registrada!");
@@ -223,7 +239,7 @@ export default function MovimentacoesPage() {
               <tr key={m.id} className="border-b hover:bg-[#F8FAFC]">
                 <td className="px-4 py-2">{new Date(m.data + "T12:00:00").toLocaleDateString("pt-BR")}</td>
                 <td className="px-4 py-2"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${TIPO_BADGE[m.tipo] || ""}`}>{TIPO_LABEL[m.tipo]}</span></td>
-                <td className="px-4 py-2 font-mono">{m.animal?.brinco || "—"}</td>
+                <td className="px-4 py-2 font-mono">{m.tipo === "transferencia" ? `${m.origem?.nome || "?"} → ${m.destino?.nome || "?"}` : (m.animal?.brinco || "—")}</td>
                 <td className="px-4 py-2">{m.quantidade}</td>
                 <td className="px-4 py-2">{m.peso_kg ? Number(m.peso_kg).toFixed(1) : "—"}</td>
                 <td className="px-4 py-2">{m.valor_total ? fmt(Number(m.valor_total)) : "—"}</td>
@@ -248,7 +264,7 @@ export default function MovimentacoesPage() {
             </div>
             <div className="space-y-2"><Label>Data</Label><Input type="date" value={form.data} onChange={e => setForm({ ...form, data: e.target.value })} /></div>
 
-            {(form.tipo === "compra" || form.tipo === "venda" || form.tipo === "morte" || form.tipo === "transferencia") && (
+            {(form.tipo === "compra" || form.tipo === "venda" || form.tipo === "morte") && (
               <div className="space-y-2"><Label>Animal</Label>
                 <Select value={form.animal_id || "__none__"} onValueChange={v => setForm({ ...form, animal_id: v === "__none__" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -310,14 +326,37 @@ export default function MovimentacoesPage() {
               <div className="space-y-2"><Label>Causa da Morte</Label><Input value={form.causa_morte} onChange={e => setForm({ ...form, causa_morte: e.target.value })} placeholder="Doença, Acidente..." /></div>
             )}
 
-            {form.tipo === "transferencia" && (
-              <div className="space-y-2"><Label>Pasto Destino</Label>
-                <Select value={form.pasto_destino_id || "__none__"} onValueChange={v => setForm({ ...form, pasto_destino_id: v === "__none__" ? "" : v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{pastos.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            )}
+            {form.tipo === "transferencia" && (() => {
+              const disponiveis = form.pasto_origem_id ? animais.filter(a => a.pasto_id === form.pasto_origem_id).length : 0;
+              return (
+                <>
+                  <div className="space-y-2"><Label>Pasto de Origem</Label>
+                    <Select value={form.pasto_origem_id || "__none__"} onValueChange={v => setForm({ ...form, pasto_origem_id: v === "__none__" ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {pastos.map(p => {
+                          const qtd = animais.filter(a => a.pasto_id === p.id).length;
+                          return <SelectItem key={p.id} value={p.id}>{p.nome} ({qtd} animal{qtd !== 1 ? "is" : ""})</SelectItem>;
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Quantidade de Animais</Label>
+                    <Input type="number" min="1" max={disponiveis || undefined} value={form.quantidade} onChange={e => setForm({ ...form, quantidade: e.target.value })} />
+                    {form.pasto_origem_id && (
+                      <p className="text-xs text-muted-foreground">Disponível no pasto: <strong>{disponiveis}</strong></p>
+                    )}
+                  </div>
+                  <div className="space-y-2"><Label>Pasto Destino</Label>
+                    <Select value={form.pasto_destino_id || "__none__"} onValueChange={v => setForm({ ...form, pasto_destino_id: v === "__none__" ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>{pastos.filter(p => p.id !== form.pasto_origem_id).map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </>
+              );
+            })()}
 
             <div className="space-y-2"><Label>Observação</Label><Textarea value={form.observacao} onChange={e => setForm({ ...form, observacao: e.target.value })} rows={2} /></div>
           </div>
