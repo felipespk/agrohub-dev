@@ -59,6 +59,7 @@ export default function AnimaisPage() {
   const [trocaOpen, setTrocaOpen] = useState<any>(null);
   const [novoBrinco, setNovoBrinco] = useState("");
   const ultimoBrincoMaeRef = useRef("");
+  const ultimoBrincoBezerroRef = useRef("");
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
@@ -95,28 +96,39 @@ export default function AnimaisPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const brincoMaeInformado = form.mae_brinco.trim();
+  const ehBezerroNascido =
+    form.origem === "nascido" && ["bezerro", "bezerra"].includes(form.categoria);
+  const brincoFinal = form.brinco.trim() || form.mae_brinco.trim();
   const herdaBrincoDaMae =
-    form.origem === "nascido" &&
-    ["bezerro", "bezerra"].includes(form.categoria) &&
-    brincoMaeInformado.length > 0;
-  const brincoFinal = form.brinco.trim() || (herdaBrincoDaMae ? brincoMaeInformado : "");
+    ehBezerroNascido &&
+    !!brincoFinal &&
+    !!form.mae_brinco.trim() &&
+    brincoFinal === form.mae_brinco.trim();
 
+  // Espelha automaticamente brinco <-> brinco da mãe (apenas para bezerros nascidos na fazenda)
   useEffect(() => {
-    const brincoMae = form.mae_brinco.trim();
-    const brincoAtual = form.brinco.trim();
-    const ultimoBrincoMae = ultimoBrincoMaeRef.current;
-
-    if (herdaBrincoDaMae && (!brincoAtual || brincoAtual === ultimoBrincoMae)) {
-      setForm(prev => (prev.brinco === brincoMae ? prev : { ...prev, brinco: brincoMae }));
+    if (!ehBezerroNascido) {
+      ultimoBrincoMaeRef.current = form.mae_brinco.trim();
+      ultimoBrincoBezerroRef.current = form.brinco.trim();
+      return;
     }
+    const brincoMae = form.mae_brinco.trim();
+    const brincoBezerro = form.brinco.trim();
+    const maeMudou = brincoMae !== ultimoBrincoMaeRef.current;
+    const bezerroMudou = brincoBezerro !== ultimoBrincoBezerroRef.current;
 
-    if (!herdaBrincoDaMae && brincoAtual && brincoAtual === ultimoBrincoMae) {
-      setForm(prev => ({ ...prev, brinco: "" }));
+    // Usuário digitou no brinco da mãe → copia para o bezerro
+    if (maeMudou && brincoMae && brincoBezerro !== brincoMae) {
+      setForm(prev => ({ ...prev, brinco: brincoMae }));
+    }
+    // Usuário digitou no brinco do bezerro → copia para a mãe
+    else if (bezerroMudou && brincoBezerro && brincoMae !== brincoBezerro) {
+      setForm(prev => ({ ...prev, mae_brinco: brincoBezerro }));
     }
 
     ultimoBrincoMaeRef.current = brincoMae;
-  }, [form.mae_brinco, form.brinco, herdaBrincoDaMae]);
+    ultimoBrincoBezerroRef.current = brincoBezerro;
+  }, [form.mae_brinco, form.brinco, ehBezerroNascido]);
 
   const filtered = animais.filter(a => {
     if (busca && !a.brinco.toLowerCase().includes(busca.toLowerCase()) && !(a.nome || "").toLowerCase().includes(busca.toLowerCase())) return false;
