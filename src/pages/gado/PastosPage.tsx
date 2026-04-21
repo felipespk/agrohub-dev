@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUser } from "@/hooks/useEffectiveUser";
@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, MapPin, ChevronDown, ChevronUp, Pencil, Trash2, ArrowRightLeft } from "lucide-react";
+import { Plus, MapPin, ChevronDown, ChevronUp, Pencil, Trash2, ArrowRightLeft, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
+import { PastoMiniMapa } from "@/components/gado/PastoMiniMapa";
 
 export default function PastosPage() {
   const { user } = useAuth();
