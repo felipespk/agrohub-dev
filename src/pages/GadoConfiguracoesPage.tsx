@@ -271,6 +271,20 @@ export default function GadoConfiguracoesPage() {
                 <Label className="cursor-pointer">Reclassificação automática</Label>
               </div>
               <p className="text-xs text-muted-foreground">Quando ativado, o sistema atualiza a categoria dos animais automaticamente ao abrir o módulo Gado.</p>
+
+              <div className="space-y-2 pt-2 border-t">
+                <Label>Quando alertar para trocar o brinco do bezerro</Label>
+                <Select value={momentoTrocaBrinco} onValueChange={(v: any) => setMomentoTrocaBrinco(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="desmame">No desmame (sai da fase Bezerro/Bezerra)</SelectItem>
+                    <SelectItem value="adulto">Ao virar adulto (Boi/Vaca)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Bezerros nascidos na fazenda herdam o brinco da mãe. O sistema gera um alerta no Dashboard e em Animais quando chegar o momento configurado para trocar.
+                </p>
+              </div>
               <Button onClick={handleSaveFases} disabled={savingFases} className="gap-2 w-full">
                 <Save className="h-4 w-4" /> {savingFases ? "Salvando..." : "Salvar Fases de Vida"}
               </Button>
