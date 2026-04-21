@@ -159,14 +159,30 @@ export default function MovimentacoesPage() {
       } as any);
       await supabase.from("animais" as any).update({ status: "morto" } as any).eq("id", form.animal_id);
     } else if (form.tipo === "transferencia") {
-      if (!form.animal_id || !form.pasto_destino_id) { toast.error("Selecione animal e pasto destino."); return; }
-      const animal = animais.find(a => a.id === form.animal_id);
+      if (!form.pasto_origem_id || !form.pasto_destino_id) { toast.error("Selecione pasto de origem e destino."); return; }
+      if (form.pasto_origem_id === form.pasto_destino_id) { toast.error("Pasto origem e destino devem ser diferentes."); return; }
+      const qtd = parseInt(form.quantidade) || 0;
+      if (qtd <= 0) { toast.error("Informe a quantidade de animais."); return; }
+
+      // Pega N animais ativos do pasto de origem (ordem por brinco — qualquer um serve, são "iguais" para movimentação)
+      const disponiveis = animais.filter(a => a.pasto_id === form.pasto_origem_id);
+      if (disponiveis.length < qtd) {
+        toast.error(`Pasto de origem possui apenas ${disponiveis.length} animal(is) ativo(s).`);
+        return;
+      }
+      const selecionados = disponiveis.slice(0, qtd);
+
+      // Registra UMA movimentação consolidada (sem animal_id específico, com quantidade)
       await supabase.from("movimentacoes_gado" as any).insert({
-        tipo: "transferencia", animal_id: form.animal_id, data: form.data,
-        pasto_origem_id: animal?.pasto_id || null, pasto_destino_id: form.pasto_destino_id,
+        tipo: "transferencia", animal_id: null, data: form.data,
+        quantidade: qtd,
+        pasto_origem_id: form.pasto_origem_id, pasto_destino_id: form.pasto_destino_id,
         user_id: user.id, observacao: form.observacao || null,
       } as any);
-      await supabase.from("animais" as any).update({ pasto_id: form.pasto_destino_id } as any).eq("id", form.animal_id);
+
+      // Atualiza o pasto dos animais selecionados
+      const ids = selecionados.map(a => a.id);
+      await supabase.from("animais" as any).update({ pasto_id: form.pasto_destino_id } as any).in("id", ids);
     }
 
     toast.success("Movimentação registrada!");
