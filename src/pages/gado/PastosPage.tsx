@@ -280,9 +280,8 @@ export default function PastosPage() {
                   <p className="text-sm text-muted-foreground">{count} cabeças · <span className="italic">Capacidade não definida</span></p>
                 )}
 
-                {count > 0 && (
-                  <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>Peso médio: <strong className="text-foreground">{pesoMedio > 0 ? `${pesoMedio.toFixed(0)} kg` : "—"}</strong></span>
+                {count > 0 && valorMedioPorAnimal > 0 && (
+                  <div className="text-xs text-muted-foreground">
                     <span>Valor est.: <strong className="text-foreground">R$ {valorEstimado.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
                   </div>
                 )}
