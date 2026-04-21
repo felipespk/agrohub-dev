@@ -153,22 +153,26 @@ export default function PastosPage() {
     fetchAll();
   };
 
-  // === Move Animals ===
+  // === Move Animals (by quantity) ===
   const openMoveModal = (pastoId: string) => {
     setMovePastoOrigemId(pastoId);
-    setMoveSelectedIds(new Set());
+    setMoveLoteOrigemId("");
+    setMoveQtd("");
     setMovePastoDestino("");
     setMoveLoteDestino("");
-    setMoveSearch("");
     setMoveOpen(true);
   };
 
-  const moveAnimaisOrigem = useMemo(() => {
-    const list = animais.filter(a => a.pasto_id === movePastoOrigemId);
-    const q = moveSearch.toLowerCase();
-    if (!q) return list;
-    return list.filter(a => a.brinco?.toLowerCase().includes(q) || a.nome?.toLowerCase().includes(q));
-  }, [animais, movePastoOrigemId, moveSearch]);
+  const lotesOrigemFiltrados = useMemo(() => {
+    if (!movePastoOrigemId) return [];
+    return lotes.filter(l => l.pasto_id === movePastoOrigemId);
+  }, [lotes, movePastoOrigemId]);
+
+  const animaisDisponiveisOrigem = useMemo(() => {
+    let list = animais.filter(a => a.pasto_id === movePastoOrigemId);
+    if (moveLoteOrigemId) list = list.filter(a => a.lote_id === moveLoteOrigemId);
+    return list;
+  }, [animais, movePastoOrigemId, moveLoteOrigemId]);
 
   const lotesDestinoFiltrados = useMemo(() => {
     if (!movePastoDestino) return [];
@@ -176,36 +180,36 @@ export default function PastosPage() {
   }, [lotes, movePastoDestino]);
 
   const handleMoveAnimals = async () => {
-    if (!user || moveSelectedIds.size === 0) { toast.error("Selecione pelo menos um animal."); return; }
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
+    if (!user) return;
+    const qtd = parseInt(moveQtd);
+    if (!qtd || qtd <= 0) { toast.error("Informe uma quantidade válida."); return; }
     if (!movePastoDestino) { toast.error("Selecione o pasto destino."); return; }
-    const ids = Array.from(moveSelectedIds);
-    const pastoDestObj = pastos.find(p => p.id === movePastoDestino);
-    for (const animalId of ids) {
-      await supabase.from("animais" as any).update({
-        pasto_id: movePastoDestino,
-        lote_id: moveLoteDestino || null,
-      } as any).eq("id", animalId);
-      await supabase.from("movimentacoes_gado" as any).insert({
-        animal_id: animalId,
-        tipo: "transferencia",
-        data: new Date().toISOString().split("T")[0],
-        pasto_origem_id: movePastoOrigemId || null,
-        pasto_destino_id: movePastoDestino,
-        quantidade: 1,
-        user_id: user.id,
-      } as any);
+    if (qtd > animaisDisponiveisOrigem.length) {
+      toast.error(`Apenas ${animaisDisponiveisOrigem.length} animais disponíveis na origem.`);
+      return;
     }
-    toast.success(`${ids.length} animais movidos para ${pastoDestObj?.nome || "novo pasto"}!`);
+    const selecionados = animaisDisponiveisOrigem.slice(0, qtd);
+    const ids = selecionados.map(a => a.id);
+    const pastoDestObj = pastos.find(p => p.id === movePastoDestino);
+
+    await supabase.from("animais" as any).update({
+      pasto_id: movePastoDestino,
+      lote_id: moveLoteDestino || null,
+    } as any).in("id", ids);
+
+    await supabase.from("movimentacoes_gado" as any).insert({
+      tipo: "transferencia",
+      data: new Date().toISOString().split("T")[0],
+      pasto_origem_id: movePastoOrigemId || null,
+      pasto_destino_id: movePastoDestino,
+      quantidade: qtd,
+      user_id: user.id,
+    } as any);
+
+    toast.success(`${qtd} animais movidos para ${pastoDestObj?.nome || "novo pasto"}!`);
     setMoveOpen(false);
     fetchAll();
-  };
-
-  const toggleMoveAnimal = (id: string) => {
-    setMoveSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
   };
 
   // === Helpers ===
