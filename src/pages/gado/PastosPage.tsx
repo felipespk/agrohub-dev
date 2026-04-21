@@ -47,7 +47,7 @@ export default function PastosPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [p, l, a, prof] = await Promise.all([
-      supabase.from("pastos" as any).select("*").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("pastos" as any).select("id, nome, area_hectares, capacidade_cabecas, coordenadas, centro_lat, centro_lng, foto_url").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("lotes" as any).select("*").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("animais" as any).select("id, brinco, nome, categoria, peso_atual, pasto_id, lote_id").eq("user_id", effectiveUserId).eq("status", "ativo"),
       supabase.from("profiles").select("valor_arroba, rendimento_carcaca").eq("user_id", effectiveUserId).maybeSingle(),
