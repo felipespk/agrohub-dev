@@ -454,6 +454,10 @@ export default function PastosPage() {
             <div className="space-y-2"><Label>Nome *</Label><Input value={formPasto.nome} onChange={e => setFormPasto({ ...formPasto, nome: e.target.value })} /></div>
             <div className="space-y-2"><Label>Área (hectares)</Label><Input type="number" value={formPasto.area_hectares} onChange={e => setFormPasto({ ...formPasto, area_hectares: e.target.value })} /></div>
             <div className="space-y-2"><Label>Capacidade (cabeças)</Label><Input type="number" value={formPasto.capacidade_cabecas} onChange={e => setFormPasto({ ...formPasto, capacidade_cabecas: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Cor no mapa</Label>
+              <ColorPicker value={formPasto.cor} onChange={(c) => setFormPasto({ ...formPasto, cor: c })} />
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2"><Button variant="outline" onClick={() => setOpenPasto(false)}>Cancelar</Button><Button onClick={handleSavePasto}>Salvar</Button></div>
         </DialogContent>
@@ -484,6 +488,10 @@ export default function PastosPage() {
             <div className="space-y-2"><Label>Nome *</Label><Input value={formEditPasto.nome} onChange={e => setFormEditPasto({ ...formEditPasto, nome: e.target.value })} /></div>
             <div className="space-y-2"><Label>Área (hectares)</Label><Input type="number" value={formEditPasto.area_hectares} onChange={e => setFormEditPasto({ ...formEditPasto, area_hectares: e.target.value })} /></div>
             <div className="space-y-2"><Label>Capacidade (cabeças)</Label><Input type="number" value={formEditPasto.capacidade_cabecas} onChange={e => setFormEditPasto({ ...formEditPasto, capacidade_cabecas: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Cor no mapa</Label>
+              <ColorPicker value={formEditPasto.cor} onChange={(c) => setFormEditPasto({ ...formEditPasto, cor: c })} />
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2"><Button variant="outline" onClick={() => setEditPasto(null)}>Cancelar</Button><Button onClick={handleUpdatePasto}>Salvar</Button></div>
         </DialogContent>
