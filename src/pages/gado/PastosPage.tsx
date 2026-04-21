@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, MapPin, ChevronDown, ChevronUp, Pencil, Trash2, Search, ArrowRightLeft } from "lucide-react";
+import { Plus, MapPin, ChevronDown, ChevronUp, Pencil, Trash2, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function PastosPage() {
@@ -32,13 +31,13 @@ export default function PastosPage() {
   const [formEditPasto, setFormEditPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "" });
   const [formEditLote, setFormEditLote] = useState({ nome: "", pasto_id: "" });
 
-  // Move animals modal
+  // Move animals modal (by quantity)
   const [moveOpen, setMoveOpen] = useState(false);
   const [movePastoOrigemId, setMovePastoOrigemId] = useState("");
-  const [moveSelectedIds, setMoveSelectedIds] = useState<Set<string>>(new Set());
+  const [moveLoteOrigemId, setMoveLoteOrigemId] = useState("");
+  const [moveQtd, setMoveQtd] = useState("");
   const [movePastoDestino, setMovePastoDestino] = useState("");
   const [moveLoteDestino, setMoveLoteDestino] = useState("");
-  const [moveSearch, setMoveSearch] = useState("");
 
   // Profile config
   const [valorArroba, setValorArroba] = useState(300);
@@ -154,22 +153,26 @@ export default function PastosPage() {
     fetchAll();
   };
 
-  // === Move Animals ===
+  // === Move Animals (by quantity) ===
   const openMoveModal = (pastoId: string) => {
     setMovePastoOrigemId(pastoId);
-    setMoveSelectedIds(new Set());
+    setMoveLoteOrigemId("");
+    setMoveQtd("");
     setMovePastoDestino("");
     setMoveLoteDestino("");
-    setMoveSearch("");
     setMoveOpen(true);
   };
 
-  const moveAnimaisOrigem = useMemo(() => {
-    const list = animais.filter(a => a.pasto_id === movePastoOrigemId);
-    const q = moveSearch.toLowerCase();
-    if (!q) return list;
-    return list.filter(a => a.brinco?.toLowerCase().includes(q) || a.nome?.toLowerCase().includes(q));
-  }, [animais, movePastoOrigemId, moveSearch]);
+  const lotesOrigemFiltrados = useMemo(() => {
+    if (!movePastoOrigemId) return [];
+    return lotes.filter(l => l.pasto_id === movePastoOrigemId);
+  }, [lotes, movePastoOrigemId]);
+
+  const animaisDisponiveisOrigem = useMemo(() => {
+    let list = animais.filter(a => a.pasto_id === movePastoOrigemId);
+    if (moveLoteOrigemId) list = list.filter(a => a.lote_id === moveLoteOrigemId);
+    return list;
+  }, [animais, movePastoOrigemId, moveLoteOrigemId]);
 
   const lotesDestinoFiltrados = useMemo(() => {
     if (!movePastoDestino) return [];
@@ -177,36 +180,36 @@ export default function PastosPage() {
   }, [lotes, movePastoDestino]);
 
   const handleMoveAnimals = async () => {
-    if (!user || moveSelectedIds.size === 0) { toast.error("Selecione pelo menos um animal."); return; }
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
+    if (!user) return;
+    const qtd = parseInt(moveQtd);
+    if (!qtd || qtd <= 0) { toast.error("Informe uma quantidade válida."); return; }
     if (!movePastoDestino) { toast.error("Selecione o pasto destino."); return; }
-    const ids = Array.from(moveSelectedIds);
-    const pastoDestObj = pastos.find(p => p.id === movePastoDestino);
-    for (const animalId of ids) {
-      await supabase.from("animais" as any).update({
-        pasto_id: movePastoDestino,
-        lote_id: moveLoteDestino || null,
-      } as any).eq("id", animalId);
-      await supabase.from("movimentacoes_gado" as any).insert({
-        animal_id: animalId,
-        tipo: "transferencia",
-        data: new Date().toISOString().split("T")[0],
-        pasto_origem_id: movePastoOrigemId || null,
-        pasto_destino_id: movePastoDestino,
-        quantidade: 1,
-        user_id: user.id,
-      } as any);
+    if (qtd > animaisDisponiveisOrigem.length) {
+      toast.error(`Apenas ${animaisDisponiveisOrigem.length} animais disponíveis na origem.`);
+      return;
     }
-    toast.success(`${ids.length} animais movidos para ${pastoDestObj?.nome || "novo pasto"}!`);
+    const selecionados = animaisDisponiveisOrigem.slice(0, qtd);
+    const ids = selecionados.map(a => a.id);
+    const pastoDestObj = pastos.find(p => p.id === movePastoDestino);
+
+    await supabase.from("animais" as any).update({
+      pasto_id: movePastoDestino,
+      lote_id: moveLoteDestino || null,
+    } as any).in("id", ids);
+
+    await supabase.from("movimentacoes_gado" as any).insert({
+      tipo: "transferencia",
+      data: new Date().toISOString().split("T")[0],
+      pasto_origem_id: movePastoOrigemId || null,
+      pasto_destino_id: movePastoDestino,
+      quantidade: qtd,
+      user_id: user.id,
+    } as any);
+
+    toast.success(`${qtd} animais movidos para ${pastoDestObj?.nome || "novo pasto"}!`);
     setMoveOpen(false);
     fetchAll();
-  };
-
-  const toggleMoveAnimal = (id: string) => {
-    setMoveSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
   };
 
   // === Helpers ===
@@ -411,6 +414,26 @@ export default function PastosPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Mover Animais</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            {/* Origem */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Pasto Origem</Label>
+                <div className="h-10 px-3 flex items-center rounded-md border bg-muted/40 text-sm">
+                  {pastos.find(p => p.id === movePastoOrigemId)?.nome || "—"}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Lote Origem (opcional)</Label>
+                <Select value={moveLoteOrigemId || "__none__"} onValueChange={v => setMoveLoteOrigemId(v === "__none__" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Todos do pasto" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Todos do pasto</SelectItem>
+                    {lotesOrigemFiltrados.map(l => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             {/* Destino */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -435,55 +458,30 @@ export default function PastosPage() {
               </div>
             </div>
 
-            {/* Search & quick actions */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative flex-1 min-w-[180px]">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Buscar brinco ou nome..." value={moveSearch} onChange={e => setMoveSearch(e.target.value)} className="pl-8 h-9" />
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setMoveSelectedIds(new Set(moveAnimaisOrigem.map(a => a.id)))}>Selecionar Todos</Button>
-              <Button variant="outline" size="sm" onClick={() => setMoveSelectedIds(new Set())}>Selecionar Nenhum</Button>
+            {/* Quantidade */}
+            <div className="space-y-2">
+              <Label>Quantidade de animais *</Label>
+              <Input
+                type="number"
+                min="1"
+                max={animaisDisponiveisOrigem.length}
+                placeholder="Ex: 10"
+                value={moveQtd}
+                onChange={e => setMoveQtd(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Disponíveis na origem: <strong className="text-foreground">{animaisDisponiveisOrigem.length}</strong> animais
+              </p>
             </div>
-            <p className="text-sm font-medium text-muted-foreground">{moveSelectedIds.size} animais selecionados</p>
 
-            {/* Animal list */}
-            <div className="border rounded-md max-h-[300px] overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
-                  <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground">
-                    <th className="px-3 py-2 w-8"></th>
-                    <th className="px-3 py-2">Brinco</th>
-                    <th className="px-3 py-2">Nome</th>
-                    <th className="px-3 py-2">Categoria</th>
-                    <th className="px-3 py-2 text-right">Peso</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {moveAnimaisOrigem.map(a => {
-                    const checked = moveSelectedIds.has(a.id);
-                    return (
-                      <tr key={a.id} className={`border-b cursor-pointer transition-colors ${checked ? "bg-green-50" : "hover:bg-muted/30"}`} onClick={() => toggleMoveAnimal(a.id)}>
-                        <td className="px-3 py-1.5">
-                          <Checkbox checked={checked} onCheckedChange={() => toggleMoveAnimal(a.id)} className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600" onClick={e => e.stopPropagation()} />
-                        </td>
-                        <td className="px-3 py-1.5 font-mono font-bold">{a.brinco}</td>
-                        <td className="px-3 py-1.5">{a.nome || "—"}</td>
-                        <td className="px-3 py-1.5">
-                          <span className={`px-2 py-0.5 rounded-full text-xs ${CAT_BADGE[a.categoria?.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>{a.categoria}</span>
-                        </td>
-                        <td className="px-3 py-1.5 text-right">{a.peso_atual ? `${Number(a.peso_atual).toFixed(0)} kg` : "—"}</td>
-                      </tr>
-                    );
-                  })}
-                  {moveAnimaisOrigem.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum animal neste pasto</td></tr>}
-                </tbody>
-              </table>
+            <div className="rounded-md bg-muted/40 p-3 text-xs text-muted-foreground">
+              Os animais são selecionados automaticamente pela origem. Os brincos continuam servindo para vacinação, pesagem, reprodução e cadastro — apenas a movimentação entre pastos é feita por quantidade.
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => setMoveOpen(false)}>Cancelar</Button>
-            <Button onClick={handleMoveAnimals} disabled={moveSelectedIds.size === 0 || !movePastoDestino}>
-              Mover {moveSelectedIds.size > 0 ? `(${moveSelectedIds.size})` : ""}
+            <Button onClick={handleMoveAnimals} disabled={!moveQtd || !movePastoDestino}>
+              Mover {moveQtd ? `(${moveQtd})` : ""}
             </Button>
           </div>
         </DialogContent>
