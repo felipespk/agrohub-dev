@@ -1,41 +1,52 @@
-import { Outlet, useNavigate } from 'react-router-dom'
-import { LavouraSidebar } from './LavouraSidebar'
-import { ProfileDropdown } from '@/components/ProfileDropdown'
-import { PageTransition } from '@/components/PageTransition'
-import { Wheat, ChevronLeft } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { LavouraSidebar } from "./LavouraSidebar";
+import { Sprout } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "react-router-dom";
+import { ProfileDropdown } from "@/components/ProfileDropdown";
 
-export function LavouraLayout() {
-  const { profile } = useAuth()
-  const navigate = useNavigate()
-  const farmName = profile?.farm_name_lavoura || profile?.farm_name
+const pageTitles: Record<string, string> = {
+  "/lavoura": "Dashboard da Lavoura",
+  "/lavoura/talhoes": "Talhões",
+  "/lavoura/safras": "Safras",
+  "/lavoura/atividades": "Caderno de Campo",
+  "/lavoura/insumos": "Estoque de Insumos",
+  "/lavoura/maquinas": "Máquinas e Equipamentos",
+  "/lavoura/colheitas": "Colheita",
+  "/lavoura/pragas": "Pragas / MIP",
+  "/lavoura/comercializacao": "Comercialização",
+  "/lavoura/culturas": "Culturas e Variedades",
+  "/lavoura/configuracoes": "Configurações",
+};
+
+export function LavouraLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  const title = pageTitles[location.pathname] || "Lavoura";
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="h-14 flex items-center justify-between px-5 glass-header sticky top-0 z-30">
-        <div className="flex items-center gap-2.5">
-          <button onClick={() => navigate('/hub')} className="text-t3 hover:text-t1 transition-colors mr-1">
-            <ChevronLeft size={18} />
-          </button>
-          <div className="w-6 h-6 rounded-md bg-yellow-500/12 flex items-center justify-center">
-            <Wheat size={13} className="text-yellow-400" strokeWidth={2} />
-          </div>
-          <span className="text-md font-semibold text-t1 tracking-tight">Lavoura</span>
-          {farmName && (
-            <>
-              <span className="text-t3 font-normal mx-1">·</span>
-              <span className="text-sm text-t3 font-normal truncate max-w-[200px]">{farmName}</span>
-            </>
-          )}
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <LavouraSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-16 flex items-center justify-between border-b border-border bg-card px-6 shrink-0">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="text-muted-foreground" />
+              <div className="flex items-center gap-2 md:hidden">
+                <Sprout className="h-5 w-5 text-primary" />
+                <span className="font-bold text-foreground text-sm">AgroHub</span>
+              </div>
+              <span className="hidden md:block text-lg font-semibold text-foreground">{title}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <ProfileDropdown />
+            </div>
+          </header>
+          <main className="flex-1 p-6 overflow-auto bg-background">
+            {children}
+          </main>
         </div>
-        <ProfileDropdown settingsPath="/lavoura/configuracoes" />
-      </header>
-      <LavouraSidebar />
-      <div className="flex-1 p-6 max-w-content mx-auto w-full">
-        <PageTransition>
-          <Outlet />
-        </PageTransition>
       </div>
-    </div>
-  )
+    </SidebarProvider>
+  );
 }

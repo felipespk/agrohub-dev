@@ -1,0 +1,12 @@
+
+ALTER TABLE public.talhoes ADD COLUMN IF NOT EXISTS coordenadas JSONB;
+ALTER TABLE public.talhoes ADD COLUMN IF NOT EXISTS centro_lat DECIMAL(10,7);
+ALTER TABLE public.talhoes ADD COLUMN IF NOT EXISTS centro_lng DECIMAL(10,7);
+
+ALTER TABLE public.pastos ADD COLUMN IF NOT EXISTS coordenadas JSONB;
+ALTER TABLE public.pastos ADD COLUMN IF NOT EXISTS centro_lat DECIMAL(10,7);
+ALTER TABLE public.pastos ADD COLUMN IF NOT EXISTS centro_lng DECIMAL(10,7);
+
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS fazenda_lat DECIMAL(10,7);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS fazenda_lng DECIMAL(10,7);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS fazenda_zoom INTEGER DEFAULT 15;
