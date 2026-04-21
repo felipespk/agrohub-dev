@@ -1225,6 +1225,7 @@ export type Database = {
           centro_lng: number | null
           coordenadas: Json | null
           created_at: string | null
+          foto_url: string | null
           id: string
           nome: string
           user_id: string
@@ -1237,6 +1238,7 @@ export type Database = {
           centro_lng?: number | null
           coordenadas?: Json | null
           created_at?: string | null
+          foto_url?: string | null
           id?: string
           nome: string
           user_id: string
@@ -1249,6 +1251,7 @@ export type Database = {
           centro_lng?: number | null
           coordenadas?: Json | null
           created_at?: string | null
+          foto_url?: string | null
           id?: string
           nome?: string
           user_id?: string
