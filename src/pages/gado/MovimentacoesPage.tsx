@@ -264,7 +264,7 @@ export default function MovimentacoesPage() {
             </div>
             <div className="space-y-2"><Label>Data</Label><Input type="date" value={form.data} onChange={e => setForm({ ...form, data: e.target.value })} /></div>
 
-            {(form.tipo === "compra" || form.tipo === "venda" || form.tipo === "morte" || form.tipo === "transferencia") && (
+            {(form.tipo === "compra" || form.tipo === "venda" || form.tipo === "morte") && (
               <div className="space-y-2"><Label>Animal</Label>
                 <Select value={form.animal_id || "__none__"} onValueChange={v => setForm({ ...form, animal_id: v === "__none__" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
