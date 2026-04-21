@@ -23,13 +23,13 @@ export default function PastosPage() {
   // Create modals
   const [openPasto, setOpenPasto] = useState(false);
   const [openLote, setOpenLote] = useState(false);
-  const [formPasto, setFormPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "" });
+  const [formPasto, setFormPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "", cor: "#16A34A" });
   const [formLote, setFormLote] = useState({ nome: "", pasto_id: "" });
 
   // Edit modals
   const [editPasto, setEditPasto] = useState<any>(null);
   const [editLote, setEditLote] = useState<any>(null);
-  const [formEditPasto, setFormEditPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "" });
+  const [formEditPasto, setFormEditPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "", cor: "#16A34A" });
   const [formEditLote, setFormEditLote] = useState({ nome: "", pasto_id: "" });
 
   // Move animals modal (by quantity)
@@ -47,7 +47,7 @@ export default function PastosPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [p, l, a, prof] = await Promise.all([
-      supabase.from("pastos" as any).select("id, nome, area_hectares, capacidade_cabecas, coordenadas, centro_lat, centro_lng, foto_url").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("pastos" as any).select("id, nome, area_hectares, capacidade_cabecas, coordenadas, centro_lat, centro_lng, foto_url, cor").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("lotes" as any).select("*").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("animais" as any).select("id, brinco, nome, categoria, peso_atual, pasto_id, lote_id").eq("user_id", effectiveUserId).eq("status", "ativo"),
       supabase.from("profiles").select("valor_arroba, rendimento_carcaca").eq("user_id", effectiveUserId).maybeSingle(),
@@ -71,11 +71,12 @@ export default function PastosPage() {
       nome: formPasto.nome.trim(),
       area_hectares: formPasto.area_hectares ? parseFloat(formPasto.area_hectares) : null,
       capacidade_cabecas: formPasto.capacidade_cabecas ? parseInt(formPasto.capacidade_cabecas) : null,
+      cor: formPasto.cor || null,
       user_id: user.id,
     } as any);
     toast.success("Pasto criado!");
     setOpenPasto(false);
-    setFormPasto({ nome: "", area_hectares: "", capacidade_cabecas: "" });
+    setFormPasto({ nome: "", area_hectares: "", capacidade_cabecas: "", cor: "#16A34A" });
     fetchAll();
   };
 
@@ -99,6 +100,7 @@ export default function PastosPage() {
       nome: p.nome || "",
       area_hectares: p.area_hectares != null ? String(p.area_hectares) : "",
       capacidade_cabecas: p.capacidade_cabecas != null ? String(p.capacidade_cabecas) : "",
+      cor: p.cor || "#16A34A",
     });
   };
   const handleUpdatePasto = async () => {
@@ -108,6 +110,7 @@ export default function PastosPage() {
       nome: formEditPasto.nome.trim(),
       area_hectares: formEditPasto.area_hectares ? parseFloat(formEditPasto.area_hectares) : null,
       capacidade_cabecas: formEditPasto.capacidade_cabecas ? parseInt(formEditPasto.capacidade_cabecas) : null,
+      cor: formEditPasto.cor || null,
     } as any).eq("id", editPasto.id);
     toast.success("Pasto atualizado!");
     setEditPasto(null);
