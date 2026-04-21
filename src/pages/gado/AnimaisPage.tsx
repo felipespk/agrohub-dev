@@ -185,6 +185,21 @@ export default function AnimaisPage() {
         <Button onClick={() => setOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Novo Animal</Button>
       </div>
 
+      {pendentesTroca.length > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-900">
+              {pendentesTroca.length} {pendentesTroca.length === 1 ? "animal precisa" : "animais precisam"} de troca de brinco
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              {pendentesTroca.slice(0, 5).map(a => a.brinco).join(", ")}
+              {pendentesTroca.length > 5 ? ` e mais ${pendentesTroca.length - 5}` : ""} — herdaram o brinco da mãe e agora chegaram ao momento configurado para receber identificação própria.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
