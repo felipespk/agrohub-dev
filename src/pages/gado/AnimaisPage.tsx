@@ -379,6 +379,28 @@ export default function AnimaisPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Trocar Brinco */}
+      <Dialog open={!!trocaOpen} onOpenChange={v => { if (!v) { setTrocaOpen(null); setNovoBrinco(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Trocar Brinco</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-md bg-muted/40 p-3 text-xs space-y-1">
+              <p>Brinco atual (herdado da mãe): <strong className="font-mono">{trocaOpen?.brinco}</strong></p>
+              {trocaOpen?.mae_brinco && <p className="text-muted-foreground">Mãe: {trocaOpen.mae_brinco}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Novo Brinco *</Label>
+              <Input value={novoBrinco} onChange={e => setNovoBrinco(e.target.value)} placeholder="Ex: 0123" autoFocus />
+            </div>
+            <p className="text-xs text-muted-foreground">O brinco anterior será preservado no histórico do animal.</p>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => { setTrocaOpen(null); setNovoBrinco(""); }}>Cancelar</Button>
+            <Button onClick={handleTrocarBrinco}>Trocar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
