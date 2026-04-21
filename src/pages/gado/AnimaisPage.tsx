@@ -97,6 +97,13 @@ export default function AnimaisPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  const brincoMaeInformado = form.mae_brinco.trim();
+  const herdaBrincoDaMae =
+    form.origem === "nascido" &&
+    ["bezerro", "bezerra"].includes(form.categoria) &&
+    brincoMaeInformado.length > 0;
+  const brincoFinal = form.brinco.trim() || (herdaBrincoDaMae ? brincoMaeInformado : "");
+
   const filtered = animais.filter(a => {
     if (busca && !a.brinco.toLowerCase().includes(busca.toLowerCase()) && !(a.nome || "").toLowerCase().includes(busca.toLowerCase())) return false;
     if (fCat !== "__all__" && a.categoria !== fCat) return false;
@@ -115,14 +122,17 @@ export default function AnimaisPage() {
 
   const handleSave = async () => {
     if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
-    if (!user || !form.brinco.trim() || !form.sexo || !form.categoria) {
+    if (!user || !brincoFinal || !form.sexo || !form.categoria) {
       toast.error("Preencha os campos obrigatórios."); return;
     }
     const payload: any = {
-      ...form, user_id: user.id,
+      ...form,
+      brinco: brincoFinal,
+      user_id: user.id,
       peso_atual: form.peso_atual ? parseFloat(form.peso_atual) : null,
       raca_id: form.raca_id || null, pasto_id: form.pasto_id || null, lote_id: form.lote_id || null,
       data_nascimento: form.data_nascimento || null,
+      precisa_trocar_brinco: herdaBrincoDaMae && brincoFinal === brincoMaeInformado,
     };
     const { data: inserted, error } = await (supabase.from("animais" as any).insert(payload).select("id").single() as any);
     if (error) { toast.error(error.message); return; }
@@ -313,7 +323,19 @@ export default function AnimaisPage() {
         <DialogContent className="max-w-[640px] max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Novo Animal</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2"><Label>Brinco *</Label><Input value={form.brinco} onChange={e => setForm({ ...form, brinco: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Brinco *</Label>
+              <Input
+                value={form.brinco}
+                onChange={e => setForm({ ...form, brinco: e.target.value })}
+                placeholder={herdaBrincoDaMae ? `Automático: ${brincoMaeInformado}` : ""}
+              />
+              {herdaBrincoDaMae && !form.brinco.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  Se deixar em branco, o sistema usará automaticamente o mesmo brinco da mãe.
+                </p>
+              )}
+            </div>
             <div className="space-y-2"><Label>Sexo *</Label>
               <Select value={form.sexo} onValueChange={v => setForm({ ...form, sexo: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
