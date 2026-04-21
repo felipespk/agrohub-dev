@@ -307,31 +307,86 @@ export default function PastosPage() {
 
           const valorEstimado = count * valorMedioPorAnimal;
 
+          const coordsRaw = p.coordenadas as any;
+          const coords: [number, number][] | null =
+            Array.isArray(coordsRaw) && coordsRaw.length >= 3
+              ? coordsRaw
+                  .map((c: any) =>
+                    Array.isArray(c) ? [Number(c[0]), Number(c[1])] :
+                    c && typeof c === "object" ? [Number(c.lat ?? c[0]), Number(c.lng ?? c[1])] :
+                    null
+                  )
+                  .filter((c: any): c is [number, number] => c && Number.isFinite(c[0]) && Number.isFinite(c[1]))
+              : null;
+
           return (
-            <Card key={p.id} className="border-[#E5E7EB]">
+            <Card key={p.id} className="border-border overflow-hidden">
               <CardHeader className="pb-2 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : p.id)}>
                 <CardTitle className="flex items-center justify-between text-lg">
                   <div className="flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" />{p.nome}</div>
                   <div className="flex items-center gap-1">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); openEditPasto(p); }}>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); openEditPasto(p); }} title="Editar">
                       <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); handleDeletePasto(p); }}>
-                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); handleDeletePasto(p); }} title="Excluir">
+                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
                     </Button>
                     {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </div>
                 </CardTitle>
                 {p.area_hectares != null && <p className="text-sm text-muted-foreground">{Number(p.area_hectares).toFixed(1)} ha</p>}
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-3">
+                {/* Imagem: foto enviada OU mini-mapa do polígono */}
+                {p.foto_url ? (
+                  <div className="relative group">
+                    <img
+                      src={p.foto_url}
+                      alt={`Foto do pasto ${p.nome}`}
+                      className="w-full h-32 object-cover rounded-md border border-border"
+                      loading="lazy"
+                    />
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition"
+                      onClick={e => { e.stopPropagation(); handleRemoveFoto(p.id); }}
+                      title="Remover foto"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : coords ? (
+                  <PastoMiniMapa coordenadas={coords} centroLat={p.centro_lat} centroLng={p.centro_lng} />
+                ) : (
+                  <div className="w-full h-32 rounded-md border border-dashed border-border flex flex-col items-center justify-center gap-1 bg-muted/30">
+                    <MapPin className="h-5 w-5 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Sem mapa cadastrado</p>
+                  </div>
+                )}
+
+                {/* Botão upload de foto */}
+                <div onClick={e => e.stopPropagation()}>
+                  <label className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer">
+                    <ImagePlus className="h-3 w-3" />
+                    {p.foto_url ? "Trocar foto" : "Adicionar foto"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadFoto(p.id, f); e.target.value = ""; }}
+                    />
+                  </label>
+                </div>
+
+                {/* Ocupação */}
                 {cap > 0 ? (
-                  <>
-                    <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="space-y-1">
+                    <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
                       <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(pct, 100)}%` }} />
                     </div>
                     <p className="text-sm text-muted-foreground">{count} / {cap} cabeças</p>
-                  </>
+                  </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">{count} cabeças · <span className="italic">Capacidade não definida</span></p>
                 )}
@@ -342,64 +397,42 @@ export default function PastosPage() {
                   </div>
                 )}
 
-                {isExpanded && (
-                  <div className="mt-4 space-y-3" onClick={e => e.stopPropagation()}>
-                    {/* Lotes */}
-                    <div>
-                      <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Lotes</p>
-                      {lotesPasto.length > 0 ? (
-                        <div className="space-y-1">
-                          {lotesPasto.map(l => {
-                            const animaisLote = animais.filter(a => a.lote_id === l.id);
-                            return (
-                              <div key={l.id} className="flex items-center justify-between bg-muted/50 rounded px-2 py-1">
-                                <span className="text-sm">{l.nome} <span className="text-muted-foreground">({animaisLote.length} animais)</span></span>
-                                <div className="flex gap-1">
-                                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => openEditLote(l)}>
-                                    <Pencil className="h-3 w-3 text-muted-foreground" />
-                                  </Button>
-                                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleDeleteLote(l)}>
-                                    <Trash2 className="h-3 w-3 text-muted-foreground hover:text-red-500" />
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground italic">Nenhum lote cadastrado</span>
-                          <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => { setFormLote({ nome: "", pasto_id: p.id }); setOpenLote(true); }}>
-                            <Plus className="h-3 w-3" /> Criar Lote
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                {/* Ação rápida sempre visível */}
+                {count > 0 && (
+                  <Button variant="outline" size="sm" className="w-full h-8 gap-1 text-xs" onClick={e => { e.stopPropagation(); openMoveModal(p.id); }}>
+                    <ArrowRightLeft className="h-3 w-3" /> Mover Animais
+                  </Button>
+                )}
 
-                    {/* Animais */}
-                    {animaisPasto.length > 0 && (
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-xs font-semibold uppercase text-muted-foreground">Animais</p>
-                          <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => openMoveModal(p.id)}>
-                            <ArrowRightLeft className="h-3 w-3" /> Mover Animais
-                          </Button>
-                        </div>
-                        <table className="w-full text-xs">
-                          <thead><tr className="text-left text-muted-foreground"><th className="pb-1">Brinco</th><th className="pb-1">Nome</th><th className="pb-1">Cat.</th><th className="pb-1">Peso</th></tr></thead>
-                          <tbody>
-                            {animaisPasto.slice(0, 10).map(a => (
-                              <tr key={a.id} className="border-t">
-                                <td className="py-1 font-mono">{a.brinco}</td>
-                                <td className="py-1">{a.nome || "—"}</td>
-                                <td className="py-1">{a.categoria}</td>
-                                <td className="py-1">{a.peso_atual ? `${Number(a.peso_atual).toFixed(0)} kg` : "—"}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                        {animaisPasto.length > 10 && <p className="text-xs text-muted-foreground mt-1">...e mais {animaisPasto.length - 10}</p>}
+                {isExpanded && (
+                  <div className="mt-2 space-y-2 pt-2 border-t border-border" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase text-muted-foreground">Lotes</p>
+                      <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs" onClick={() => { setFormLote({ nome: "", pasto_id: p.id }); setOpenLote(true); }}>
+                        <Plus className="h-3 w-3" /> Lote
+                      </Button>
+                    </div>
+                    {lotesPasto.length > 0 ? (
+                      <div className="space-y-1">
+                        {lotesPasto.map(l => {
+                          const animaisLote = animais.filter(a => a.lote_id === l.id);
+                          return (
+                            <div key={l.id} className="flex items-center justify-between bg-muted/50 rounded px-2 py-1">
+                              <span className="text-sm">{l.nome} <span className="text-muted-foreground">({animaisLote.length})</span></span>
+                              <div className="flex gap-1">
+                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => openEditLote(l)}>
+                                  <Pencil className="h-3 w-3 text-muted-foreground" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleDeleteLote(l)}>
+                                  <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">Nenhum lote cadastrado</p>
                     )}
                   </div>
                 )}
