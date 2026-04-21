@@ -33,6 +33,7 @@ export default function AnimaisPage() {
   const navigate = useNavigate();
   const [animais, setAnimais] = useState<any[]>([]);
   const [racas, setRacas] = useState<any[]>([]);
+  const [coresPorRaca, setCoresPorRaca] = useState<Record<string, { nome: string; principal: boolean }[]>>({});
   const [pastos, setPastos] = useState<any[]>([]);
   const [lotes, setLotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
