@@ -60,7 +60,7 @@ export default function GadoConfiguracoesPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba, idade_bezerro_meses, idade_jovem_meses, reclassificacao_automatica").eq("user_id", effectiveUserId).single()
+    supabase.from("profiles").select("rendimento_carcaca, unidade_peso, exibir_conversao, valor_arroba, data_cotacao_arroba, idade_bezerro_meses, idade_jovem_meses, reclassificacao_automatica, momento_troca_brinco").eq("user_id", effectiveUserId).single()
       .then(({ data }) => {
         if (data) {
           if (data.rendimento_carcaca != null) setRendimento(String(data.rendimento_carcaca));
@@ -74,6 +74,7 @@ export default function GadoConfiguracoesPage() {
           if ((data as any).idade_bezerro_meses != null) setIdadeBezerro(String((data as any).idade_bezerro_meses));
           if ((data as any).idade_jovem_meses != null) setIdadeJovem(String((data as any).idade_jovem_meses));
           if ((data as any).reclassificacao_automatica != null) setReclassAuto((data as any).reclassificacao_automatica);
+          if ((data as any).momento_troca_brinco) setMomentoTrocaBrinco((data as any).momento_troca_brinco);
         }
       });
   }, [user]);
