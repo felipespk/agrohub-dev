@@ -17,6 +17,7 @@ export type Database = {
       animais: {
         Row: {
           brinco: string
+          brinco_anterior: string | null
           categoria: string
           categoria_atualizada_em: string | null
           cor: string | null
@@ -33,6 +34,7 @@ export type Database = {
           pai_brinco: string | null
           pasto_id: string | null
           peso_atual: number | null
+          precisa_trocar_brinco: boolean
           raca_id: string | null
           sexo: string
           status: string | null
@@ -40,6 +42,7 @@ export type Database = {
         }
         Insert: {
           brinco: string
+          brinco_anterior?: string | null
           categoria: string
           categoria_atualizada_em?: string | null
           cor?: string | null
@@ -56,6 +59,7 @@ export type Database = {
           pai_brinco?: string | null
           pasto_id?: string | null
           peso_atual?: number | null
+          precisa_trocar_brinco?: boolean
           raca_id?: string | null
           sexo: string
           status?: string | null
@@ -63,6 +67,7 @@ export type Database = {
         }
         Update: {
           brinco?: string
+          brinco_anterior?: string | null
           categoria?: string
           categoria_atualizada_em?: string | null
           cor?: string | null
@@ -79,6 +84,7 @@ export type Database = {
           pai_brinco?: string | null
           pasto_id?: string | null
           peso_atual?: number | null
+          precisa_trocar_brinco?: boolean
           raca_id?: string | null
           sexo?: string
           status?: string | null
@@ -1374,6 +1380,7 @@ export type Database = {
           is_admin: boolean | null
           master_password_hash: string | null
           moeda: string | null
+          momento_troca_brinco: string
           reclassificacao_automatica: boolean | null
           rendimento_carcaca: number | null
           unidade_peso: string | null
@@ -1408,6 +1415,7 @@ export type Database = {
           is_admin?: boolean | null
           master_password_hash?: string | null
           moeda?: string | null
+          momento_troca_brinco?: string
           reclassificacao_automatica?: boolean | null
           rendimento_carcaca?: number | null
           unidade_peso?: string | null
@@ -1442,6 +1450,7 @@ export type Database = {
           is_admin?: boolean | null
           master_password_hash?: string | null
           moeda?: string | null
+          momento_troca_brinco?: string
           reclassificacao_automatica?: boolean | null
           rendimento_carcaca?: number | null
           unidade_peso?: string | null
