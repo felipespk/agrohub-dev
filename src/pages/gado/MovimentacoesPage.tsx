@@ -326,14 +326,37 @@ export default function MovimentacoesPage() {
               <div className="space-y-2"><Label>Causa da Morte</Label><Input value={form.causa_morte} onChange={e => setForm({ ...form, causa_morte: e.target.value })} placeholder="Doença, Acidente..." /></div>
             )}
 
-            {form.tipo === "transferencia" && (
-              <div className="space-y-2"><Label>Pasto Destino</Label>
-                <Select value={form.pasto_destino_id || "__none__"} onValueChange={v => setForm({ ...form, pasto_destino_id: v === "__none__" ? "" : v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{pastos.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            )}
+            {form.tipo === "transferencia" && (() => {
+              const disponiveis = form.pasto_origem_id ? animais.filter(a => a.pasto_id === form.pasto_origem_id).length : 0;
+              return (
+                <>
+                  <div className="space-y-2"><Label>Pasto de Origem</Label>
+                    <Select value={form.pasto_origem_id || "__none__"} onValueChange={v => setForm({ ...form, pasto_origem_id: v === "__none__" ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {pastos.map(p => {
+                          const qtd = animais.filter(a => a.pasto_id === p.id).length;
+                          return <SelectItem key={p.id} value={p.id}>{p.nome} ({qtd} animal{qtd !== 1 ? "is" : ""})</SelectItem>;
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Quantidade de Animais</Label>
+                    <Input type="number" min="1" max={disponiveis || undefined} value={form.quantidade} onChange={e => setForm({ ...form, quantidade: e.target.value })} />
+                    {form.pasto_origem_id && (
+                      <p className="text-xs text-muted-foreground">Disponível no pasto: <strong>{disponiveis}</strong></p>
+                    )}
+                  </div>
+                  <div className="space-y-2"><Label>Pasto Destino</Label>
+                    <Select value={form.pasto_destino_id || "__none__"} onValueChange={v => setForm({ ...form, pasto_destino_id: v === "__none__" ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>{pastos.filter(p => p.id !== form.pasto_origem_id).map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </>
+              );
+            })()}
 
             <div className="space-y-2"><Label>Observação</Label><Textarea value={form.observacao} onChange={e => setForm({ ...form, observacao: e.target.value })} rows={2} /></div>
           </div>
