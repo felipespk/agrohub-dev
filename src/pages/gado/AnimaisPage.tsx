@@ -156,6 +156,25 @@ export default function AnimaisPage() {
 
   const lotesFiltered = form.pasto_id ? lotes.filter(l => l.pasto_id === form.pasto_id) : lotes;
 
+  const handleTrocarBrinco = async () => {
+    if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
+    if (!trocaOpen || !novoBrinco.trim()) { toast.error("Informe o novo brinco."); return; }
+    const novo = novoBrinco.trim();
+    if (novo === trocaOpen.brinco) { toast.error("Informe um brinco diferente do atual."); return; }
+    const { error } = await supabase.from("animais" as any).update({
+      brinco: novo,
+      brinco_anterior: trocaOpen.brinco,
+      precisa_trocar_brinco: false,
+    } as any).eq("id", trocaOpen.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Brinco trocado de ${trocaOpen.brinco} para ${novo}.`);
+    setTrocaOpen(null);
+    setNovoBrinco("");
+    fetchAll();
+  };
+
+  const pendentesTroca = animais.filter(a => a.precisa_trocar_brinco && a.status === "ativo");
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
