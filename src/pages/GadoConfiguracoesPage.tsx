@@ -143,6 +143,7 @@ export default function GadoConfiguracoesPage() {
         idade_bezerro_meses: parseInt(idadeBezerro) || 8,
         idade_jovem_meses: parseInt(idadeJovem) || 24,
         reclassificacao_automatica: reclassAuto,
+        momento_troca_brinco: momentoTrocaBrinco,
       } as any).eq("user_id", effectiveUserId);
       toast.success("Fases de vida salvas!");
     } catch {
