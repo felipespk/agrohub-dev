@@ -215,6 +215,14 @@ export default function PastosPage() {
   // === Helpers ===
   const calcValorEst = (peso: number) => (peso * rendimento / 100 / 15) * valorArroba;
 
+  // Valor médio estimado por animal (considerando todo o rebanho com peso registrado)
+  const valorMedioPorAnimal = useMemo(() => {
+    const comPeso = animais.filter(a => Number(a.peso_atual) > 0);
+    if (comPeso.length === 0) return 0;
+    const total = comPeso.reduce((s, a) => s + calcValorEst(Number(a.peso_atual)), 0);
+    return total / comPeso.length;
+  }, [animais, valorArroba, rendimento]);
+
   const CAT_BADGE: Record<string, string> = {
     vaca: "bg-pink-100 text-pink-700", touro: "bg-blue-100 text-blue-700",
     boi: "bg-amber-100 text-amber-700", novilha: "bg-purple-100 text-purple-700",
