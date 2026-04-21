@@ -249,9 +249,7 @@ export default function PastosPage() {
           const isExpanded = expanded === p.id;
           const lotesPasto = lotes.filter(l => l.pasto_id === p.id);
 
-          const pesoTotal = animaisPasto.reduce((s, a) => s + (Number(a.peso_atual) || 0), 0);
-          const pesoMedio = count > 0 ? pesoTotal / count : 0;
-          const valorEstimado = animaisPasto.reduce((s, a) => s + (a.peso_atual ? calcValorEst(Number(a.peso_atual)) : 0), 0);
+          const valorEstimado = count * valorMedioPorAnimal;
 
           return (
             <Card key={p.id} className="border-[#E5E7EB]">
