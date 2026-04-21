@@ -436,6 +436,10 @@ export default function MapaFazendaPage() {
   }, [animais, pastos]);
 
   const getPastoColor = (pastoId: string): string => {
+    // Cor personalizada do pasto tem prioridade sobre a cor por lotação
+    const p = pastos.find((x: any) => x.id === pastoId);
+    const cor = (p as any)?.cor;
+    if (cor && /^#[0-9A-Fa-f]{6}$/.test(cor)) return cor;
     const { pct } = getPastoLotacao(pastoId);
     if (pct < 0) return "#D97706";
     if (pct < 70) return "#16A34A";

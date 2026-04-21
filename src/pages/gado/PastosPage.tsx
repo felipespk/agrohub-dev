@@ -23,13 +23,13 @@ export default function PastosPage() {
   // Create modals
   const [openPasto, setOpenPasto] = useState(false);
   const [openLote, setOpenLote] = useState(false);
-  const [formPasto, setFormPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "" });
+  const [formPasto, setFormPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "", cor: "#16A34A" });
   const [formLote, setFormLote] = useState({ nome: "", pasto_id: "" });
 
   // Edit modals
   const [editPasto, setEditPasto] = useState<any>(null);
   const [editLote, setEditLote] = useState<any>(null);
-  const [formEditPasto, setFormEditPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "" });
+  const [formEditPasto, setFormEditPasto] = useState({ nome: "", area_hectares: "", capacidade_cabecas: "", cor: "#16A34A" });
   const [formEditLote, setFormEditLote] = useState({ nome: "", pasto_id: "" });
 
   // Move animals modal (by quantity)
@@ -47,7 +47,7 @@ export default function PastosPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [p, l, a, prof] = await Promise.all([
-      supabase.from("pastos" as any).select("id, nome, area_hectares, capacidade_cabecas, coordenadas, centro_lat, centro_lng, foto_url").eq("user_id", effectiveUserId).order("nome"),
+      supabase.from("pastos" as any).select("id, nome, area_hectares, capacidade_cabecas, coordenadas, centro_lat, centro_lng, foto_url, cor").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("lotes" as any).select("*").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("animais" as any).select("id, brinco, nome, categoria, peso_atual, pasto_id, lote_id").eq("user_id", effectiveUserId).eq("status", "ativo"),
       supabase.from("profiles").select("valor_arroba, rendimento_carcaca").eq("user_id", effectiveUserId).maybeSingle(),
@@ -71,11 +71,12 @@ export default function PastosPage() {
       nome: formPasto.nome.trim(),
       area_hectares: formPasto.area_hectares ? parseFloat(formPasto.area_hectares) : null,
       capacidade_cabecas: formPasto.capacidade_cabecas ? parseInt(formPasto.capacidade_cabecas) : null,
+      cor: formPasto.cor || null,
       user_id: user.id,
     } as any);
     toast.success("Pasto criado!");
     setOpenPasto(false);
-    setFormPasto({ nome: "", area_hectares: "", capacidade_cabecas: "" });
+    setFormPasto({ nome: "", area_hectares: "", capacidade_cabecas: "", cor: "#16A34A" });
     fetchAll();
   };
 
@@ -99,6 +100,7 @@ export default function PastosPage() {
       nome: p.nome || "",
       area_hectares: p.area_hectares != null ? String(p.area_hectares) : "",
       capacidade_cabecas: p.capacidade_cabecas != null ? String(p.capacidade_cabecas) : "",
+      cor: p.cor || "#16A34A",
     });
   };
   const handleUpdatePasto = async () => {
@@ -108,6 +110,7 @@ export default function PastosPage() {
       nome: formEditPasto.nome.trim(),
       area_hectares: formEditPasto.area_hectares ? parseFloat(formEditPasto.area_hectares) : null,
       capacidade_cabecas: formEditPasto.capacidade_cabecas ? parseInt(formEditPasto.capacidade_cabecas) : null,
+      cor: formEditPasto.cor || null,
     } as any).eq("id", editPasto.id);
     toast.success("Pasto atualizado!");
     setEditPasto(null);
@@ -357,7 +360,7 @@ export default function PastosPage() {
                     </Button>
                   </div>
                 ) : coords ? (
-                  <PastoMiniMapa coordenadas={coords} centroLat={p.centro_lat} centroLng={p.centro_lng} />
+                  <PastoMiniMapa coordenadas={coords} centroLat={p.centro_lat} centroLng={p.centro_lng} cor={p.cor} />
                 ) : (
                   <div className="w-full h-32 rounded-md border border-dashed border-border flex flex-col items-center justify-center gap-1 bg-muted/30">
                     <MapPin className="h-5 w-5 text-muted-foreground" />
@@ -451,6 +454,10 @@ export default function PastosPage() {
             <div className="space-y-2"><Label>Nome *</Label><Input value={formPasto.nome} onChange={e => setFormPasto({ ...formPasto, nome: e.target.value })} /></div>
             <div className="space-y-2"><Label>Área (hectares)</Label><Input type="number" value={formPasto.area_hectares} onChange={e => setFormPasto({ ...formPasto, area_hectares: e.target.value })} /></div>
             <div className="space-y-2"><Label>Capacidade (cabeças)</Label><Input type="number" value={formPasto.capacidade_cabecas} onChange={e => setFormPasto({ ...formPasto, capacidade_cabecas: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Cor no mapa</Label>
+              <ColorPicker value={formPasto.cor} onChange={(c) => setFormPasto({ ...formPasto, cor: c })} />
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2"><Button variant="outline" onClick={() => setOpenPasto(false)}>Cancelar</Button><Button onClick={handleSavePasto}>Salvar</Button></div>
         </DialogContent>
@@ -481,6 +488,10 @@ export default function PastosPage() {
             <div className="space-y-2"><Label>Nome *</Label><Input value={formEditPasto.nome} onChange={e => setFormEditPasto({ ...formEditPasto, nome: e.target.value })} /></div>
             <div className="space-y-2"><Label>Área (hectares)</Label><Input type="number" value={formEditPasto.area_hectares} onChange={e => setFormEditPasto({ ...formEditPasto, area_hectares: e.target.value })} /></div>
             <div className="space-y-2"><Label>Capacidade (cabeças)</Label><Input type="number" value={formEditPasto.capacidade_cabecas} onChange={e => setFormEditPasto({ ...formEditPasto, capacidade_cabecas: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Cor no mapa</Label>
+              <ColorPicker value={formEditPasto.cor} onChange={(c) => setFormEditPasto({ ...formEditPasto, cor: c })} />
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2"><Button variant="outline" onClick={() => setEditPasto(null)}>Cancelar</Button><Button onClick={handleUpdatePasto}>Salvar</Button></div>
         </DialogContent>
@@ -580,6 +591,56 @@ export default function PastosPage() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ===== Color Picker reutilizável =====
+const PRESET_COLORS = [
+  "#16A34A", // verde
+  "#22C55E", // verde claro
+  "#0EA5E9", // azul
+  "#6366F1", // índigo
+  "#A855F7", // roxo
+  "#EC4899", // rosa
+  "#EF4444", // vermelho
+  "#F97316", // laranja
+  "#EAB308", // amarelo
+  "#14B8A6", // teal
+  "#78716C", // cinza
+  "#1F2937", // grafite
+];
+
+function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
+  const safe = /^#[0-9A-Fa-f]{6}$/.test(value) ? value : "#16A34A";
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5">
+        {PRESET_COLORS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onChange(c)}
+            className={`h-7 w-7 rounded-md border-2 transition ${
+              safe.toLowerCase() === c.toLowerCase()
+                ? "border-foreground scale-110"
+                : "border-transparent hover:scale-105"
+            }`}
+            style={{ backgroundColor: c }}
+            aria-label={`Cor ${c}`}
+          />
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={safe}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-8 w-12 rounded border border-border cursor-pointer bg-transparent"
+          aria-label="Escolher cor personalizada"
+        />
+        <span className="text-xs text-muted-foreground font-mono uppercase">{safe}</span>
+      </div>
     </div>
   );
 }
