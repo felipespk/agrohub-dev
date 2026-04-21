@@ -26,6 +26,7 @@ function fmt(v: number) {
 export default function GadoDashboard() {
   const { user } = useAuth();
   const { effectiveUserId, isImpersonating } = useEffectiveUser();
+  const navigate = useNavigate();
   const [periodo, setPeriodo] = useState("mes");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -90,6 +91,7 @@ export default function GadoDashboard() {
   const valorEstimado = totalArrobas * valorArroba;
 
   const cotacaoDesatualizada = dataCotacao ? (Date.now() - new Date(dataCotacao + "T12:00:00").getTime()) > 7 * 86400000 : true;
+  const pendentesTroca = animaisAtivos.filter(a => a.precisa_trocar_brinco);
 
   const recentMovs = movs.slice(0, 5);
 
@@ -233,6 +235,27 @@ export default function GadoDashboard() {
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 <span>Cotação desatualizada — atualize nas Configurações.</span>
               </div>
+            )}
+            {pendentesTroca.length > 0 && (
+              <button
+                type="button"
+                onClick={() => navigate("/gado/animais")}
+                className="w-full rounded-xl border border-warning/20 bg-warning/10 p-3 text-left transition-colors hover:bg-warning/15"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-warning/15 text-warning shrink-0">
+                    <Tag className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {pendentesTroca.length} {pendentesTroca.length === 1 ? "animal aguardando troca de brinco" : "animais aguardando troca de brinco"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Toque para abrir Animais e atualizar os brincos herdados da mãe.
+                    </p>
+                  </div>
+                </div>
+              </button>
             )}
           </CardContent>
         </Card>
