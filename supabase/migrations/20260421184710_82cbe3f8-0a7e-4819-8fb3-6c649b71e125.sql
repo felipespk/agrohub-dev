@@ -1,0 +1,1 @@
+ALTER TABLE public.pastos ADD COLUMN IF NOT EXISTS cor text;
