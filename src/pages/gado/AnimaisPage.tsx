@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUser } from "@/hooks/useEffectiveUser";
@@ -59,6 +59,7 @@ export default function AnimaisPage() {
   // Troca de brinco
   const [trocaOpen, setTrocaOpen] = useState<any>(null);
   const [novoBrinco, setNovoBrinco] = useState("");
+  const ultimoBrincoMaeRef = useRef("");
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
@@ -103,6 +104,22 @@ export default function AnimaisPage() {
     ["bezerro", "bezerra"].includes(form.categoria) &&
     brincoMaeInformado.length > 0;
   const brincoFinal = form.brinco.trim() || (herdaBrincoDaMae ? brincoMaeInformado : "");
+
+  useEffect(() => {
+    const brincoMae = form.mae_brinco.trim();
+    const brincoAtual = form.brinco.trim();
+    const ultimoBrincoMae = ultimoBrincoMaeRef.current;
+
+    if (herdaBrincoDaMae && (!brincoAtual || brincoAtual === ultimoBrincoMae)) {
+      setForm(prev => (prev.brinco === brincoMae ? prev : { ...prev, brinco: brincoMae }));
+    }
+
+    if (!herdaBrincoDaMae && brincoAtual && brincoAtual === ultimoBrincoMae) {
+      setForm(prev => ({ ...prev, brinco: "" }));
+    }
+
+    ultimoBrincoMaeRef.current = brincoMae;
+  }, [form.mae_brinco, form.brinco, herdaBrincoDaMae]);
 
   const filtered = animais.filter(a => {
     if (busca && !a.brinco.toLowerCase().includes(busca.toLowerCase()) && !(a.nome || "").toLowerCase().includes(busca.toLowerCase())) return false;
