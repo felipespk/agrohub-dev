@@ -246,7 +246,17 @@ export default function ReproducaoPage() {
               </Select>
             </div>
             <div className="space-y-2"><Label>Peso ao Nascer (KG)</Label><Input type="number" value={formParto.peso_bezerro} onChange={e => setFormParto({ ...formParto, peso_bezerro: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Brinco do Bezerro</Label><Input value={formParto.brinco_bezerro} onChange={e => setFormParto({ ...formParto, brinco_bezerro: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Brinco do Bezerro</Label>
+              <Input
+                value={formParto.brinco_bezerro}
+                onChange={e => setFormParto({ ...formParto, brinco_bezerro: e.target.value })}
+                placeholder={openParto?.femea?.brinco ? `Padrão: ${openParto.femea.brinco} (mesmo da mãe)` : "Mesmo da mãe"}
+              />
+              <p className="text-xs text-muted-foreground">
+                Se deixar vazio, o bezerro herda automaticamente o brinco da mãe. Você poderá trocar quando ele virar adulto/desmamar (alerta automático).
+              </p>
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2"><Button variant="outline" onClick={() => setOpenParto(null)}>Cancelar</Button><Button onClick={handleParto}>Salvar</Button></div>
         </DialogContent>
