@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUser } from "@/hooks/useEffectiveUser";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, Eye, Pencil, Trash2, AlertTriangle, Tag } from "lucide-react";
+import { Plus, Search, Eye, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 
@@ -36,7 +36,6 @@ export default function AnimaisPage() {
   const [coresPorRaca, setCoresPorRaca] = useState<Record<string, { nome: string; principal: boolean }[]>>({});
   const [pastos, setPastos] = useState<any[]>([]);
   const [lotes, setLotes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [rendimento, setRendimento] = useState(52);
   const [valorArrobaConfig, setValorArrobaConfig] = useState(300);
   const [open, setOpen] = useState(false);
@@ -59,10 +58,10 @@ export default function AnimaisPage() {
   // Troca de brinco
   const [trocaOpen, setTrocaOpen] = useState<any>(null);
   const [novoBrinco, setNovoBrinco] = useState("");
+  const ultimoBrincoMaeRef = useRef("");
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
-    setLoading(true);
     const [a, r, p, l, prof, c] = await Promise.all([
       supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome)").eq("user_id", effectiveUserId).order("brinco"),
       supabase.from("racas" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
@@ -85,7 +84,6 @@ export default function AnimaisPage() {
       if (prof.data.rendimento_carcaca) setRendimento(Number(prof.data.rendimento_carcaca));
       if ((prof.data as any).valor_arroba) setValorArrobaConfig(Number((prof.data as any).valor_arroba));
     }
-    setLoading(false);
   }, [user, effectiveUserId]);
 
   // ao mudar de raça, sugerir a cor principal automaticamente
@@ -96,6 +94,29 @@ export default function AnimaisPage() {
   };
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  const brincoMaeInformado = form.mae_brinco.trim();
+  const herdaBrincoDaMae =
+    form.origem === "nascido" &&
+    ["bezerro", "bezerra"].includes(form.categoria) &&
+    brincoMaeInformado.length > 0;
+  const brincoFinal = form.brinco.trim() || (herdaBrincoDaMae ? brincoMaeInformado : "");
+
+  useEffect(() => {
+    const brincoMae = form.mae_brinco.trim();
+    const brincoAtual = form.brinco.trim();
+    const ultimoBrincoMae = ultimoBrincoMaeRef.current;
+
+    if (herdaBrincoDaMae && (!brincoAtual || brincoAtual === ultimoBrincoMae)) {
+      setForm(prev => (prev.brinco === brincoMae ? prev : { ...prev, brinco: brincoMae }));
+    }
+
+    if (!herdaBrincoDaMae && brincoAtual && brincoAtual === ultimoBrincoMae) {
+      setForm(prev => ({ ...prev, brinco: "" }));
+    }
+
+    ultimoBrincoMaeRef.current = brincoMae;
+  }, [form.mae_brinco, form.brinco, herdaBrincoDaMae]);
 
   const filtered = animais.filter(a => {
     if (busca && !a.brinco.toLowerCase().includes(busca.toLowerCase()) && !(a.nome || "").toLowerCase().includes(busca.toLowerCase())) return false;
@@ -115,14 +136,17 @@ export default function AnimaisPage() {
 
   const handleSave = async () => {
     if (isImpersonating) { toast.warning("Modo visualização — ações desabilitadas"); return; }
-    if (!user || !form.brinco.trim() || !form.sexo || !form.categoria) {
+    if (!user || !brincoFinal || !form.sexo || !form.categoria) {
       toast.error("Preencha os campos obrigatórios."); return;
     }
     const payload: any = {
-      ...form, user_id: user.id,
+      ...form,
+      brinco: brincoFinal,
+      user_id: user.id,
       peso_atual: form.peso_atual ? parseFloat(form.peso_atual) : null,
       raca_id: form.raca_id || null, pasto_id: form.pasto_id || null, lote_id: form.lote_id || null,
       data_nascimento: form.data_nascimento || null,
+      precisa_trocar_brinco: herdaBrincoDaMae && brincoFinal === brincoMaeInformado,
     };
     const { data: inserted, error } = await (supabase.from("animais" as any).insert(payload).select("id").single() as any);
     if (error) { toast.error(error.message); return; }
@@ -313,7 +337,19 @@ export default function AnimaisPage() {
         <DialogContent className="max-w-[640px] max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Novo Animal</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2"><Label>Brinco *</Label><Input value={form.brinco} onChange={e => setForm({ ...form, brinco: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Brinco *</Label>
+              <Input
+                value={form.brinco}
+                onChange={e => setForm({ ...form, brinco: e.target.value })}
+                placeholder={herdaBrincoDaMae ? `Automático: ${brincoMaeInformado}` : ""}
+              />
+              {herdaBrincoDaMae && !form.brinco.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  Se deixar em branco, o sistema usará automaticamente o mesmo brinco da mãe.
+                </p>
+              )}
+            </div>
             <div className="space-y-2"><Label>Sexo *</Label>
               <Select value={form.sexo} onValueChange={v => setForm({ ...form, sexo: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
