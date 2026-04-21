@@ -215,6 +215,14 @@ export default function PastosPage() {
   // === Helpers ===
   const calcValorEst = (peso: number) => (peso * rendimento / 100 / 15) * valorArroba;
 
+  // Valor médio estimado por animal (considerando todo o rebanho com peso registrado)
+  const valorMedioPorAnimal = useMemo(() => {
+    const comPeso = animais.filter(a => Number(a.peso_atual) > 0);
+    if (comPeso.length === 0) return 0;
+    const total = comPeso.reduce((s, a) => s + calcValorEst(Number(a.peso_atual)), 0);
+    return total / comPeso.length;
+  }, [animais, valorArroba, rendimento]);
+
   const CAT_BADGE: Record<string, string> = {
     vaca: "bg-pink-100 text-pink-700", touro: "bg-blue-100 text-blue-700",
     boi: "bg-amber-100 text-amber-700", novilha: "bg-purple-100 text-purple-700",
@@ -241,9 +249,7 @@ export default function PastosPage() {
           const isExpanded = expanded === p.id;
           const lotesPasto = lotes.filter(l => l.pasto_id === p.id);
 
-          const pesoTotal = animaisPasto.reduce((s, a) => s + (Number(a.peso_atual) || 0), 0);
-          const pesoMedio = count > 0 ? pesoTotal / count : 0;
-          const valorEstimado = animaisPasto.reduce((s, a) => s + (a.peso_atual ? calcValorEst(Number(a.peso_atual)) : 0), 0);
+          const valorEstimado = count * valorMedioPorAnimal;
 
           return (
             <Card key={p.id} className="border-[#E5E7EB]">
@@ -274,9 +280,8 @@ export default function PastosPage() {
                   <p className="text-sm text-muted-foreground">{count} cabeças · <span className="italic">Capacidade não definida</span></p>
                 )}
 
-                {count > 0 && (
-                  <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>Peso médio: <strong className="text-foreground">{pesoMedio > 0 ? `${pesoMedio.toFixed(0)} kg` : "—"}</strong></span>
+                {count > 0 && valorMedioPorAnimal > 0 && (
+                  <div className="text-xs text-muted-foreground">
                     <span>Valor est.: <strong className="text-foreground">R$ {valorEstimado.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
                   </div>
                 )}
