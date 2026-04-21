@@ -239,7 +239,7 @@ export default function MovimentacoesPage() {
               <tr key={m.id} className="border-b hover:bg-[#F8FAFC]">
                 <td className="px-4 py-2">{new Date(m.data + "T12:00:00").toLocaleDateString("pt-BR")}</td>
                 <td className="px-4 py-2"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${TIPO_BADGE[m.tipo] || ""}`}>{TIPO_LABEL[m.tipo]}</span></td>
-                <td className="px-4 py-2 font-mono">{m.animal?.brinco || "—"}</td>
+                <td className="px-4 py-2 font-mono">{m.tipo === "transferencia" ? `${m.origem?.nome || "?"} → ${m.destino?.nome || "?"}` : (m.animal?.brinco || "—")}</td>
                 <td className="px-4 py-2">{m.quantidade}</td>
                 <td className="px-4 py-2">{m.peso_kg ? Number(m.peso_kg).toFixed(1) : "—"}</td>
                 <td className="px-4 py-2">{m.valor_total ? fmt(Number(m.valor_total)) : "—"}</td>
