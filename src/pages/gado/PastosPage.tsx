@@ -402,7 +402,7 @@ export default function PastosPage() {
 
                 {/* Ação rápida sempre visível */}
                 {count > 0 && (
-                  <Button variant="outline" size="sm" className="w-full h-8 gap-1 text-xs" onClick={e => { e.stopPropagation(); openMoveModal(p.id); }}>
+                  <Button size="sm" className="w-full h-8 gap-1 text-xs bg-black text-white hover:bg-black/90" onClick={e => { e.stopPropagation(); openMoveModal(p.id); }}>
                     <ArrowRightLeft className="h-3 w-3" /> Mover Animais
                   </Button>
                 )}

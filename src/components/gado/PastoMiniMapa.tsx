@@ -85,7 +85,8 @@ export function PastoMiniMapa({ coordenadas, centroLat, centroLng, cor }: PastoM
   return (
     <div
       ref={containerRef}
-      className="w-full h-32 rounded-md overflow-hidden border border-border"
+      className="w-full h-32 rounded-md overflow-hidden border border-border isolate [&_.leaflet-pane]:!z-0 [&_.leaflet-top]:!z-[1] [&_.leaflet-bottom]:!z-[1]"
+      style={{ position: "relative", zIndex: 0 }}
       aria-label="Mini-mapa do pasto"
     />
   );
