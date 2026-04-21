@@ -44,6 +44,7 @@ export default function GadoConfiguracoesPage() {
   const [idadeBezerro, setIdadeBezerro] = useState("8");
   const [idadeJovem, setIdadeJovem] = useState("24");
   const [reclassAuto, setReclassAuto] = useState(true);
+  const [momentoTrocaBrinco, setMomentoTrocaBrinco] = useState<"desmame" | "adulto">("adulto");
   const [savingFases, setSavingFases] = useState(false);
 
   const fetchRacas = useCallback(async () => {
