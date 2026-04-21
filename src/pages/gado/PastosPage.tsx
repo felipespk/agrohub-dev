@@ -360,7 +360,7 @@ export default function PastosPage() {
                     </Button>
                   </div>
                 ) : coords ? (
-                  <PastoMiniMapa coordenadas={coords} centroLat={p.centro_lat} centroLng={p.centro_lng} />
+                  <PastoMiniMapa coordenadas={coords} centroLat={p.centro_lat} centroLng={p.centro_lng} cor={p.cor} />
                 ) : (
                   <div className="w-full h-32 rounded-md border border-dashed border-border flex flex-col items-center justify-center gap-1 bg-muted/30">
                     <MapPin className="h-5 w-5 text-muted-foreground" />
