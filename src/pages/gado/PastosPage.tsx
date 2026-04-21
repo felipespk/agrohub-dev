@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, MapPin, ChevronDown, ChevronUp, Pencil, Trash2, Search, ArrowRightLeft } from "lucide-react";
+import { Plus, MapPin, ChevronDown, ChevronUp, Pencil, Trash2, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function PastosPage() {
