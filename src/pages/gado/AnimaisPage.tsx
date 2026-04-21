@@ -33,6 +33,7 @@ export default function AnimaisPage() {
   const navigate = useNavigate();
   const [animais, setAnimais] = useState<any[]>([]);
   const [racas, setRacas] = useState<any[]>([]);
+  const [coresPorRaca, setCoresPorRaca] = useState<Record<string, { nome: string; principal: boolean }[]>>({});
   const [pastos, setPastos] = useState<any[]>([]);
   const [lotes, setLotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,23 +59,37 @@ export default function AnimaisPage() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [a, r, p, l, prof] = await Promise.all([
+    const [a, r, p, l, prof, c] = await Promise.all([
       supabase.from("animais" as any).select("*, raca:racas!raca_id(nome), pasto:pastos!pasto_id(nome)").eq("user_id", effectiveUserId).order("brinco"),
       supabase.from("racas" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("pastos" as any).select("id, nome").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("lotes" as any).select("id, nome, pasto_id").eq("user_id", effectiveUserId).order("nome"),
       supabase.from("profiles").select("rendimento_carcaca, valor_arroba").eq("user_id", effectiveUserId).single(),
+      supabase.from("racas_cores" as any).select("raca_id, nome, principal").eq("user_id", effectiveUserId).order("nome"),
     ]);
     setAnimais((a.data as any) || []);
     setRacas((r.data as any) || []);
     setPastos((p.data as any) || []);
     setLotes((l.data as any) || []);
+    const cm: Record<string, { nome: string; principal: boolean }[]> = {};
+    ((c.data as any) || []).forEach((x: any) => {
+      if (!cm[x.raca_id]) cm[x.raca_id] = [];
+      cm[x.raca_id].push({ nome: x.nome, principal: x.principal });
+    });
+    setCoresPorRaca(cm);
     if (prof.data) {
       if (prof.data.rendimento_carcaca) setRendimento(Number(prof.data.rendimento_carcaca));
       if ((prof.data as any).valor_arroba) setValorArrobaConfig(Number((prof.data as any).valor_arroba));
     }
     setLoading(false);
-  }, [user]);
+  }, [user, effectiveUserId]);
+
+  // ao mudar de raça, sugerir a cor principal automaticamente
+  const handleRacaChange = (racaId: string) => {
+    const cores = coresPorRaca[racaId] || [];
+    const principal = cores.find(c => c.principal);
+    setForm(f => ({ ...f, raca_id: racaId, cor: principal ? principal.nome : "" }));
+  };
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -261,12 +276,28 @@ export default function AnimaisPage() {
               </Select>
             </div>
             <div className="space-y-2"><Label>Raça</Label>
-              <Select value={form.raca_id || "__none__"} onValueChange={v => setForm({ ...form, raca_id: v === "__none__" ? "" : v })}>
+              <Select value={form.raca_id || "__none__"} onValueChange={v => handleRacaChange(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="__none__">Sem raça</SelectItem>{racas.map(r => <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label>Cor</Label><Input value={form.cor} onChange={e => setForm({ ...form, cor: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Cor</Label>
+              {form.raca_id && (coresPorRaca[form.raca_id]?.length ?? 0) > 0 ? (
+                <Select value={form.cor || "__none__"} onValueChange={v => setForm({ ...form, cor: v === "__none__" ? "" : v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {coresPorRaca[form.raca_id].map(c => (
+                      <SelectItem key={c.nome} value={c.nome}>
+                        {c.nome}{c.principal ? " ★" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input value={form.cor} onChange={e => setForm({ ...form, cor: e.target.value })} placeholder={form.raca_id ? "Sem cores cadastradas" : "Selecione uma raça"} />
+              )}
+            </div>
             <div className="space-y-2"><Label>Data de Nascimento</Label><Input type="date" value={form.data_nascimento} onChange={e => setForm({ ...form, data_nascimento: e.target.value })} /></div>
             <div className="space-y-2"><Label>Data de Entrada</Label><Input type="date" value={form.data_entrada} onChange={e => setForm({ ...form, data_entrada: e.target.value })} /></div>
             <div className="space-y-2"><Label>Origem</Label>

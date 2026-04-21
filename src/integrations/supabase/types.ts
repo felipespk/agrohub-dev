@@ -1526,6 +1526,41 @@ export type Database = {
           },
         ]
       }
+      racas_cores: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          principal: boolean
+          raca_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          principal?: boolean
+          raca_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          principal?: boolean
+          raca_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "racas_cores_raca_id_fkey"
+            columns: ["raca_id"]
+            isOneToOne: false
+            referencedRelation: "racas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recebimentos: {
         Row: {
           created_at: string
