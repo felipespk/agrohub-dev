@@ -258,7 +258,20 @@ export default function AnimaisPage() {
               <tbody>
                 {paged.map((a: any) => (
                   <tr key={a.id} className="border-b hover:bg-[#F8FAFC] transition-colors">
-                    <td className="px-4 py-3 font-mono font-bold">{a.brinco}</td>
+                    <td className="px-4 py-3 font-mono font-bold">
+                      <div className="flex items-center gap-2">
+                        <span>{a.brinco}</span>
+                        {a.precisa_trocar_brinco && (
+                          <button
+                            onClick={() => { setTrocaOpen(a); setNovoBrinco(""); }}
+                            className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 inline-flex items-center gap-1"
+                            title="Trocar brinco"
+                          >
+                            <AlertTriangle className="h-2.5 w-2.5" /> Trocar
+                          </button>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${CAT_BADGE[a.categoria] || ""}`}>{CAT_LABEL[a.categoria] || a.categoria}</span>
                       {a.categoria_atualizada_em && (Date.now() - new Date(a.categoria_atualizada_em).getTime()) < 7 * 86400000 && (
